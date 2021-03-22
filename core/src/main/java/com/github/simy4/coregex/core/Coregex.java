@@ -5,6 +5,10 @@ import java.util.AbstractMap;
 import java.util.Map;
 
 public abstract class Coregex implements Serializable {
+  public static Coregex concat(Coregex first, Coregex... rest) {
+    return new Concat(first, rest);
+  }
+
   public static Coregex empty() {
     return Empty.INSTANCE;
   }
@@ -21,6 +25,32 @@ public abstract class Coregex implements Serializable {
 
   public final Coregex quantify(int min, int max) {
     return 1 == min && 1 == max ? this : new Quantified(this, min, max);
+  }
+
+  private static final class Concat extends Coregex {
+    private static final long serialVersionUID = 1L;
+
+    private final Coregex first;
+    private final Coregex[] rest;
+
+    Concat(Coregex first, Coregex[] rest) {
+      this.first = first;
+      this.rest = rest;
+    }
+
+    @Override
+    public Map.Entry<RNG, String> generate(RNG rng) {
+      StringBuilder sb = new StringBuilder();
+      Map.Entry<RNG, String> rngAndCoregex = first.generate(rng);
+      rng = rngAndCoregex.getKey();
+      sb.append(rngAndCoregex.getValue());
+      for (Coregex coregex : rest) {
+        rngAndCoregex = coregex.generate(rng);
+        rng = rngAndCoregex.getKey();
+        sb.append(rngAndCoregex.getValue());
+      }
+      return new AbstractMap.SimpleEntry<>(rng, sb.toString());
+    }
   }
 
   private static final class Empty extends Coregex {
