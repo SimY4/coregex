@@ -1,26 +1,35 @@
 package com.github.simy4.coregex.core;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.function.IntPredicate;
 
-abstract class SetItem implements IntPredicate, Serializable {
-  static SetItem range(char start, char end) {
+public abstract class SetItem implements IntPredicate, Serializable {
+  private static final char[] EMPTY = {};
+
+  public static SetItem any() {
+    return range(Character.MIN_VALUE, Character.MAX_VALUE);
+  }
+
+  public static SetItem range(char start, char end) {
     return new Range(start, end);
   }
 
-  static SetItem set(char first, char... rest) {
+  public static SetItem set(char first, char... rest) {
     return new Set(first, rest);
   }
 
-  static SetItem union(SetItem first, SetItem... rest) {
+  public static SetItem single(char ch) {
+    return set(ch, EMPTY);
+  }
+
+  public static SetItem union(SetItem first, SetItem... rest) {
     return new Union(first, rest);
   }
 
   private SetItem() {
   }
 
-  abstract char generate(long seed);
+  public abstract char generate(long seed);
 
   @Override
   public SetItem negate() {
@@ -37,7 +46,7 @@ abstract class SetItem implements IntPredicate, Serializable {
     }
 
     @Override
-    char generate(long seed) {
+    public char generate(long seed) {
       char result;
       long offset = 0L;
       do {
@@ -69,7 +78,7 @@ abstract class SetItem implements IntPredicate, Serializable {
     }
 
     @Override
-    char generate(long seed) {
+    public char generate(long seed) {
       return (char) (start + Math.abs((int) (seed % (end - start))));
     }
 
@@ -91,7 +100,7 @@ abstract class SetItem implements IntPredicate, Serializable {
     }
 
     @Override
-    char generate(long seed) {
+    public char generate(long seed) {
       int idx = (int) Math.abs(seed % (rest.length + 1));
       return idx < rest.length ? rest[idx] : first;
     }
@@ -118,14 +127,18 @@ abstract class SetItem implements IntPredicate, Serializable {
     }
 
     @Override
-    char generate(long seed) {
+    public char generate(long seed) {
       int idx = (int) Math.abs(seed % (rest.length + 1));
       return (idx < rest.length ? rest[idx] : first).generate(seed);
     }
 
     @Override
     public boolean test(int value) {
-      return first.test(value) || Arrays.stream(rest).anyMatch(setItem -> setItem.test(value));
+      boolean result = first.test(value);
+      for (int i = 0; !result && i < rest.length; i++) {
+        result = rest[i].test(value);
+      }
+      return result;
     }
   }
 }

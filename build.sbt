@@ -1,6 +1,7 @@
-name := "coregex"
-version := "0.1"
-scalaVersion := "2.13.5"
+ThisBuild / name := "coregex-parent"
+ThisBuild / organization := "com.github.simy4.coregex"
+ThisBuild / version := "0.1"
+ThisBuild / scalaVersion := "2.13.5"
 
 val core = (project in file("core"))
   .settings(
