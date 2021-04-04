@@ -3,8 +3,9 @@ package com.github.simy4.coregex.core;
 import java.io.Serializable;
 import java.util.AbstractMap;
 import java.util.Map;
+import java.util.function.Function;
 
-public abstract class Coregex implements Serializable {
+public abstract class Coregex implements Function<RNG, Map.Entry<RNG, String>>, Serializable {
   public static Coregex concat(Coregex first, Coregex... rest) {
     return new Concat(first, rest);
   }
@@ -21,7 +22,9 @@ public abstract class Coregex implements Serializable {
     return new Union(first, rest);
   }
 
-  public abstract Map.Entry<RNG, String> generate(RNG rng);
+  public final String generate(RNG rng) {
+    return apply(rng).getValue();
+  }
 
   public final Coregex quantify(int min, int max) {
     return 1 == min && 1 == max ? this : new Quantified(this, min, max);
@@ -39,13 +42,13 @@ public abstract class Coregex implements Serializable {
     }
 
     @Override
-    public Map.Entry<RNG, String> generate(RNG rng) {
+    public Map.Entry<RNG, String> apply(RNG rng) {
       StringBuilder sb = new StringBuilder();
-      Map.Entry<RNG, String> rngAndCoregex = first.generate(rng);
+      Map.Entry<RNG, String> rngAndCoregex = first.apply(rng);
       rng = rngAndCoregex.getKey();
       sb.append(rngAndCoregex.getValue());
       for (Coregex coregex : rest) {
-        rngAndCoregex = coregex.generate(rng);
+        rngAndCoregex = coregex.apply(rng);
         rng = rngAndCoregex.getKey();
         sb.append(rngAndCoregex.getValue());
       }
@@ -61,7 +64,7 @@ public abstract class Coregex implements Serializable {
     }
 
     @Override
-    public Map.Entry<RNG, String> generate(RNG rng) {
+    public Map.Entry<RNG, String> apply(RNG rng) {
       return new AbstractMap.SimpleEntry<>(rng, "");
     }
 
@@ -80,7 +83,7 @@ public abstract class Coregex implements Serializable {
     }
 
     @Override
-    public Map.Entry<RNG, String> generate(RNG rng) {
+    public Map.Entry<RNG, String> apply(RNG rng) {
       Map.Entry<RNG, Long> rngAndSeed = rng.genLong();
       return new AbstractMap.SimpleEntry<>(rng, String.valueOf(set.generate(rngAndSeed.getValue())));
     }
@@ -98,13 +101,13 @@ public abstract class Coregex implements Serializable {
     }
 
     @Override
-    public Map.Entry<RNG, String> generate(RNG rng) {
+    public Map.Entry<RNG, String> apply(RNG rng) {
       Map.Entry<RNG, Integer> rngAndQuantifier = rng.genInteger(min, max);
       rng = rngAndQuantifier.getKey();
       int quantifier = rngAndQuantifier.getValue();
       String[] repeats = new String[quantifier];
       for (int i = 0; i < quantifier; i++) {
-        Map.Entry<RNG, String> rngAndCoregex = quantified.generate(rng);
+        Map.Entry<RNG, String> rngAndCoregex = quantified.apply(rng);
         rng = rngAndCoregex.getKey();
         repeats[i] = rngAndCoregex.getValue();
       }
@@ -124,10 +127,10 @@ public abstract class Coregex implements Serializable {
     }
 
     @Override
-    public Map.Entry<RNG, String> generate(RNG rng) {
+    public Map.Entry<RNG, String> apply(RNG rng) {
       Map.Entry<RNG, Integer> rngAndIdx = rng.genInteger(0, rest.length);
       int idx = rngAndIdx.getValue();
-      return (idx < rest.length ? rest[idx] : first).generate(rngAndIdx.getKey());
+      return (idx < rest.length ? rest[idx] : first).apply(rngAndIdx.getKey());
     }
   }
 }

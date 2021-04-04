@@ -150,16 +150,35 @@ public class SetItemTest {
       public SetItem generate(SourceOfRandomness random, GenerationStatus status) {
         Range.Gen rangeGen = gen().make(Range.Gen.class);
         Set.Gen setGen = gen().make(Set.Gen.class);
-        return setItemGen(rangeGen, setGen).generate(random, status);
+
+        int depth = random.nextInt(0, 2);
+        com.pholser.junit.quickcheck.generator.Gen<SetItem> setItemGen = setItemGen(rangeGen, setGen, depth);
+        SetItem first = setItemGen.generate(random, status);
+        SetItem[] rest = new SetItem[random.nextInt(0, 10)];
+        for (int i = 0; i < rest.length; i++) {
+          rest[i] = setItemGen.generate(random, status);
+        }
+        return SetItem.union(first, rest);
       }
 
-      private com.pholser.junit.quickcheck.generator.Gen<SetItem> setItemGen(Range.Gen rangeGen, Set.Gen setGen) {
-        return com.pholser.junit.quickcheck.generator.Gen.frequency(
-            com.pholser.junit.quickcheck.generator.Gen.freq(5, rangeGen),
-            com.pholser.junit.quickcheck.generator.Gen.freq(5, setGen),
-            com.pholser.junit.quickcheck.generator.Gen.freq(1, (random, status) ->
-                setItemGen(rangeGen, setGen).generate(random, status))
-        );
+      private com.pholser.junit.quickcheck.generator.Gen<SetItem> setItemGen(Range.Gen rangeGen, Set.Gen setGen, int depth) {
+        if (depth > 0) {
+          return com.pholser.junit.quickcheck.generator.Gen.frequency(
+                  com.pholser.junit.quickcheck.generator.Gen.freq(3, rangeGen),
+                  com.pholser.junit.quickcheck.generator.Gen.freq(3, setGen),
+                  com.pholser.junit.quickcheck.generator.Gen.freq(1, (random, status) -> {
+                    com.pholser.junit.quickcheck.generator.Gen<SetItem> setItemGen = setItemGen(rangeGen, setGen, depth - 1);
+                    SetItem first = setItemGen.generate(random, status);
+                    SetItem[] rest = new SetItem[random.nextInt(0, 10)];
+                    for (int i = 0; i < rest.length; i++) {
+                      rest[i] = setItemGen.generate(random, status);
+                    }
+                    return SetItem.union(first, rest);
+                  })
+          );
+        } else {
+          return com.pholser.junit.quickcheck.generator.Gen.oneOf(rangeGen, setGen);
+        }
       }
     }
   }
