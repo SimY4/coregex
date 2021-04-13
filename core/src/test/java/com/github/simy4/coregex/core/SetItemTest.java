@@ -114,22 +114,25 @@ public class SetItemTest {
   @RunWith(JUnitQuickcheck.class)
   public static class Union {
     @Property
-    public void generatedShouldBeInUnion(@From(Gen.class) SetItem first, List<@From(Gen.class) SetItem> rest, long seed) {
+    public void generatedShouldBeInUnion(
+        @From(Range.Gen.class) @From(Set.Gen.class) @From(Gen.class) SetItem first,
+        List<@From(Range.Gen.class) @From(Set.Gen.class) @From(Gen.class) SetItem> rest, long seed) {
       SetItem union = SetItem.union(first, rest.toArray(new SetItem[0]));
       char generated = union.generate(seed);
       assertTrue(first.generate(seed) == generated || rest.stream().anyMatch(si -> si.generate(seed) == generated));
     }
 
     @Property
-    public void sameSeedSameResult(@From(Gen.class) SetItem first, List<@From(Gen.class) SetItem> rest, long seed) {
-      SetItem union = SetItem.union(first, rest.toArray(new SetItem[0]));
+    public void sameSeedSameResult(@From(Gen.class) SetItem union, long seed) {
       char generated1 = union.generate(seed);
       char generated2 = union.generate(seed);
       assertEquals(generated1, generated2);
     }
 
     @Property
-    public void acceptOnlyCharactersInUnion(@From(Gen.class) SetItem first, List<@From(Gen.class) SetItem> rest, char check) {
+    public void acceptOnlyCharactersInUnion(
+        @From(Range.Gen.class) @From(Set.Gen.class) @From(Gen.class) SetItem first,
+        List<@From(Range.Gen.class) @From(Set.Gen.class) @From(Gen.class) SetItem> rest, char check) {
       SetItem union = SetItem.union(first, rest.toArray(new SetItem[0]));
       assertEquals(first.test(check) || rest.stream().anyMatch(setItem -> setItem.test(check)), union.test(check));
     }
@@ -152,13 +155,7 @@ public class SetItemTest {
         Set.Gen setGen = gen().make(Set.Gen.class);
 
         int depth = random.nextInt(0, 2);
-        com.pholser.junit.quickcheck.generator.Gen<SetItem> setItemGen = setItemGen(rangeGen, setGen, depth);
-        SetItem first = setItemGen.generate(random, status);
-        SetItem[] rest = new SetItem[random.nextInt(0, 10)];
-        for (int i = 0; i < rest.length; i++) {
-          rest[i] = setItemGen.generate(random, status);
-        }
-        return SetItem.union(first, rest);
+        return unionGen(setItemGen(rangeGen, setGen, depth)).generate(random, status);
       }
 
       private com.pholser.junit.quickcheck.generator.Gen<SetItem> setItemGen(Range.Gen rangeGen, Set.Gen setGen, int depth) {
@@ -166,19 +163,23 @@ public class SetItemTest {
           return com.pholser.junit.quickcheck.generator.Gen.frequency(
                   com.pholser.junit.quickcheck.generator.Gen.freq(3, rangeGen),
                   com.pholser.junit.quickcheck.generator.Gen.freq(3, setGen),
-                  com.pholser.junit.quickcheck.generator.Gen.freq(1, (random, status) -> {
-                    com.pholser.junit.quickcheck.generator.Gen<SetItem> setItemGen = setItemGen(rangeGen, setGen, depth - 1);
-                    SetItem first = setItemGen.generate(random, status);
-                    SetItem[] rest = new SetItem[random.nextInt(0, 10)];
-                    for (int i = 0; i < rest.length; i++) {
-                      rest[i] = setItemGen.generate(random, status);
-                    }
-                    return SetItem.union(first, rest);
-                  })
+                  com.pholser.junit.quickcheck.generator.Gen.freq(1, (random, status) ->
+                      unionGen(setItemGen(rangeGen, setGen, depth - 1)).generate(random, status))
           );
         } else {
           return com.pholser.junit.quickcheck.generator.Gen.oneOf(rangeGen, setGen);
         }
+      }
+
+      private com.pholser.junit.quickcheck.generator.Gen<SetItem> unionGen(com.pholser.junit.quickcheck.generator.Gen<SetItem> setItemGen) {
+        return (random, status) -> {
+          SetItem first = setItemGen.generate(random, status);
+          SetItem[] rest = new SetItem[random.nextInt(0, 10)];
+          for (int i = 0; i < rest.length; i++) {
+            rest[i] = setItemGen.generate(random, status);
+          }
+          return SetItem.union(first, rest);
+        };
       }
     }
   }

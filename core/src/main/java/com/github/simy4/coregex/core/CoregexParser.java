@@ -16,8 +16,7 @@ public final class CoregexParser {
     Context ctx = new Context(regex);
     Coregex regexGen = RE(ctx);
     if (ctx.hasMoreElements()) {
-      throw new UnsupportedOperationException(
-          "Regex not supported: " + regex + ". Unparsed symbol: " + ctx.peek());
+      regexGen = ctx.error("EOL");
     }
     return regexGen;
   }
