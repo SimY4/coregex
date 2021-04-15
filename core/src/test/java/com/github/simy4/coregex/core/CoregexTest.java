@@ -12,9 +12,8 @@ import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 
 import java.util.List;
-import java.util.function.Predicate;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(Enclosed.class)
 public class CoregexTest {
@@ -95,7 +94,7 @@ public class CoregexTest {
         @From(RNGGenerator.class) RNG rng) {
       Coregex union = Coregex.union(first, rest.toArray(new Coregex[0]));
       String generated = union.generate(rng);
-      assertTrue(generated + " in (" + union + ')', generated.chars().allMatch(ch -> {
+      assertTrue(generated + " in " + union, generated.chars().allMatch(ch -> {
         String regex = String.valueOf(ch);
         RNG nextRng = rng.genLong().getKey();
         return regex.equals(first.generate(nextRng)) || rest.stream().map(coregex -> coregex.generate(nextRng)).anyMatch(regex::equals);
@@ -121,23 +120,21 @@ public class CoregexTest {
 
       @Override
       public Coregex generate(SourceOfRandomness random, GenerationStatus status) {
-        Empty.Gen emptyGen = gen().make(Empty.Gen.class);
         Set.Gen setGen = gen().make(Set.Gen.class);
 
         int depth = random.nextInt(0, 2);
-        return unionGen(coregexGen(emptyGen, setGen, depth)).generate(random, status);
+        return unionGen(coregexGen(setGen, depth)).generate(random, status);
       }
 
-      private com.pholser.junit.quickcheck.generator.Gen<Coregex> coregexGen(Empty.Gen emptyGen, Set.Gen setGen, int depth) {
+      private com.pholser.junit.quickcheck.generator.Gen<Coregex> coregexGen(Set.Gen setGen, int depth) {
         if (depth > 0) {
           return com.pholser.junit.quickcheck.generator.Gen.frequency(
-              com.pholser.junit.quickcheck.generator.Gen.freq(3, emptyGen),
               com.pholser.junit.quickcheck.generator.Gen.freq(3, setGen),
               com.pholser.junit.quickcheck.generator.Gen.freq(1, (random, status) ->
-                  unionGen(coregexGen(emptyGen, setGen, depth - 1)).generate(random, status))
+                  unionGen(coregexGen(setGen, depth - 1)).generate(random, status))
           );
         } else {
-          return com.pholser.junit.quickcheck.generator.Gen.oneOf(emptyGen, setGen);
+          return com.pholser.junit.quickcheck.generator.Gen.oneOf(setGen);
         }
       }
 
