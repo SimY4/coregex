@@ -3,11 +3,14 @@ package com.github.simy4.coregex.core;
 import java.io.Serializable;
 import java.util.AbstractMap;
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.function.Function;
+
+import static java.util.Objects.requireNonNull;
 
 public abstract class Coregex implements Function<RNG, Map.Entry<RNG, String>>, Serializable {
   public static Coregex concat(Coregex first, Coregex... rest) {
-    return new Concat(first, rest);
+    return new Concat(requireNonNull(first, "first"), requireNonNull(rest, "rest"));
   }
 
   public static Coregex empty() {
@@ -15,18 +18,21 @@ public abstract class Coregex implements Function<RNG, Map.Entry<RNG, String>>, 
   }
 
   public static Coregex set(SetItem set) {
-    return new Set(set);
+    return new Set(requireNonNull(set, "set"));
   }
 
   public static Coregex union(Coregex first, Coregex... rest) {
-    return new Union(first, rest);
+    return new Union(requireNonNull(first, "first"), requireNonNull(rest, "rest"));
   }
 
   public final String generate(RNG rng) {
-    return apply(rng).getValue();
+    return apply(requireNonNull(rng, "rng")).getValue();
   }
 
   public final Coregex quantify(int min, int max) {
+    if (min < 0 || max < 0 || min > max) {
+      throw new IllegalArgumentException("min: " + min + " and max: " + max + " has to be positive with min being <= max");
+    }
     return 1 == min && 1 == max ? this : new Quantified(this, min, max);
   }
 
@@ -36,7 +42,7 @@ public abstract class Coregex implements Function<RNG, Map.Entry<RNG, String>>, 
     private final Coregex first;
     private final Coregex[] rest;
 
-    Concat(Coregex first, Coregex[] rest) {
+    private Concat(Coregex first, Coregex[] rest) {
       this.first = first;
       this.rest = rest;
     }
@@ -53,6 +59,11 @@ public abstract class Coregex implements Function<RNG, Map.Entry<RNG, String>>, 
         sb.append(rngAndCoregex.getValue());
       }
       return new AbstractMap.SimpleEntry<>(rng, sb.toString());
+    }
+
+    @Override
+    public String toString() {
+      return "TBD";
     }
   }
 
@@ -71,6 +82,11 @@ public abstract class Coregex implements Function<RNG, Map.Entry<RNG, String>>, 
     private Object readResolve() {
       return INSTANCE;
     }
+
+    @Override
+    public String toString() {
+      return "∅";
+    }
   }
 
   private static final class Set extends Coregex {
@@ -86,6 +102,11 @@ public abstract class Coregex implements Function<RNG, Map.Entry<RNG, String>>, 
     public Map.Entry<RNG, String> apply(RNG rng) {
       Map.Entry<RNG, Long> rngAndSeed = rng.genLong();
       return new AbstractMap.SimpleEntry<>(rng, String.valueOf(set.generate(rngAndSeed.getValue())));
+    }
+
+    @Override
+    public String toString() {
+      return "[" + set + ']';
     }
   }
 
@@ -113,6 +134,11 @@ public abstract class Coregex implements Function<RNG, Map.Entry<RNG, String>>, 
       }
       return new AbstractMap.SimpleEntry<>(rng, String.join("", repeats));
     }
+
+    @Override
+    public String toString() {
+      return quantified.toString() + '{' + min + ',' + max + '}';
+    }
   }
 
   private static final class Union extends Coregex {
@@ -121,7 +147,7 @@ public abstract class Coregex implements Function<RNG, Map.Entry<RNG, String>>, 
     private final Coregex first;
     private final Coregex[] rest;
 
-    Union(Coregex first, Coregex[] rest) {
+    private Union(Coregex first, Coregex[] rest) {
       this.first = first;
       this.rest = rest;
     }
@@ -131,6 +157,15 @@ public abstract class Coregex implements Function<RNG, Map.Entry<RNG, String>>, 
       Map.Entry<RNG, Integer> rngAndIdx = rng.genInteger(0, rest.length);
       int idx = rngAndIdx.getValue();
       return (idx < rest.length ? rest[idx] : first).apply(rngAndIdx.getKey());
+    }
+
+    @Override
+    public String toString() {
+      StringJoiner joiner = new StringJoiner("|", "|", ")");
+      for (Coregex coregex : rest) {
+        joiner.add(coregex.toString());
+      }
+      return "(" + first + joiner;
     }
   }
 }

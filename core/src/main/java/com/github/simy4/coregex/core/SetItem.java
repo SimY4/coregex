@@ -1,7 +1,10 @@
 package com.github.simy4.coregex.core;
 
 import java.io.Serializable;
+import java.util.StringJoiner;
 import java.util.function.IntPredicate;
+
+import static java.util.Objects.requireNonNull;
 
 public abstract class SetItem implements IntPredicate, Serializable {
   private static final char[] EMPTY = {};
@@ -11,11 +14,14 @@ public abstract class SetItem implements IntPredicate, Serializable {
   }
 
   public static SetItem range(char start, char end) {
+    if (start >= end) {
+      throw new IllegalArgumentException("start: " + start + " should be < end: " + end);
+    }
     return new Range(start, end);
   }
 
   public static SetItem set(char first, char... rest) {
-    return new Set(first, rest);
+    return new Set(first, requireNonNull(rest, "rest"));
   }
 
   public static SetItem single(char ch) {
@@ -23,7 +29,7 @@ public abstract class SetItem implements IntPredicate, Serializable {
   }
 
   public static SetItem union(SetItem first, SetItem... rest) {
-    return new Union(first, rest);
+    return new Union(requireNonNull(first, "first"), requireNonNull(rest, "rest"));
   }
 
   private SetItem() {
@@ -64,6 +70,11 @@ public abstract class SetItem implements IntPredicate, Serializable {
     public SetItem negate() {
       return negated;
     }
+
+    @Override
+    public String toString() {
+      return "!" + negated;
+    }
   }
 
   private static final class Range extends SetItem {
@@ -72,19 +83,24 @@ public abstract class SetItem implements IntPredicate, Serializable {
     private final char start;
     private final char end;
 
-    Range(char start, char end) {
+    private Range(char start, char end) {
       this.start = start;
       this.end = end;
     }
 
     @Override
     public char generate(long seed) {
-      return (char) (start + Math.abs((int) (seed % (end - start))));
+      return (char) (start + (Math.abs(seed) % (end - start)));
     }
 
     @Override
     public boolean test(int value) {
       return start <= value && value <= end;
+    }
+
+    @Override
+    public String toString() {
+      return "" + start + '-' + end;
     }
   }
 
@@ -94,14 +110,14 @@ public abstract class SetItem implements IntPredicate, Serializable {
     private final char first;
     private final char[] rest;
 
-    Set(char first, char[] rest) {
+    private Set(char first, char[] rest) {
       this.first = first;
       this.rest = rest;
     }
 
     @Override
     public char generate(long seed) {
-      int idx = (int) Math.abs(seed % (rest.length + 1));
+      int idx = (int) (Math.abs(seed) % (rest.length + 1));
       return idx < rest.length ? rest[idx] : first;
     }
 
@@ -113,6 +129,15 @@ public abstract class SetItem implements IntPredicate, Serializable {
       }
       return result;
     }
+
+    @Override
+    public String toString() {
+      StringJoiner joiner = new StringJoiner("", "", "");
+      for (char ch : rest) {
+        joiner.add(String.valueOf(ch));
+      }
+      return "" + first + joiner;
+    }
   }
 
   private static final class Union extends SetItem {
@@ -121,14 +146,14 @@ public abstract class SetItem implements IntPredicate, Serializable {
     private final SetItem first;
     private final SetItem[] rest;
 
-    Union(SetItem first, SetItem[] rest) {
+    private Union(SetItem first, SetItem[] rest) {
       this.first = first;
       this.rest = rest;
     }
 
     @Override
     public char generate(long seed) {
-      int idx = (int) Math.abs(seed % (rest.length + 1));
+      int idx = (int) (Math.abs(seed) % (rest.length + 1));
       return (idx < rest.length ? rest[idx] : first).generate(seed);
     }
 
@@ -139,6 +164,15 @@ public abstract class SetItem implements IntPredicate, Serializable {
         result = rest[i].test(value);
       }
       return result;
+    }
+
+    @Override
+    public String toString() {
+      StringJoiner joiner = new StringJoiner("|", "|", ")");
+      for (SetItem setItem : rest) {
+        joiner.add(setItem.toString());
+      }
+      return "(" + first + joiner;
     }
   }
 }

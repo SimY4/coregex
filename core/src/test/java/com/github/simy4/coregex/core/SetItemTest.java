@@ -26,7 +26,7 @@ public class SetItemTest {
       char end = (char) Math.max(ch1, ch2);
       SetItem range = SetItem.range(start, end);
       char generated = range.generate(seed);
-      assertTrue(start <= generated && generated <= end);
+      assertTrue(start + " <= " + generated + " <= " + end, start <= generated && generated <= end);
     }
 
     @Property
@@ -62,6 +62,7 @@ public class SetItemTest {
         char ch2 = charGen.generate(random, status);
         char start = (char) Math.min(ch1, ch2);
         char end = (char) Math.max(ch1, ch2);
+        end = start == end ? (char) (end + 1) : end;
         return SetItem.range(start, end);
       }
     }
@@ -73,7 +74,7 @@ public class SetItemTest {
     public void generatedShouldBeInSet(char first, String rest, long seed) {
       SetItem set = SetItem.set(first, rest.toCharArray());
       char generated = set.generate(seed);
-      assertTrue(first == generated || IntStream.range(0, rest.length()).anyMatch(i -> rest.charAt(i) == generated));
+      assertTrue(generated + " in [" + set + ']', first == generated || IntStream.range(0, rest.length()).anyMatch(i -> rest.charAt(i) == generated));
     }
 
     @Property
@@ -119,7 +120,7 @@ public class SetItemTest {
         List<@From(Range.Gen.class) @From(Set.Gen.class) @From(Gen.class) SetItem> rest, long seed) {
       SetItem union = SetItem.union(first, rest.toArray(new SetItem[0]));
       char generated = union.generate(seed);
-      assertTrue(first.generate(seed) == generated || rest.stream().anyMatch(si -> si.generate(seed) == generated));
+      assertTrue(generated + " in (" + union + ')', first.generate(seed) == generated || rest.stream().anyMatch(si -> si.generate(seed) == generated));
     }
 
     @Property
