@@ -19,6 +19,8 @@ public final class SimpleRNG implements RNG, Serializable {
   public Map.Entry<RNG, Integer> genInteger(int startInc, int endInc) {
     if (startInc > endInc) {
       throw new IllegalArgumentException("startInc: " + startInc + " should be <= than endInc: " + endInc);
+    } else if (startInc == endInc) {
+      return new AbstractMap.SimpleEntry<>(this, startInc);
     }
     Map.Entry<RNG, Long> rngAndLong = genLong();
     int nextInt = (int) (startInc + rngAndLong.getValue() % (endInc - startInc + 1L));
