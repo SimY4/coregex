@@ -21,7 +21,7 @@ public class RandomRNGTest {
     int start = Math.min(in1, in2);
     int end = Math.max(in1, in2);
     Map.Entry<RNG, Integer> generated = rng.genInteger(start, end);
-    assertTrue(start <= generated.getValue() && generated.getValue() <= end);
+    assertTrue(start + " <= " + generated.getValue() + " <= " + end, start <= generated.getValue() && generated.getValue() <= end);
   }
 
   public static class Gen extends Generator<RandomRNG> {

@@ -6,7 +6,11 @@ import com.pholser.junit.quickcheck.generator.GenerationStatus;
 import com.pholser.junit.quickcheck.generator.Generator;
 import com.pholser.junit.quickcheck.random.SourceOfRandomness;
 
+import java.util.Optional;
+
 public class CoregexGenerator extends Generator<Coregex> {
+  private static final GenerationStatus.Key<Integer> DEPTH = new GenerationStatus.Key<>("depth", Integer.class);
+
   public CoregexGenerator() {
     super(Coregex.class);
   }
@@ -14,6 +18,7 @@ public class CoregexGenerator extends Generator<Coregex> {
   @Override
   public Coregex generate(SourceOfRandomness random, GenerationStatus status) {
     return gen().oneOf(
+        gen().make(Concat.class),
         gen().make(Empty.class),
         gen().make(Set.class),
         gen().make(Union.class)
@@ -27,6 +32,52 @@ public class CoregexGenerator extends Generator<Coregex> {
             }
         ))
         .generate(random, status);
+  }
+
+  public static class Concat extends Generator<Coregex> {
+    public Concat() {
+      super(Coregex.class);
+    }
+
+    @Override
+    public Coregex generate(SourceOfRandomness random, GenerationStatus status) {
+      Set setGen = gen().make(Set.class);
+      Union unionGen = gen().make(Union.class);
+
+      int depth;
+      Optional<Integer> maybeDepth = status.valueOf(DEPTH);
+      if (maybeDepth.isPresent()) {
+        depth = maybeDepth.get();
+        status.setValue(DEPTH, depth - 1);
+      } else {
+        depth = random.nextInt(0, 2);
+        status.setValue(DEPTH, depth);
+      }
+      return concatGen(coregexGen(setGen, unionGen, depth)).generate(random, status);
+    }
+
+    private Gen<Coregex> coregexGen(Set setGen, Union unionGen, int depth) {
+      if (depth > 0) {
+        return Gen.frequency(
+            Gen.freq(1, this),
+            Gen.freq(3, setGen),
+            Gen.freq(1, unionGen)
+        );
+      } else {
+        return Gen.oneOf(setGen);
+      }
+    }
+
+    private Gen<Coregex> concatGen(Gen<Coregex> coregexGen) {
+      return (random, status) -> {
+        Coregex first = coregexGen.generate(random, status);
+        Coregex[] rest = new Coregex[random.nextInt(0, 10)];
+        for (int i = 0; i < rest.length; i++) {
+          rest[i] = coregexGen.generate(random, status);
+        }
+        return Coregex.union(first, rest);
+      };
+    }
   }
 
   public static class Empty extends Generator<Coregex> {
@@ -58,18 +109,27 @@ public class CoregexGenerator extends Generator<Coregex> {
 
     @Override
     public Coregex generate(SourceOfRandomness random, GenerationStatus status) {
+      Concat concatGen = gen().make(Concat.class);
       Set setGen = gen().make(Set.class);
 
-      int depth = random.nextInt(0, 2);
-      return unionGen(coregexGen(setGen, depth)).generate(random, status);
+      int depth;
+      Optional<Integer> maybeDepth = status.valueOf(DEPTH);
+      if (maybeDepth.isPresent()) {
+        depth = maybeDepth.get();
+        status.setValue(DEPTH, depth - 1);
+      } else {
+        depth = random.nextInt(0, 2);
+        status.setValue(DEPTH, depth);
+      }
+      return unionGen(coregexGen(concatGen, setGen, depth)).generate(random, status);
     }
 
-    private Gen<Coregex> coregexGen(Set setGen, int depth) {
+    private Gen<Coregex> coregexGen(Concat concatGen, Set setGen, int depth) {
       if (depth > 0) {
         return Gen.frequency(
+            Gen.freq(1, concatGen),
             Gen.freq(3, setGen),
-            Gen.freq(1, (random, status) ->
-                unionGen(coregexGen(setGen, depth - 1)).generate(random, status))
+            Gen.freq(1, this)
         );
       } else {
         return Gen.oneOf(setGen);

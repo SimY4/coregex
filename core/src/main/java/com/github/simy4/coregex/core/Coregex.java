@@ -70,7 +70,11 @@ public abstract class Coregex implements Function<RNG, Map.Entry<RNG, String>>, 
 
     @Override
     public String toString() {
-      return "TBD";
+      StringJoiner joiner = new StringJoiner(" <*> ", " <*> ", ")").setEmptyValue(")");
+      for (Coregex coregex : rest) {
+        joiner.add(coregex.toString());
+      }
+      return "(" + first + joiner;
     }
   }
 
@@ -208,7 +212,7 @@ public abstract class Coregex implements Function<RNG, Map.Entry<RNG, String>>, 
 
     @Override
     public String toString() {
-      StringJoiner joiner = new StringJoiner(" <> ", " <> ", ")").setEmptyValue(")");
+      StringJoiner joiner = new StringJoiner(" <|> ", " <|> ", ")").setEmptyValue(")");
       for (Coregex coregex : rest) {
         joiner.add(coregex.toString());
       }

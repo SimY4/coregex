@@ -17,6 +17,31 @@ import static org.junit.Assert.assertTrue;
 @RunWith(Enclosed.class)
 public class CoregexTest {
   @RunWith(JUnitQuickcheck.class)
+  public static class Concat {
+//    @Property
+//    public void generatedShouldBeInUnion(
+//        @From(CoregexGenerator.class) Coregex first,
+//        List<@From(CoregexGenerator.class) Coregex> rest,
+//        @From(RNGGenerator.class) RNG rng) {
+//      Coregex concat = Coregex.concat(first, rest.toArray(new Coregex[0]));
+//      String generated = concat.generate(rng);
+//      assertTrue(generated + " in " + concat, first.test(generated) || rest.stream().anyMatch(coregex -> coregex.test(generated)));
+//    }
+
+    @Property
+    public void quantify(@From(CoregexGenerator.Concat.class) Coregex concat,
+                         @InRange(minInt = 0, maxInt = 20) int i1,
+                         @InRange(minInt = 0, maxInt = 20) int i2,
+                         @From(RNGGenerator.class) RNG rng) {
+      int start = Math.min(i1, i2);
+      int end = Math.max(i1, i2);
+      String quantified = concat.quantify(start, end).generate(rng);
+      assertTrue(start + " <= \"" + quantified + "\".length(" + quantified.length() + ") <= " + end,
+          start <= quantified.length() && quantified.length() <= end);
+    }
+  }
+
+  @RunWith(JUnitQuickcheck.class)
   public static class Empty {
     @Property
     public void generatedShouldBeEmpty(
@@ -81,5 +106,4 @@ public class CoregexTest {
           start <= quantified.length() && quantified.length() <= end);
     }
   }
-
 }
