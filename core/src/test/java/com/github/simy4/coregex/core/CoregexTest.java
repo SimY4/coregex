@@ -11,7 +11,9 @@ import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 
 import java.util.List;
+import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(Enclosed.class)
@@ -25,8 +27,16 @@ public class CoregexTest {
 //        @From(RNGGenerator.class) RNG rng) {
 //      Coregex concat = Coregex.concat(first, rest.toArray(new Coregex[0]));
 //      String generated = concat.generate(rng);
+//      assertTrue(generated + " pass coregex predicate", concat.test(generated));
 //      assertTrue(generated + " in " + concat, first.test(generated) || rest.stream().anyMatch(coregex -> coregex.test(generated)));
 //    }
+
+    @Property
+    public void sameSeedSameResult(@From(CoregexGenerator.Concat.class) Coregex concat, @From(RNGGenerator.class) RNG rng) {
+      String generated1 = concat.generate(rng);
+      String generated2 = concat.generate(rng);
+      assertEquals(generated1, generated2);
+    }
 
     @Property
     public void quantify(@From(CoregexGenerator.Concat.class) Coregex concat,
@@ -50,6 +60,13 @@ public class CoregexTest {
     }
 
     @Property
+    public void sameSeedSameResult(@From(CoregexGenerator.Empty.class) Coregex concat, @From(RNGGenerator.class) RNG rng) {
+      String generated1 = concat.generate(rng);
+      String generated2 = concat.generate(rng);
+      assertEquals(generated1, generated2);
+    }
+
+    @Property
     public void quantify(@From(CoregexGenerator.Empty.class) Coregex empty,
                          @InRange(minInt = 0, maxInt = 20) int i1,
                          @InRange(minInt = 0, maxInt = 20) int i2,
@@ -66,7 +83,15 @@ public class CoregexTest {
     public void generatedShouldBeInSet(@From(SetItemGenerator.class) SetItem setItem, @From(RNGGenerator.class) RNG rng) {
       final Coregex set = Coregex.set(setItem);
       String generated = set.generate(rng);
+      assertTrue(generated + " pass coregex predicate", set.test(generated));
       assertTrue(generated + " all match " + set, generated.chars().allMatch(setItem));
+    }
+
+    @Property
+    public void sameSeedSameResult(@From(CoregexGenerator.Set.class) Coregex concat, @From(RNGGenerator.class) RNG rng) {
+      String generated1 = concat.generate(rng);
+      String generated2 = concat.generate(rng);
+      assertEquals(generated1, generated2);
     }
 
     @Property
@@ -91,7 +116,15 @@ public class CoregexTest {
         @From(RNGGenerator.class) RNG rng) {
       Coregex union = Coregex.union(first, rest.toArray(new Coregex[0]));
       String generated = union.generate(rng);
+      assertTrue(generated + " pass coregex predicate", union.test(generated));
       assertTrue(generated + " in " + union, first.test(generated) || rest.stream().anyMatch(coregex -> coregex.test(generated)));
+    }
+
+    @Property
+    public void sameSeedSameResult(@From(CoregexGenerator.Union.class) Coregex concat, @From(RNGGenerator.class) RNG rng) {
+      String generated1 = concat.generate(rng);
+      String generated2 = concat.generate(rng);
+      assertEquals(generated1, generated2);
     }
 
     @Property
