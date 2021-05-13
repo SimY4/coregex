@@ -1,10 +1,8 @@
 package com.github.simy4.coregex.core;
 
+import com.github.simy4.coregex.core.generators.SetItemGenerator;
 import com.pholser.junit.quickcheck.From;
 import com.pholser.junit.quickcheck.Property;
-import com.pholser.junit.quickcheck.generator.GenerationStatus;
-import com.pholser.junit.quickcheck.generator.Generator;
-import com.pholser.junit.quickcheck.random.SourceOfRandomness;
 import com.pholser.junit.quickcheck.runner.JUnitQuickcheck;
 import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
@@ -30,7 +28,7 @@ public class SetItemTest {
     }
 
     @Property
-    public void sameSeedSameResult(@From(Gen.class) SetItem range, long seed) {
+    public void sameSeedSameResult(@From(SetItemGenerator.Range.class) SetItem range, long seed) {
       char generated1 = range.generate(seed);
       char generated2 = range.generate(seed);
       assertEquals(generated1, generated2);
@@ -45,26 +43,9 @@ public class SetItemTest {
     }
 
     @Property
-    public void negation(@From(Gen.class) SetItem range, char check) {
+    public void negation(@From(SetItemGenerator.Range.class) SetItem range, char check) {
       assertNotEquals(range.negate().test(check), range.test(check));
       assertEquals(range.negate().negate().test(check), range.test(check));
-    }
-
-    public static class Gen extends Generator<SetItem> {
-      public Gen() {
-        super(SetItem.class);
-      }
-
-      @Override
-      public SetItem generate(SourceOfRandomness random, GenerationStatus status) {
-        Generator<Character> charGen = gen().type(char.class);
-        char ch1 = charGen.generate(random, status);
-        char ch2 = charGen.generate(random, status);
-        char start = (char) Math.min(ch1, ch2);
-        char end = (char) Math.max(ch1, ch2);
-        end = start == end ? (char) (end + 1) : end;
-        return SetItem.range(start, end);
-      }
     }
   }
 
@@ -78,7 +59,7 @@ public class SetItemTest {
     }
 
     @Property
-    public void sameSeedSameResult(@From(Gen.class) SetItem set, long seed) {
+    public void sameSeedSameResult(@From(SetItemGenerator.Set.class) SetItem set, long seed) {
       char generated1 = set.generate(seed);
       char generated2 = set.generate(seed);
       assertEquals(generated1, generated2);
@@ -91,24 +72,9 @@ public class SetItemTest {
     }
 
     @Property
-    public void negation(@From(Gen.class) SetItem set, char check) {
+    public void negation(@From(SetItemGenerator.Set.class) SetItem set, char check) {
       assertNotEquals(set.negate().test(check), set.test(check));
       assertEquals(set.negate().negate().test(check), set.test(check));
-    }
-
-    public static class Gen extends Generator<SetItem> {
-      public Gen() {
-        super(SetItem.class);
-      }
-
-      @Override
-      public SetItem generate(SourceOfRandomness random, GenerationStatus status) {
-        Generator<Character> charGen = gen().type(char.class);
-        Generator<String> stringGen = gen().type(String.class);
-        char first = charGen.generate(random, status);
-        String rest = stringGen.generate(random, status);
-        return SetItem.set(first, rest.toCharArray());
-      }
     }
   }
 
@@ -116,15 +82,14 @@ public class SetItemTest {
   public static class Union {
     @Property
     public void generatedShouldBeInUnion(
-        @From(Range.Gen.class) @From(Set.Gen.class) @From(Gen.class) SetItem first,
-        List<@From(Range.Gen.class) @From(Set.Gen.class) @From(Gen.class) SetItem> rest, long seed) {
+        @From(SetItemGenerator.class) SetItem first, List<@From(SetItemGenerator.class) SetItem> rest, long seed) {
       SetItem union = SetItem.union(first, rest.toArray(new SetItem[0]));
       char generated = union.generate(seed);
       assertTrue(generated + " in (" + union + ')', first.generate(seed) == generated || rest.stream().anyMatch(si -> si.generate(seed) == generated));
     }
 
     @Property
-    public void sameSeedSameResult(@From(Gen.class) SetItem union, long seed) {
+    public void sameSeedSameResult(@From(SetItemGenerator.Union.class) SetItem union, long seed) {
       char generated1 = union.generate(seed);
       char generated2 = union.generate(seed);
       assertEquals(generated1, generated2);
@@ -132,56 +97,17 @@ public class SetItemTest {
 
     @Property
     public void acceptOnlyCharactersInUnion(
-        @From(Range.Gen.class) @From(Set.Gen.class) @From(Gen.class) SetItem first,
-        List<@From(Range.Gen.class) @From(Set.Gen.class) @From(Gen.class) SetItem> rest, char check) {
+        @From(SetItemGenerator.class) SetItem first, List<@From(SetItemGenerator.class) SetItem> rest, char check) {
       SetItem union = SetItem.union(first, rest.toArray(new SetItem[0]));
       assertEquals(first.test(check) || rest.stream().anyMatch(setItem -> setItem.test(check)), union.test(check));
     }
 
     @Property
-    public void negation(@From(Gen.class) SetItem first, List<@From(Gen.class) SetItem> rest, char check) {
+    public void negation(
+        @From(SetItemGenerator.class) SetItem first, List<@From(SetItemGenerator.class) SetItem> rest, char check) {
       SetItem union = SetItem.union(first, rest.toArray(new SetItem[0]));
       assertNotEquals(union.negate().test(check), union.test(check));
       assertEquals(union.negate().negate().test(check), union.test(check));
-    }
-
-    public static class Gen extends Generator<SetItem> {
-      public Gen() {
-        super(SetItem.class);
-      }
-
-      @Override
-      public SetItem generate(SourceOfRandomness random, GenerationStatus status) {
-        Range.Gen rangeGen = gen().make(Range.Gen.class);
-        Set.Gen setGen = gen().make(Set.Gen.class);
-
-        int depth = random.nextInt(0, 2);
-        return unionGen(setItemGen(rangeGen, setGen, depth)).generate(random, status);
-      }
-
-      private com.pholser.junit.quickcheck.generator.Gen<SetItem> setItemGen(Range.Gen rangeGen, Set.Gen setGen, int depth) {
-        if (depth > 0) {
-          return com.pholser.junit.quickcheck.generator.Gen.frequency(
-                  com.pholser.junit.quickcheck.generator.Gen.freq(3, rangeGen),
-                  com.pholser.junit.quickcheck.generator.Gen.freq(3, setGen),
-                  com.pholser.junit.quickcheck.generator.Gen.freq(1, (random, status) ->
-                      unionGen(setItemGen(rangeGen, setGen, depth - 1)).generate(random, status))
-          );
-        } else {
-          return com.pholser.junit.quickcheck.generator.Gen.oneOf(rangeGen, setGen);
-        }
-      }
-
-      private com.pholser.junit.quickcheck.generator.Gen<SetItem> unionGen(com.pholser.junit.quickcheck.generator.Gen<SetItem> setItemGen) {
-        return (random, status) -> {
-          SetItem first = setItemGen.generate(random, status);
-          SetItem[] rest = new SetItem[random.nextInt(0, 10)];
-          for (int i = 0; i < rest.length; i++) {
-            rest[i] = setItemGen.generate(random, status);
-          }
-          return SetItem.union(first, rest);
-        };
-      }
     }
   }
 }

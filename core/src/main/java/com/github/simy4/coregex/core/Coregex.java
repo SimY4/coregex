@@ -5,10 +5,11 @@ import java.util.AbstractMap;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static java.util.Objects.requireNonNull;
 
-public abstract class Coregex implements Function<RNG, Map.Entry<RNG, String>>, Serializable {
+public abstract class Coregex implements Function<RNG, Map.Entry<RNG, String>>, Predicate<String>, Serializable {
   public static Coregex concat(Coregex first, Coregex... rest) {
     return new Concat(requireNonNull(first, "first"), requireNonNull(rest, "rest"));
   }
@@ -48,6 +49,12 @@ public abstract class Coregex implements Function<RNG, Map.Entry<RNG, String>>, 
     }
 
     @Override
+    public boolean test(String s) {
+      boolean result = first.test(s);
+      return false;
+    }
+
+    @Override
     public Map.Entry<RNG, String> apply(RNG rng) {
       StringBuilder sb = new StringBuilder();
       Map.Entry<RNG, String> rngAndCoregex = first.apply(rng);
@@ -75,6 +82,11 @@ public abstract class Coregex implements Function<RNG, Map.Entry<RNG, String>>, 
     }
 
     @Override
+    public boolean test(String s) {
+      return s.isEmpty();
+    }
+
+    @Override
     public Map.Entry<RNG, String> apply(RNG rng) {
       return new AbstractMap.SimpleEntry<>(rng, "");
     }
@@ -99,6 +111,11 @@ public abstract class Coregex implements Function<RNG, Map.Entry<RNG, String>>, 
     }
 
     @Override
+    public boolean test(String s) {
+      return s.chars().allMatch(set);
+    }
+
+    @Override
     public Map.Entry<RNG, String> apply(RNG rng) {
       Map.Entry<RNG, Long> rngAndSeed = rng.genLong();
       return new AbstractMap.SimpleEntry<>(rng, String.valueOf(set.generate(rngAndSeed.getValue())));
@@ -119,6 +136,27 @@ public abstract class Coregex implements Function<RNG, Map.Entry<RNG, String>>, 
       this.quantified = quantified;
       this.min = min;
       this.max = max;
+    }
+
+    @Override
+    public boolean test(String s) {
+      boolean result = false;
+      for (int i = min; i <= max && !result; i++) {
+        if (i == 0) {
+          result = s.isEmpty();
+          continue;
+        }
+        if (s.length() % i != 0) {
+          continue;
+        }
+        int chars = s.length() / i;
+        boolean segmentMatches = true;
+        for(int j = 0, idx = 0; j < s.length() && segmentMatches; j += chars, idx++) {
+          segmentMatches = quantified.test(s.substring(j, j + chars));
+        }
+        result = segmentMatches;
+      }
+      return result;
     }
 
     @Override
@@ -153,6 +191,15 @@ public abstract class Coregex implements Function<RNG, Map.Entry<RNG, String>>, 
     }
 
     @Override
+    public boolean test(String s) {
+      boolean result = first.test(s);
+      for (int i = 0; i < rest.length && !result; i++) {
+        result = rest[i].test(s);
+      }
+      return result;
+    }
+
+    @Override
     public Map.Entry<RNG, String> apply(RNG rng) {
       Map.Entry<RNG, Integer> rngAndIdx = rng.genInteger(0, rest.length);
       int idx = rngAndIdx.getValue();
@@ -161,7 +208,7 @@ public abstract class Coregex implements Function<RNG, Map.Entry<RNG, String>>, 
 
     @Override
     public String toString() {
-      StringJoiner joiner = new StringJoiner("|", "|", ")");
+      StringJoiner joiner = new StringJoiner(" <> ", " <> ", ")").setEmptyValue(")");
       for (Coregex coregex : rest) {
         joiner.add(coregex.toString());
       }
