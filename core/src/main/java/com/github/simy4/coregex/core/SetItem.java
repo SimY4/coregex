@@ -37,6 +37,8 @@ public abstract class SetItem implements IntPredicate, Serializable {
 
   public abstract char generate(long seed);
 
+  protected abstract int weight();
+
   @Override
   public SetItem negate() {
     return new Negated(this);
@@ -72,6 +74,11 @@ public abstract class SetItem implements IntPredicate, Serializable {
     }
 
     @Override
+    protected int weight() {
+      return negated.weight();
+    }
+
+    @Override
     public String toString() {
       return "!" + negated;
     }
@@ -99,6 +106,11 @@ public abstract class SetItem implements IntPredicate, Serializable {
     }
 
     @Override
+    protected int weight() {
+      return end - start;
+    }
+
+    @Override
     public String toString() {
       return "" + start + '-' + end;
     }
@@ -117,7 +129,7 @@ public abstract class SetItem implements IntPredicate, Serializable {
 
     @Override
     public char generate(long seed) {
-      int idx = (int) (Math.abs(seed) % (rest.length + 1));
+      int idx = (int) (Math.abs(seed) % weight());
       return idx < rest.length ? rest[idx] : first;
     }
 
@@ -128,6 +140,11 @@ public abstract class SetItem implements IntPredicate, Serializable {
         result = rest[i] == value;
       }
       return result;
+    }
+
+    @Override
+    protected int weight() {
+      return rest.length + 1;
     }
 
     @Override
@@ -153,8 +170,15 @@ public abstract class SetItem implements IntPredicate, Serializable {
 
     @Override
     public char generate(long seed) {
-      int idx = (int) (Math.abs(seed) % (rest.length + 1));
-      return (idx < rest.length ? rest[idx] : first).generate(seed);
+      int weightedSeed = (int) (Math.abs(seed) % weight());
+      int threshold = 0;
+      for (SetItem item : rest) {
+        threshold += item.weight();
+        if (weightedSeed < threshold) {
+          return item.generate(seed);
+        }
+      }
+      return first.generate(seed);
     }
 
     @Override
@@ -162,6 +186,15 @@ public abstract class SetItem implements IntPredicate, Serializable {
       boolean result = first.test(value);
       for (int i = 0; !result && i < rest.length; i++) {
         result = rest[i].test(value);
+      }
+      return result;
+    }
+
+    @Override
+    protected int weight() {
+      int result = first.weight();
+      for (SetItem item : rest) {
+        result += item.weight();
       }
       return result;
     }

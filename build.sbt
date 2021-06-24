@@ -1,9 +1,11 @@
-ThisBuild / name := "coregex-parent"
 ThisBuild / organization := "com.github.simy4.coregex"
 ThisBuild / version := "0.1"
 ThisBuild / scalaVersion := "2.13.5"
 
 lazy val root = (project in file("."))
+  .settings(
+    name := "coregex-parent",
+  )
   .dependsOn(core, junitQuickcheck)
   .aggregate(core, junitQuickcheck)
 
