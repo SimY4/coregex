@@ -102,22 +102,20 @@ public abstract class Coregex implements Function<RNG, Map.Entry<RNG, String>>, 
 
     private boolean test0(String s, int offset, Queue<Coregex> rest) {
       if (rest.isEmpty()) {
-        System.out.println("" + offset + " -> " + s.length());
         return offset == s.length();
       }
       Coregex head = rest.remove();
       boolean result = false;
       for (int i = head.min(); i <= head.max() && !result; i++) {
-        int upperBound = offset + i;
-        if (s.length() < upperBound) {
+        int newOffset = offset + i;
+        if (s.length() < newOffset) {
+          break;
+        }
+        if (!head.test(s.substring(offset, newOffset))) {
           continue;
         }
-        if (!head.test(s.substring(offset, upperBound))) {
-          continue;
-        }
-        result = test0(s, upperBound, rest);
+        result = test0(s, newOffset, new ArrayDeque<>(rest));
       }
-      System.out.println("" + head + " -> " + result + " // " + rest);
       return result;
     }
 

@@ -21,9 +21,9 @@ public class CoregexTest {
   public static class Concat {
     @Property
     public void generatedShouldBeInConcat(@From(CoregexGenerator.class) Coregex first,
-//                                          List<@From(CoregexGenerator.class) Coregex> rest,
+                                          List<@From(CoregexGenerator.class) Coregex> rest,
                                           @From(RNGGenerator.class) RNG rng) {
-      Coregex concat = Coregex.concat(first/*, rest.toArray(new Coregex[0])*/);
+      Coregex concat = Coregex.concat(first, rest.toArray(new Coregex[0]));
       String generated = concat.generate(rng);
       assertTrue(generated + " pass coregex predicate", concat.test(generated));
     }
@@ -43,8 +43,8 @@ public class CoregexTest {
       int start = Math.min(i1, i2);
       int end = Math.max(i1, i2);
       String quantified = concat.quantify(start, end).generate(rng);
-      assertTrue(start + " <= \"" + quantified + "\".length(" + quantified.length() + ") <= " + end,
-          start <= quantified.length() && quantified.length() <= end);
+      assertTrue(concat.min() * start + " <= \"" + quantified + "\".length(" + quantified.length() + ") <= " + concat.max() * end,
+          concat.min() * start <= quantified.length() && quantified.length() <= concat.max() * end);
     }
   }
 
@@ -131,8 +131,8 @@ public class CoregexTest {
       int start = Math.min(i1, i2);
       int end = Math.max(i1, i2);
       String quantified = union.quantify(start, end).generate(rng);
-      assertTrue(start + " <= \"" + quantified + "\".length(" + quantified.length() + ") <= " + end,
-          start <= quantified.length() && quantified.length() <= end);
+      assertTrue(union.min() * start + " <= \"" + quantified + "\".length(" + quantified.length() + ") <= " + union.max() * end,
+          union.min() * start <= quantified.length() && quantified.length() <= union.max() * end);
     }
   }
 }
