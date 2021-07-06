@@ -37,7 +37,7 @@ public abstract class SetItem implements IntPredicate, Serializable {
 
   public abstract char generate(long seed);
 
-  protected abstract int weight();
+  abstract int weight();
 
   @Override
   public SetItem negate() {
@@ -74,7 +74,7 @@ public abstract class SetItem implements IntPredicate, Serializable {
     }
 
     @Override
-    protected int weight() {
+    int weight() {
       return negated.weight();
     }
 
@@ -106,7 +106,7 @@ public abstract class SetItem implements IntPredicate, Serializable {
     }
 
     @Override
-    protected int weight() {
+    int weight() {
       return end - start;
     }
 
@@ -143,7 +143,7 @@ public abstract class SetItem implements IntPredicate, Serializable {
     }
 
     @Override
-    protected int weight() {
+    int weight() {
       return rest.length + 1;
     }
 
@@ -191,7 +191,7 @@ public abstract class SetItem implements IntPredicate, Serializable {
     }
 
     @Override
-    protected int weight() {
+    int weight() {
       int result = first.weight();
       for (SetItem item : rest) {
         result += item.weight();

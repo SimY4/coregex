@@ -11,7 +11,6 @@ import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -20,16 +19,14 @@ import static org.junit.Assert.assertTrue;
 public class CoregexTest {
   @RunWith(JUnitQuickcheck.class)
   public static class Concat {
-//    @Property
-//    public void generatedShouldBeInUnion(
-//        @From(CoregexGenerator.class) Coregex first,
-//        List<@From(CoregexGenerator.class) Coregex> rest,
-//        @From(RNGGenerator.class) RNG rng) {
-//      Coregex concat = Coregex.concat(first, rest.toArray(new Coregex[0]));
-//      String generated = concat.generate(rng);
-//      assertTrue(generated + " pass coregex predicate", concat.test(generated));
-//      assertTrue(generated + " in " + concat, first.test(generated) || rest.stream().anyMatch(coregex -> coregex.test(generated)));
-//    }
+    @Property
+    public void generatedShouldBeInConcat(@From(CoregexGenerator.class) Coregex first,
+//                                          List<@From(CoregexGenerator.class) Coregex> rest,
+                                          @From(RNGGenerator.class) RNG rng) {
+      Coregex concat = Coregex.concat(first/*, rest.toArray(new Coregex[0])*/);
+      String generated = concat.generate(rng);
+      assertTrue(generated + " pass coregex predicate", concat.test(generated));
+    }
 
     @Property
     public void sameSeedSameResult(@From(CoregexGenerator.Concat.class) Coregex concat, @From(RNGGenerator.class) RNG rng) {
@@ -73,7 +70,7 @@ public class CoregexTest {
                          @From(RNGGenerator.class) RNG rng) {
       int start = Math.min(i1, i2);
       int end = Math.max(i1, i2);
-      assertTrue("empty", empty.quantify(start, end).generate(rng).isEmpty());
+      assertEquals("", empty.quantify(start, end).generate(rng));
     }
   }
 
@@ -110,10 +107,9 @@ public class CoregexTest {
   @RunWith(JUnitQuickcheck.class)
   public static class Union {
     @Property
-    public void generatedShouldBeInUnion(
-        @From(CoregexGenerator.class) Coregex first,
-        List<@From(CoregexGenerator.class) Coregex> rest,
-        @From(RNGGenerator.class) RNG rng) {
+    public void generatedShouldBeInUnion(@From(CoregexGenerator.class) Coregex first,
+                                         List<@From(CoregexGenerator.class) Coregex> rest,
+                                         @From(RNGGenerator.class) RNG rng) {
       Coregex union = Coregex.union(first, rest.toArray(new Coregex[0]));
       String generated = union.generate(rng);
       assertTrue(generated + " pass coregex predicate", union.test(generated));
