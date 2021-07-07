@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package com.github.simy4.coregex.scalacheck
+package com.github.simy4.coregex
+package scalacheck
 
-import com.github.simy4.coregex.core.{ Coregex, CoregexParser }
-import com.github.simy4.coregex.core.rng.SimpleRNG
+import core.{ Coregex, CoregexParser }
+import core.rng.SimpleRNG
 import org.scalacheck.{ Arbitrary, Gen }
 
 import java.util.regex.Pattern
