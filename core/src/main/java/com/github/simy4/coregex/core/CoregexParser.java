@@ -7,6 +7,10 @@ import java.util.function.IntPredicate;
 import java.util.regex.Pattern;
 
 public final class CoregexParser {
+  public static CoregexParser getInstance() {
+    return new CoregexParser();
+  }
+
   public Coregex parse(Pattern pattern) {
     String regex = pattern.pattern();
     if (regex.isEmpty()) {
@@ -301,10 +305,6 @@ public final class CoregexParser {
       default:
         return false;
     }
-  }
-
-  private CoregexParser() {
-    throw new UnsupportedOperationException("new");
   }
 
   private static final class Context {

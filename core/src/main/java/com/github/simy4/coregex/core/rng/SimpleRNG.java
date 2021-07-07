@@ -23,7 +23,7 @@ public final class SimpleRNG implements RNG, Serializable {
       return new AbstractMap.SimpleEntry<>(this, startInc);
     }
     Map.Entry<RNG, Long> rngAndLong = genLong();
-    int nextInt = (int) (startInc + rngAndLong.getValue() % (endInc - startInc + 1L));
+    int nextInt = (int) (startInc + rngAndLong.getValue() % (endInc - startInc + 1));
     return new AbstractMap.SimpleEntry<>(rngAndLong.getKey(), nextInt);
   }
 
