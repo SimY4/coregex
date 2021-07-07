@@ -1,13 +1,12 @@
 package com.github.simy4.coregex.core;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.function.IntPredicate;
 import java.util.regex.Pattern;
 
 public final class CoregexParser {
-
   public Coregex parse(Pattern pattern) {
     String regex = pattern.pattern();
     if (regex.isEmpty()) {
@@ -169,14 +168,15 @@ public final class CoregexParser {
           break;
         case '=':
         case '!':
-          throw new IllegalArgumentException("Regex not supported: look-aheads are not supported");
+          group = ctx.unsupported("look-aheads are not supported");
+          break;
         case '<':
           ctx.match('<');
           switch (ctx.peek()) {
             case '=':
             case '!':
-              throw new IllegalArgumentException(
-                  "Regex not supported: look-behinds are not supported");
+              group = ctx.unsupported("look-behinds are not supported");
+              break;
             default:
               ctx.takeWhile(ch -> '>' != ch);
               ctx.match('>');
@@ -185,7 +185,8 @@ public final class CoregexParser {
           }
           break;
         default:
-          throw new IllegalArgumentException("Regex not supported: inline option is not supported");
+          group = ctx.unsupported("inline option is not supported");
+          break;
       }
     } else {
       group = RE(ctx);
@@ -247,8 +248,8 @@ public final class CoregexParser {
         charSet = SetItem.set(' ', '\t', '\r', '\n');
         break;
       default:
-        throw new UnsupportedOperationException(
-            "Regex not supported: metacharacter \\" + ch + " is not supported");
+        charSet = ctx.error("metacharacter \\" + ch + " is not supported");
+        break;
     }
     return charSet;
   }
@@ -302,6 +303,10 @@ public final class CoregexParser {
     }
   }
 
+  private CoregexParser() {
+    throw new UnsupportedOperationException("new");
+  }
+
   private static final class Context {
     private final String regex;
     private int cursor;
@@ -316,14 +321,14 @@ public final class CoregexParser {
 
     private char peek() {
       if (!hasMoreElements()) {
-        throw new NoSuchElementException("No more elements");
+        error("No more elements");
       }
       return regex.charAt(cursor);
     }
 
     private void match(char ch) {
       if (ch != peek()) {
-        throw new UnsupportedOperationException("Regex not supported: " + regex);
+        error(String.valueOf(ch));
       }
       cursor++;
     }
@@ -340,9 +345,32 @@ public final class CoregexParser {
       }
     }
 
-    private <T> T error(String error) {
-      throw new IllegalArgumentException(error);
+    private <T> T error(String expected) {
+      String messagePrefix = "Unable to parse regex: '";
+      char[] cursor = new char[messagePrefix.length() + this.cursor];
+      Arrays.fill(cursor, ' ');
+      cursor[cursor.length - 1] = '^';
+      String message = String.join(
+          System.lineSeparator(),
+          "Unable to parse regex: '" + regex + "'",
+          new String(cursor),
+          "Expected: '" + expected + "' Actual: '" + regex.charAt(this.cursor) + "'"
+      );
+      throw new UnsupportedOperationException(message);
+    }
+
+    private <T> T unsupported(String reason) {
+      String messagePrefix = "Unable to parse regex: '";
+      char[] cursor = new char[messagePrefix.length() + this.cursor];
+      Arrays.fill(cursor, ' ');
+      cursor[cursor.length - 1] = '^';
+      String message = String.join(
+          System.lineSeparator(),
+          "Unable to parse regex: '" + regex + "'",
+          new String(cursor),
+          "Reason: " + reason
+      );
+      throw new UnsupportedOperationException(message);
     }
   }
-
 }
