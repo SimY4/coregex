@@ -1,6 +1,20 @@
 ThisBuild / organization := "com.github.simy4.coregex"
 ThisBuild / organizationName := "Alex Simkin"
 ThisBuild / version := "0.1.0-SNAPSHOT"
+ThisBuild / scmInfo := Some(
+  ScmInfo(
+    url("https://github.com/SimY4/coregex"),
+    "scm:git@github.com:SimY4/coregex.git"
+  )
+)
+ThisBuild / developers := List(
+  Developer(
+    id = "SimY4",
+    name = "Alex Simkin",
+    email = null,
+    url = new URL("https://github.com/SimY4")
+  )
+)
 
 lazy val scala212 = "2.12.14"
 lazy val scala213 = "2.13.6"
@@ -58,3 +72,5 @@ lazy val scalacheck = (project in file("scalacheck"))
     crossScalaVersions := supportedScalaVersions
   )
   .dependsOn(core)
+
+addCommandAlias("build", ";headerCheck;test")
