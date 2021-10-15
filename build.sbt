@@ -18,7 +18,7 @@ ThisBuild / developers := List(
 
 lazy val scala212 = "2.12.14"
 lazy val scala213 = "2.13.6"
-lazy val scala3 = "3.0.0"
+lazy val scala3 = "3.0.2"
 lazy val supportedScalaVersions = List(scala212, scala213, scala3)
 
 ThisBuild / scalaVersion := scala213
@@ -42,7 +42,8 @@ lazy val core = (project in file("core"))
     libraryDependencies ++= Seq(
       "com.pholser" % "junit-quickcheck-core" % "1.0" % Test,
       "com.pholser" % "junit-quickcheck-generators" % "1.0" % Test,
-      "junit" % "junit" % "4.13.2" % Test
+      "junit" % "junit" % "4.13.2" % Test,
+      "com.github.sbt" % "junit-interface" % "0.13.2" % Test
     ),
     crossScalaVersions := Nil
   )
@@ -56,7 +57,8 @@ lazy val junitQuickcheck = (project in file("junit-quickcheck"))
     libraryDependencies ++= Seq(
       "com.pholser" % "junit-quickcheck-core" % "1.0" % Provided,
       "com.pholser" % "junit-quickcheck-generators" % "1.0" % Test,
-      "junit" % "junit" % "4.13.2" % Test
+      "junit" % "junit" % "4.13.2" % Test,
+      "com.github.sbt" % "junit-interface" % "0.13.2" % Test
     ),
     crossScalaVersions := Nil
   )

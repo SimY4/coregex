@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.simy4.coregex.junitQuickcheck;
+package com.github.simy4.coregex.junit.quickcheck;
 
 import com.github.simy4.coregex.core.Coregex;
 import com.github.simy4.coregex.core.CoregexParser;

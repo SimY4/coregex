@@ -160,6 +160,9 @@ public final class CoregexParser {
     SetItem setItem;
     if ('[' == ctx.peek()) {
       setItem = set(ctx);
+    } else if ('-' == ctx.peek()) {
+      ctx.match('-');
+      setItem = SetItem.single('-');
     } else {
       setItem = aChar(ctx, this::isSetMetachar);
       if ('-' == ctx.peek()) {

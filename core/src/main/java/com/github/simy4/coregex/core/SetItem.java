@@ -165,7 +165,7 @@ public abstract class SetItem implements IntPredicate, Serializable {
 
     @Override
     public String toString() {
-      StringJoiner joiner = new StringJoiner("", "", "");
+      StringJoiner joiner = new StringJoiner("");
       for (char ch : rest) {
         joiner.add(String.valueOf(ch));
       }
@@ -217,7 +217,7 @@ public abstract class SetItem implements IntPredicate, Serializable {
 
     @Override
     public String toString() {
-      StringJoiner joiner = new StringJoiner("|", "|", ")");
+      StringJoiner joiner = new StringJoiner("|", "|", ")").setEmptyValue(")");
       for (SetItem setItem : rest) {
         joiner.add(setItem.toString());
       }

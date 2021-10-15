@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.simy4.coregex.junitQuickcheck;
+package com.github.simy4.coregex.junit.quickcheck;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Inherited;
