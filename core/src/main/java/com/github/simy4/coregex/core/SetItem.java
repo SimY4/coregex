@@ -48,8 +48,7 @@ public abstract class SetItem implements IntPredicate, Serializable {
     return new Union(requireNonNull(first, "first"), requireNonNull(rest, "rest"));
   }
 
-  private SetItem() {
-  }
+  private SetItem() {}
 
   public abstract char generate(long seed);
 

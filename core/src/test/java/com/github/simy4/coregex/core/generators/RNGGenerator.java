@@ -14,8 +14,6 @@ public class RNGGenerator extends Generator<RNG> {
 
   @Override
   public RNG generate(SourceOfRandomness random, GenerationStatus status) {
-    return Gen.oneOf(
-        new SimpleRNG(random.nextLong())
-    ).generate(random, status);
+    return Gen.oneOf(new SimpleRNG(random.nextLong())).generate(random, status);
   }
 }

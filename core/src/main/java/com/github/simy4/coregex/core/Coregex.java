@@ -28,7 +28,8 @@ import java.util.function.Predicate;
 
 import static java.util.Objects.requireNonNull;
 
-public abstract class Coregex implements Function<RNG, Map.Entry<RNG, String>>, Predicate<String>, Serializable {
+public abstract class Coregex
+    implements Function<RNG, Map.Entry<RNG, String>>, Predicate<String>, Serializable {
   public static Coregex concat(Coregex first, Coregex... rest) {
     return new Concat(requireNonNull(first, "first"), requireNonNull(rest, "rest"));
   }
@@ -51,7 +52,8 @@ public abstract class Coregex implements Function<RNG, Map.Entry<RNG, String>>, 
 
   public Coregex quantify(int min, int max) {
     if (min < 0 || max < 0 || min > max) {
-      throw new IllegalArgumentException("min: " + min + " and max: " + max + " has to be positive with min being <= max");
+      throw new IllegalArgumentException(
+          "min: " + min + " and max: " + max + " has to be positive with min being <= max");
     }
     return 1 == min && 1 == max ? this : new Quantified(this, min, max);
   }
@@ -158,8 +160,7 @@ public abstract class Coregex implements Function<RNG, Map.Entry<RNG, String>>, 
     private static final long serialVersionUID = 1L;
     private static final Empty INSTANCE = new Empty();
 
-    private Empty() {
-    }
+    private Empty() {}
 
     @Override
     public Map.Entry<RNG, String> apply(RNG rng) {
@@ -213,7 +214,8 @@ public abstract class Coregex implements Function<RNG, Map.Entry<RNG, String>>, 
     @Override
     public Map.Entry<RNG, String> apply(RNG rng) {
       Map.Entry<RNG, Long> rngAndSeed = rng.genLong();
-      return new AbstractMap.SimpleEntry<>(rng, String.valueOf(set.generate(rngAndSeed.getValue())));
+      return new AbstractMap.SimpleEntry<>(
+          rng, String.valueOf(set.generate(rngAndSeed.getValue())));
     }
 
     @Override
@@ -293,7 +295,7 @@ public abstract class Coregex implements Function<RNG, Map.Entry<RNG, String>>, 
         }
         int chars = s.length() / i;
         boolean segmentMatches = true;
-        for(int j = 0, idx = 0; j < s.length() && segmentMatches; j += chars, idx++) {
+        for (int j = 0, idx = 0; j < s.length() && segmentMatches; j += chars, idx++) {
           segmentMatches = quantified.test(s.substring(j, j + chars));
         }
         result = segmentMatches;

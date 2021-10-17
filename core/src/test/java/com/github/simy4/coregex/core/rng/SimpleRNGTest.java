@@ -23,5 +23,4 @@ public class SimpleRNGTest {
     int generated = new SimpleRNG(seed).genInteger(startAndEnd, startAndEnd).getValue();
     assertEquals(startAndEnd, generated);
   }
-
 }

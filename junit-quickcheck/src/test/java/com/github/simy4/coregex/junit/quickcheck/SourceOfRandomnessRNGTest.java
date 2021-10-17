@@ -25,8 +25,10 @@ public class SourceOfRandomnessRNGTest {
   @Property
   public void shouldGenerateIntWhenStartAndEndAreTheSame(int startAndEnd, long seed) {
     SourceOfRandomness sourceOfRandomness = new SourceOfRandomness(new Random(seed));
-    int generated = new SourceOfRandomnessRNG(sourceOfRandomness).genInteger(startAndEnd, startAndEnd).getValue();
+    int generated =
+        new SourceOfRandomnessRNG(sourceOfRandomness)
+            .genInteger(startAndEnd, startAndEnd)
+            .getValue();
     assertEquals(startAndEnd, generated);
   }
-
 }

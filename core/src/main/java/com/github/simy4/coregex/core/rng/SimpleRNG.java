@@ -34,7 +34,8 @@ public final class SimpleRNG implements RNG, Serializable {
   @Override
   public Map.Entry<RNG, Integer> genInteger(int startInc, int endInc) {
     if (startInc > endInc) {
-      throw new IllegalArgumentException("startInc: " + startInc + " should be <= than endInc: " + endInc);
+      throw new IllegalArgumentException(
+          "startInc: " + startInc + " should be <= than endInc: " + endInc);
     } else if (startInc == endInc) {
       return new AbstractMap.SimpleEntry<>(this, startInc);
     }

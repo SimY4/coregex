@@ -369,12 +369,12 @@ public final class CoregexParser {
       char[] cursor = new char[messagePrefix.length() + this.cursor];
       Arrays.fill(cursor, ' ');
       cursor[cursor.length - 1] = '^';
-      String message = String.join(
-          System.lineSeparator(),
-          "Unable to parse regex: '" + regex + "'",
-          new String(cursor),
-          "Expected: '" + expected + "' Actual: '" + regex.charAt(this.cursor) + "'"
-      );
+      String message =
+          String.join(
+              System.lineSeparator(),
+              "Unable to parse regex: '" + regex + "'",
+              new String(cursor),
+              "Expected: '" + expected + "' Actual: '" + regex.charAt(this.cursor) + "'");
       throw new UnsupportedOperationException(message);
     }
 
@@ -383,12 +383,12 @@ public final class CoregexParser {
       char[] cursor = new char[messagePrefix.length() + this.cursor];
       Arrays.fill(cursor, ' ');
       cursor[cursor.length - 1] = '^';
-      String message = String.join(
-          System.lineSeparator(),
-          "Unable to parse regex: '" + regex + "'",
-          new String(cursor),
-          "Reason: " + reason
-      );
+      String message =
+          String.join(
+              System.lineSeparator(),
+              "Unable to parse regex: '" + regex + "'",
+              new String(cursor),
+              "Reason: " + reason);
       throw new UnsupportedOperationException(message);
     }
   }

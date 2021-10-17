@@ -13,15 +13,12 @@ public class SetItemGenerator extends Generator<SetItem> {
 
   @Override
   public SetItem generate(SourceOfRandomness random, GenerationStatus status) {
-    return gen().oneOf(
-        gen().make(Range.class),
-        gen().make(Set.class),
-        gen().make(Union.class)
-    )
-//        .flatMap(setItem -> Gen.oneOf(
-//            setItem,
-//            setItem.negate()
-//        ))
+    return gen()
+        .oneOf(gen().make(Range.class), gen().make(Set.class), gen().make(Union.class))
+        //        .flatMap(setItem -> Gen.oneOf(
+        //            setItem,
+        //            setItem.negate()
+        //        ))
         .generate(random, status);
   }
 
@@ -76,9 +73,10 @@ public class SetItemGenerator extends Generator<SetItem> {
         return Gen.frequency(
             Gen.freq(3, rangeGen),
             Gen.freq(3, setGen),
-            Gen.freq(1, (random, status) ->
-                unionGen(setItemGen(rangeGen, setGen, depth - 1)).generate(random, status))
-        );
+            Gen.freq(
+                1,
+                (random, status) ->
+                    unionGen(setItemGen(rangeGen, setGen, depth - 1)).generate(random, status)));
       } else {
         return Gen.oneOf(rangeGen, setGen);
       }

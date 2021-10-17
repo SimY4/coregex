@@ -55,7 +55,10 @@ public class SetItemTest {
     public void generatedShouldBeInSet(char first, String rest, long seed) {
       SetItem set = SetItem.set(first, rest.toCharArray());
       char generated = set.generate(seed);
-      assertTrue(generated + " in [" + set + ']', first == generated || IntStream.range(0, rest.length()).anyMatch(i -> rest.charAt(i) == generated));
+      assertTrue(
+          generated + " in [" + set + ']',
+          first == generated
+              || IntStream.range(0, rest.length()).anyMatch(i -> rest.charAt(i) == generated));
     }
 
     @Property
@@ -82,10 +85,15 @@ public class SetItemTest {
   public static class Union {
     @Property
     public void generatedShouldBeInUnion(
-        @From(SetItemGenerator.class) SetItem first, List<@From(SetItemGenerator.class) SetItem> rest, long seed) {
+        @From(SetItemGenerator.class) SetItem first,
+        List<@From(SetItemGenerator.class) SetItem> rest,
+        long seed) {
       SetItem union = SetItem.union(first, rest.toArray(new SetItem[0]));
       char generated = union.generate(seed);
-      assertTrue(generated + " in (" + union + ')', first.generate(seed) == generated || rest.stream().anyMatch(si -> si.generate(seed) == generated));
+      assertTrue(
+          generated + " in (" + union + ')',
+          first.generate(seed) == generated
+              || rest.stream().anyMatch(si -> si.generate(seed) == generated));
     }
 
     @Property
@@ -97,14 +105,20 @@ public class SetItemTest {
 
     @Property
     public void acceptOnlyCharactersInUnion(
-        @From(SetItemGenerator.class) SetItem first, List<@From(SetItemGenerator.class) SetItem> rest, char check) {
+        @From(SetItemGenerator.class) SetItem first,
+        List<@From(SetItemGenerator.class) SetItem> rest,
+        char check) {
       SetItem union = SetItem.union(first, rest.toArray(new SetItem[0]));
-      assertEquals(first.test(check) || rest.stream().anyMatch(setItem -> setItem.test(check)), union.test(check));
+      assertEquals(
+          first.test(check) || rest.stream().anyMatch(setItem -> setItem.test(check)),
+          union.test(check));
     }
 
     @Property
     public void negation(
-        @From(SetItemGenerator.class) SetItem first, List<@From(SetItemGenerator.class) SetItem> rest, char check) {
+        @From(SetItemGenerator.class) SetItem first,
+        List<@From(SetItemGenerator.class) SetItem> rest,
+        char check) {
       SetItem union = SetItem.union(first, rest.toArray(new SetItem[0]));
       assertNotEquals(union.negate().test(check), union.test(check));
       assertEquals(union.negate().negate().test(check), union.test(check));
