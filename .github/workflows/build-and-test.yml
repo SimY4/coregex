@@ -2,9 +2,6 @@ name: Build and Test
 
 on: push
 
-env:
-  JABBA_INDEX: 'https://github.com/typelevel/jdk-index/raw/main/index.json'
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -14,16 +11,15 @@ jobs:
     strategy:
       matrix:
         scala: [2.12.15, 2.13.6, 3.0.2]
-        java:
-          - adoptium@8
-          - adoptium@17
+        java: [8, 11, 17]
 
     steps:
     - uses: actions/checkout@v2
     - name: Set up JDK ${{ matrix.java }}
-      uses: olafurpg/setup-scala@v13
+      uses: actions/setup-java@v2
       with:
         java-version: ${{ matrix.java }}
+        distribution: temurin
     - name: Cache sbt
       uses: actions/cache@v2
       with:
@@ -36,4 +32,4 @@ jobs:
           ~/Library/Caches/Coursier/v1
         key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
     - name: Build with sbt
-      run: sbt ++${{ matrix.scala }} build
+      run: sbt ++${{ matrix.scala }} test
