@@ -17,7 +17,6 @@
 package com.github.simy4.coregex.core;
 
 import java.io.Serializable;
-import java.util.StringJoiner;
 import java.util.function.IntPredicate;
 
 import static java.util.Objects.requireNonNull;
@@ -164,11 +163,12 @@ public abstract class SetItem implements IntPredicate, Serializable {
 
     @Override
     public String toString() {
-      StringJoiner joiner = new StringJoiner("");
+      StringBuilder sb = new StringBuilder(rest.length + 1);
+      sb.append(first);
       for (char ch : rest) {
-        joiner.add(String.valueOf(ch));
+        sb.append(ch);
       }
-      return "" + first + joiner;
+      return sb.toString();
     }
   }
 
@@ -216,11 +216,12 @@ public abstract class SetItem implements IntPredicate, Serializable {
 
     @Override
     public String toString() {
-      StringJoiner joiner = new StringJoiner("|", "|", ")").setEmptyValue(")");
+      StringBuilder sb = new StringBuilder();
+      sb.append(first);
       for (SetItem setItem : rest) {
-        joiner.add(setItem.toString());
+        sb.append(setItem.toString());
       }
-      return "(" + first + joiner;
+      return sb.toString();
     }
   }
 }

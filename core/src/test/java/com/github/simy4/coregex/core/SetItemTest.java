@@ -17,7 +17,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(Enclosed.class)
 public class SetItemTest {
   @RunWith(JUnitQuickcheck.class)
-  public static class Range {
+  public static class RangeTest {
     @Property
     public void generatedShouldBeInRange(char ch1, char ch2, long seed) {
       char start = (char) Math.min(ch1, ch2);
@@ -50,7 +50,7 @@ public class SetItemTest {
   }
 
   @RunWith(JUnitQuickcheck.class)
-  public static class Set {
+  public static class SetTest {
     @Property
     public void generatedShouldBeInSet(char first, String rest, long seed) {
       SetItem set = SetItem.set(first, rest.toCharArray());
@@ -82,7 +82,7 @@ public class SetItemTest {
   }
 
   @RunWith(JUnitQuickcheck.class)
-  public static class Union {
+  public static class UnionTest {
     @Property
     public void generatedShouldBeInUnion(
         @From(SetItemGenerator.class) SetItem first,
@@ -115,11 +115,7 @@ public class SetItemTest {
     }
 
     @Property
-    public void negation(
-        @From(SetItemGenerator.class) SetItem first,
-        List<@From(SetItemGenerator.class) SetItem> rest,
-        char check) {
-      SetItem union = SetItem.union(first, rest.toArray(new SetItem[0]));
+    public void negation(@From(SetItemGenerator.Union.class) SetItem union, char check) {
       assertNotEquals(union.negate().test(check), union.test(check));
       assertEquals(union.negate().negate().test(check), union.test(check));
     }
