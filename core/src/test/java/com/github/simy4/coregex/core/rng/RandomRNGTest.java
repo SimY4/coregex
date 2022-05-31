@@ -5,9 +5,9 @@ import com.pholser.junit.quickcheck.runner.JUnitQuickcheck;
 import org.junit.runner.RunWith;
 
 @RunWith(JUnitQuickcheck.class)
-public class SimpleRNGTest implements RNGSpecification {
+public class RandomRNGTest implements RNGSpecification {
   @Override
   public RNG rng(long seed) {
-    return new SimpleRNG(seed);
+    return new RandomRNG(seed);
   }
 }
