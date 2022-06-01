@@ -6,7 +6,7 @@ import com.pholser.junit.quickcheck.Property;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public interface RNGSpecification {
+public interface RNGContract {
   RNG rng(long seed);
 
   @Property

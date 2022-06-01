@@ -20,28 +20,39 @@ import com.github.simy4.coregex.core.Coregex;
 import com.github.simy4.coregex.core.CoregexParser;
 import com.pholser.junit.quickcheck.generator.GenerationStatus;
 import com.pholser.junit.quickcheck.generator.Generator;
+import com.pholser.junit.quickcheck.generator.Size;
 import com.pholser.junit.quickcheck.random.SourceOfRandomness;
 
 import java.util.regex.Pattern;
 
 public class CoregexGenerator extends Generator<String> {
   private Coregex coregex;
+  private int size;
 
   public CoregexGenerator() {
     super(String.class);
   }
 
   public CoregexGenerator(Pattern regex) {
+    this(regex, Integer.MAX_VALUE);
+  }
+
+  public CoregexGenerator(Pattern regex, int size) {
     this();
     this.coregex = CoregexParser.getInstance().parse(regex);
+    this.size = size;
   }
 
   public void configure(Regex regex) {
-    this.coregex = CoregexParser.getInstance().parse(Pattern.compile(regex.value(), regex.flags()));
+    this.coregex = CoregexParser.getInstance().parse(Pattern.compile(regex.value()));
   }
 
   @Override
   public String generate(SourceOfRandomness random, GenerationStatus status) {
-    return coregex.generate(new SourceOfRandomnessRNG(random));
+    return coregex.generate(new SourceOfRandomnessRNG(random), size);
+  }
+
+  public void configure(Size size) {
+    this.size = size.max();
   }
 }

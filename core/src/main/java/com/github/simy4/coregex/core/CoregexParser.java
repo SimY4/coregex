@@ -111,7 +111,8 @@ public final class CoregexParser {
 
   private Coregex elementaryRE(Context ctx) {
     Coregex elementaryRE;
-    switch (ctx.peek()) {
+    char ch = ctx.peek();
+    switch (ch) {
       case '.':
         ctx.match('.');
         elementaryRE = Coregex.set(SetItem.any());
@@ -130,8 +131,14 @@ public final class CoregexParser {
         ctx.match('$');
         elementaryRE = Coregex.empty();
         break;
+      case '\\':
+        ctx.match('\\');
+        ch = ctx.peek();
+        elementaryRE = Coregex.set(isREMetachar(ch) ? SetItem.single(ch) : metachar(ctx));
+        break;
       default:
-        elementaryRE = Coregex.set(aChar(ctx, this::isREMetachar));
+        ctx.match(ch);
+        elementaryRE = Coregex.set(SetItem.single(ch));
         break;
     }
     return elementaryRE;
@@ -158,19 +165,44 @@ public final class CoregexParser {
 
   private SetItem setItem(Context ctx) {
     SetItem setItem;
-    if ('[' == ctx.peek()) {
-      setItem = set(ctx);
-    } else if ('-' == ctx.peek()) {
-      ctx.match('-');
-      setItem = SetItem.single('-');
-    } else {
-      setItem = aChar(ctx, this::isSetMetachar);
-      if ('-' == ctx.peek()) {
+    char ch = ctx.peek();
+    switch (ch) {
+      case '[':
+        setItem = set(ctx);
+        break;
+      case '-':
         ctx.match('-');
-        char start = setItem.generate(0L);
-        char end = aChar(ctx, this::isSetMetachar).generate(0L);
-        setItem = SetItem.range(start, end);
-      }
+        setItem = SetItem.single('-');
+        break;
+      case '\\':
+        ctx.match('\\');
+        ch = ctx.peek();
+        if (!isSetMetachar(ch)) {
+          setItem = metachar(ctx);
+          break;
+        }
+        // fall through
+      default:
+        ctx.match(ch);
+        if ('-' == ctx.peek()) {
+          ctx.match('-');
+          char end = ctx.peek();
+          switch (end) {
+            case ']':
+              setItem = SetItem.set(ch, '-');
+              break;
+            case '\\':
+              ctx.match('\\');
+              end = ctx.peek();
+              // fall through
+            default:
+              ctx.match(end);
+              setItem = SetItem.range(ch, end);
+              break;
+          }
+        } else {
+          setItem = SetItem.single(ch);
+        }
     }
     return setItem;
   }
@@ -216,25 +248,6 @@ public final class CoregexParser {
     }
     ctx.match(')');
     return group;
-  }
-
-  private SetItem aChar(Context ctx, IntPredicate isMetachar) {
-    char ch = ctx.peek();
-    SetItem aChar;
-    if ('\\' == ch) {
-      ctx.match('\\');
-      ch = ctx.peek();
-      if (isMetachar.test(ch)) {
-        ctx.match(ch);
-        aChar = SetItem.set(ch);
-      } else {
-        aChar = metachar(ctx);
-      }
-    } else {
-      ctx.match(ch);
-      aChar = SetItem.set(ch);
-    }
-    return aChar;
   }
 
   private SetItem metachar(Context ctx) {

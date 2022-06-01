@@ -43,6 +43,7 @@ lazy val core = (project in file("core"))
       "com.pholser" % "junit-quickcheck-core" % "1.0" % Test,
       "com.pholser" % "junit-quickcheck-generators" % "1.0" % Test,
       "junit" % "junit" % "4.13.2" % Test,
+      "org.slf4j" % "slf4j-simple" % "1.7.25" % Test,
       "com.github.sbt" % "junit-interface" % "0.13.3" % Test
     ),
     crossScalaVersions := Nil,
@@ -58,6 +59,7 @@ lazy val junitQuickcheck = (project in file("junit-quickcheck"))
       "com.pholser" % "junit-quickcheck-core" % "1.0" % Provided,
       "com.pholser" % "junit-quickcheck-generators" % "1.0" % Test,
       "junit" % "junit" % "4.13.2" % Test,
+      "org.slf4j" % "slf4j-simple" % "1.7.25" % Test,
       "com.github.sbt" % "junit-interface" % "0.13.3" % Test
     ),
     crossScalaVersions := Nil

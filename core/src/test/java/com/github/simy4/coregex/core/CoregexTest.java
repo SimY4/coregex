@@ -18,23 +18,35 @@ import static org.junit.Assert.assertTrue;
 @RunWith(Enclosed.class)
 public class CoregexTest {
   @RunWith(JUnitQuickcheck.class)
-  public static class Concat {
+  public static class ConcatTest {
     @Property
     public void generatedShouldBeInConcat(
         @From(CoregexGenerator.class) Coregex first,
         List<@From(CoregexGenerator.class) Coregex> rest,
         @From(RNGGenerator.class) RNG rng) {
       Coregex concat = Coregex.concat(first, rest.toArray(new Coregex[0]));
-      String generated = concat.generate(rng);
-      assertTrue(generated + " pass coregex predicate", concat.test(generated));
-    }
+      assertTrue(
+          "0 <= " + concat.minLength() + " <= " + concat.maxLength(),
+          0 <= concat.minLength() && concat.minLength() <= concat.maxLength());
+      int length = (concat.maxLength() + concat.minLength()) / 2;
+      String generated = concat.generate(rng, length);
+      assertTrue(
+          concat + ".minLength(" + concat.minLength() + ") <= " + generated + ".length(" + generated.length() + ") <= " + length,
+          concat.minLength() <= generated.length() && generated.length() <= length);
+      Coregex chunk = first;
+      int i = 0;
+      do {
+        String chunkGenerated = chunk.generate(rng, length);
+      } while (i < rest.size() && (chunk = rest.get(i++)) != null);
 
-    @Property
-    public void sameSeedSameResult(
-        @From(CoregexGenerator.Concat.class) Coregex concat, @From(RNGGenerator.class) RNG rng) {
-      String generated1 = concat.generate(rng);
-      String generated2 = concat.generate(rng);
-      assertEquals(generated1, generated2);
+//      assertTrue(generated + ".startsWith(" + chunkGenerated + ")", generated.startsWith(chunkGenerated));
+//      generated = generated.substring(chunkGenerated.length());
+//      for (Coregex coregex : rest) {
+//        chunkGenerated = coregex.generate(rng, length);
+//        assertTrue(generated + ".contains(" + chunkGenerated + ")", generated.contains(chunkGenerated));
+//        generated = generated.substring(chunkGenerated.length());
+//      }
+//      assertTrue(generated + ".isEmpty()", generated.isEmpty());
     }
 
     @Property
@@ -45,33 +57,26 @@ public class CoregexTest {
         @From(RNGGenerator.class) RNG rng) {
       int start = Math.min(i1, i2);
       int end = Math.max(i1, i2);
-      String quantified = concat.quantify(start, end).generate(rng);
+      Coregex quantified = concat.quantify(start, end);
       assertTrue(
-          concat.min() * start
-              + " <= \""
-              + quantified
-              + "\".length("
-              + quantified.length()
-              + ") <= "
-              + concat.max() * end,
-          concat.min() * start <= quantified.length() && quantified.length() <= concat.max() * end);
+          "0 <= " + quantified.minLength() + " <= " + quantified.maxLength(),
+          0 <= quantified.minLength() && quantified.minLength() <= quantified.maxLength());
+      int length = (quantified.maxLength() + quantified.minLength()) / 2;
+      String generated = quantified.generate(rng, length);
+      assertTrue(
+          quantified + ".minLength(" + quantified.minLength() + ") <= " + generated + ".length(" + generated.length() + ") <= " + length,
+          quantified.minLength() <= generated.length() && generated.length() <= length);
     }
   }
 
   @RunWith(JUnitQuickcheck.class)
-  public static class Empty {
+  public static class EmptyTest {
     @Property
     public void generatedShouldBeEmpty(
-        @From(CoregexGenerator.Empty.class) Coregex empty, @From(RNGGenerator.class) RNG rng) {
-      assertTrue("empty", empty.generate(rng).isEmpty());
-    }
-
-    @Property
-    public void sameSeedSameResult(
-        @From(CoregexGenerator.Empty.class) Coregex concat, @From(RNGGenerator.class) RNG rng) {
-      String generated1 = concat.generate(rng);
-      String generated2 = concat.generate(rng);
-      assertEquals(generated1, generated2);
+        @From(CoregexGenerator.Empty.class) Coregex empty,
+        @From(RNGGenerator.class) RNG rng,
+        @InRange(minInt = 0) int length) {
+      assertTrue("empty", empty.generate(rng, length).isEmpty());
     }
 
     @Property
@@ -79,30 +84,30 @@ public class CoregexTest {
         @From(CoregexGenerator.Empty.class) Coregex empty,
         @InRange(minInt = 0, maxInt = 20) int i1,
         @InRange(minInt = 0, maxInt = 20) int i2,
-        @From(RNGGenerator.class) RNG rng) {
+        @From(RNGGenerator.class) RNG rng,
+        @InRange(minInt = 0) int length) {
       int start = Math.min(i1, i2);
       int end = Math.max(i1, i2);
-      assertEquals("", empty.quantify(start, end).generate(rng));
+      Coregex quantified = empty.quantify(start, end);
+      assertTrue(
+          "0 == " + quantified.minLength() + " == " + quantified.maxLength(),
+          0 == quantified.minLength() && quantified.minLength() == quantified.maxLength());
+      assertEquals("", quantified.generate(rng, length));
     }
   }
 
   @RunWith(JUnitQuickcheck.class)
-  public static class Set {
+  public static class SetTest {
     @Property
     public void generatedShouldBeInSet(
-        @From(SetItemGenerator.class) SetItem setItem, @From(RNGGenerator.class) RNG rng) {
+        @From(SetItemGenerator.class) SetItem setItem, @From(RNGGenerator.class) RNG rng,
+        @InRange(minInt = 1) int length) {
       final Coregex set = Coregex.set(setItem);
-      String generated = set.generate(rng);
-      assertTrue(generated + " pass coregex predicate", set.test(generated));
+      String generated = set.generate(rng, length);
       assertTrue(generated + " all match " + set, generated.chars().allMatch(setItem));
-    }
-
-    @Property
-    public void sameSeedSameResult(
-        @From(CoregexGenerator.Set.class) Coregex concat, @From(RNGGenerator.class) RNG rng) {
-      String generated1 = concat.generate(rng);
-      String generated2 = concat.generate(rng);
-      assertEquals(generated1, generated2);
+      assertTrue(
+          generated + ".length(" + generated.length() + ") <= " + length,
+          generated.length() <= length);
     }
 
     @Property
@@ -110,37 +115,40 @@ public class CoregexTest {
         @From(CoregexGenerator.Set.class) Coregex set,
         @InRange(minInt = 0, maxInt = 20) int i1,
         @InRange(minInt = 0, maxInt = 20) int i2,
-        @From(RNGGenerator.class) RNG rng) {
+        @From(RNGGenerator.class) RNG rng,
+        @InRange(minInt = 1) int length) {
       int start = Math.min(i1, i2);
       int end = Math.max(i1, i2);
-      String quantified = set.quantify(start, end).generate(rng);
+      Coregex quantified = set.quantify(start, end);
       assertTrue(
-          start + " <= \"" + quantified + "\".length(" + quantified.length() + ") <= " + end,
-          start <= quantified.length() && quantified.length() <= end);
+          "0 <= quantified.minLength(" + quantified.minLength() + ") <= " + quantified.maxLength(),
+          0 <= quantified.minLength() && quantified.minLength() <= quantified.maxLength());
+      assertTrue(
+          start + " == quantified.minLength(" + quantified.minLength() + ") <= " + quantified.maxLength(),
+          0 <= quantified.minLength() && quantified.minLength() <= quantified.maxLength());
+      String generated = quantified.generate(rng, length);
+      assertTrue(
+          quantified + ".minLength(" + quantified.minLength() + ") <= " + generated + ".length(" + generated.length() + ") <= " + length,
+          quantified.minLength() <= generated.length() && generated.length() <= length);
     }
   }
 
   @RunWith(JUnitQuickcheck.class)
-  public static class Union {
+  public static class UnionTest {
     @Property
     public void generatedShouldBeInUnion(
         @From(CoregexGenerator.class) Coregex first,
         List<@From(CoregexGenerator.class) Coregex> rest,
         @From(RNGGenerator.class) RNG rng) {
       Coregex union = Coregex.union(first, rest.toArray(new Coregex[0]));
-      String generated = union.generate(rng);
-      assertTrue(generated + " pass coregex predicate", union.test(generated));
       assertTrue(
-          generated + " in " + union,
-          first.test(generated) || rest.stream().anyMatch(coregex -> coregex.test(generated)));
-    }
-
-    @Property
-    public void sameSeedSameResult(
-        @From(CoregexGenerator.Union.class) Coregex concat, @From(RNGGenerator.class) RNG rng) {
-      String generated1 = concat.generate(rng);
-      String generated2 = concat.generate(rng);
-      assertEquals(generated1, generated2);
+          "0 <= " + union.minLength() + " <= " + union.maxLength(),
+          0 <= union.minLength() && union.minLength() <= union.maxLength());
+      int length = (union.maxLength() + union.minLength()) / 2;
+      String generated = union.generate(rng, length);
+      assertTrue(
+          union + ".minLength(" + union.minLength() + ") <= " + generated + ".length(" + generated.length() + ") <= " + length,
+          union.minLength() <= generated.length() && generated.length() <= length);
     }
 
     @Property
@@ -151,16 +159,15 @@ public class CoregexTest {
         @From(RNGGenerator.class) RNG rng) {
       int start = Math.min(i1, i2);
       int end = Math.max(i1, i2);
-      String quantified = union.quantify(start, end).generate(rng);
+      Coregex quantified = union.quantify(start, end);
       assertTrue(
-          union.min() * start
-              + " <= \""
-              + quantified
-              + "\".length("
-              + quantified.length()
-              + ") <= "
-              + union.max() * end,
-          union.min() * start <= quantified.length() && quantified.length() <= union.max() * end);
+          "0 <= " + quantified.minLength() + " <= " + quantified.maxLength(),
+          0 <= quantified.minLength() && quantified.minLength() <= quantified.maxLength());
+      int length = (quantified.maxLength() + quantified.minLength()) / 2;
+      String generated = quantified.generate(rng, length);
+      assertTrue(
+          quantified + ".minLength(" + quantified.minLength() + ") <= " + generated + ".length(" + generated.length() + ") <= " + length,
+          quantified.minLength() <= generated.length() && generated.length() <= length);
     }
   }
 }

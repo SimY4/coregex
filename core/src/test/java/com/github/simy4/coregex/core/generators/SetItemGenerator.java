@@ -6,6 +6,9 @@ import com.pholser.junit.quickcheck.generator.GenerationStatus;
 import com.pholser.junit.quickcheck.generator.Generator;
 import com.pholser.junit.quickcheck.random.SourceOfRandomness;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SetItemGenerator extends Generator<SetItem> {
   public SetItemGenerator() {
     super(SetItem.class);
@@ -22,6 +25,11 @@ public class SetItemGenerator extends Generator<SetItem> {
         .generate(random, status);
   }
 
+  @Override
+  public List<SetItem> doShrink(SourceOfRandomness random, SetItem larger) {
+    return Collections.singletonList(SetItem.set(larger.generate(random.nextLong())));
+  }
+
   public static class Range extends Generator<SetItem> {
     public Range() {
       super(SetItem.class);
@@ -36,6 +44,11 @@ public class SetItemGenerator extends Generator<SetItem> {
       char end = (char) Math.max(ch1, ch2);
       end = start == end ? (char) (end + 1) : end;
       return SetItem.range(start, end);
+    }
+
+    @Override
+    public List<SetItem> doShrink(SourceOfRandomness random, SetItem larger) {
+      return Collections.singletonList(SetItem.set(larger.generate(random.nextLong())));
     }
   }
 
@@ -66,6 +79,11 @@ public class SetItemGenerator extends Generator<SetItem> {
 
       int depth = random.nextInt(0, 2);
       return unionGen(setItemGen(rangeGen, setGen, depth)).generate(random, status);
+    }
+
+    @Override
+    public List<SetItem> doShrink(SourceOfRandomness random, SetItem larger) {
+      return Collections.singletonList(SetItem.set(larger.generate(random.nextLong())));
     }
 
     private Gen<SetItem> setItemGen(Range rangeGen, Set setGen, int depth) {

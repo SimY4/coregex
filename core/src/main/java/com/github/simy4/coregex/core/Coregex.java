@@ -18,18 +18,15 @@ package com.github.simy4.coregex.core;
 
 import java.io.Serializable;
 import java.util.AbstractMap;
-import java.util.ArrayDeque;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.StringJoiner;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 import static java.util.Objects.requireNonNull;
 
-public abstract class Coregex
-    implements Function<RNG, Map.Entry<RNG, String>>, Predicate<String>, Serializable {
+public abstract class Coregex implements Serializable {
   public static Coregex concat(Coregex first, Coregex... rest) {
     return new Concat(requireNonNull(first, "first"), requireNonNull(rest, "rest"));
   }
@@ -46,8 +43,15 @@ public abstract class Coregex
     return new Union(requireNonNull(first, "first"), requireNonNull(rest, "rest"));
   }
 
-  public final String generate(RNG rng) {
-    return apply(requireNonNull(rng, "rng")).getValue();
+  private Coregex() {}
+
+  protected abstract Map.Entry<RNG, String> apply(RNG rng, int remainder);
+
+  public final String generate(RNG rng, int remainder) {
+    if (remainder < 0) {
+      throw new IllegalArgumentException("remainder: " + remainder + " has to be non negative");
+    }
+    return apply(requireNonNull(rng, "rng"), remainder).getValue();
   }
 
   public Coregex quantify(int min, int max) {
@@ -58,9 +62,9 @@ public abstract class Coregex
     return 1 == min && 1 == max ? this : new Quantified(this, min, max);
   }
 
-  protected abstract int min();
+  public abstract int minLength();
 
-  protected abstract int max();
+  public abstract int maxLength();
 
   abstract int weight();
 
@@ -76,65 +80,44 @@ public abstract class Coregex
     }
 
     @Override
-    public Map.Entry<RNG, String> apply(RNG rng) {
-      StringBuilder sb = new StringBuilder();
-      Map.Entry<RNG, String> rngAndCoregex = first.apply(rng);
+    protected Map.Entry<RNG, String> apply(RNG rng, int remainder) {
+      if (remainder < minLength()) {
+        throw new IllegalStateException(
+            "remainder: " + remainder + " has to be greater than " + minLength());
+      }
+      StringBuilder sb = new StringBuilder(Math.min(remainder, maxLength()));
+      Map.Entry<RNG, String> rngAndCoregex =
+          first.apply(rng, remainder - minLength() + first.minLength());
       rng = rngAndCoregex.getKey();
-      sb.append(rngAndCoregex.getValue());
+      String value = rngAndCoregex.getValue();
+      sb.append(value);
+      remainder -= (value.length() - first.minLength());
       for (Coregex coregex : rest) {
-        rngAndCoregex = coregex.apply(rng);
+        rngAndCoregex = coregex.apply(rng, remainder - minLength() + coregex.minLength());
         rng = rngAndCoregex.getKey();
-        sb.append(rngAndCoregex.getValue());
+        value = rngAndCoregex.getValue();
+        sb.append(value);
+        remainder -= (value.length() - coregex.minLength());
       }
       return new AbstractMap.SimpleEntry<>(rng, sb.toString());
     }
 
     @Override
-    protected int min() {
-      int min = first.min();
+    public int minLength() {
+      int min = first.minLength();
       for (Coregex coregex : rest) {
-        min += coregex.min();
+        min += coregex.minLength();
       }
       return min;
     }
 
     @Override
-    protected int max() {
-      int max = first.max();
+    public int maxLength() {
+      int max = first.maxLength();
       for (Coregex coregex : rest) {
-        max += coregex.max();
+        max += coregex.maxLength();
       }
       return max;
-    }
-
-    @Override
-    public boolean test(String s) {
-      if (s.length() < min() || max() < s.length()) {
-        return false;
-      }
-      Queue<Coregex> queue = new ArrayDeque<>(rest.length + 1);
-      queue.add(first);
-      Collections.addAll(queue, rest);
-      return test0(s, 0, queue);
-    }
-
-    private boolean test0(String s, int offset, Queue<Coregex> rest) {
-      if (rest.isEmpty()) {
-        return offset == s.length();
-      }
-      Coregex head = rest.remove();
-      boolean result = false;
-      for (int i = head.min(); i <= head.max() && !result; i++) {
-        int newOffset = offset + i;
-        if (s.length() < newOffset) {
-          break;
-        }
-        if (!head.test(s.substring(offset, newOffset))) {
-          continue;
-        }
-        result = test0(s, newOffset, new ArrayDeque<>(rest));
-      }
-      return result;
     }
 
     @Override
@@ -148,11 +131,12 @@ public abstract class Coregex
 
     @Override
     public String toString() {
-      StringJoiner joiner = new StringJoiner(" <*> ", " <*> ", ")").setEmptyValue(")");
+      StringBuilder sb = new StringBuilder();
+      sb.append(first.toString());
       for (Coregex coregex : rest) {
-        joiner.add(coregex.toString());
+        sb.append(coregex.toString());
       }
-      return "(" + first + joiner;
+      return sb.toString();
     }
   }
 
@@ -163,28 +147,23 @@ public abstract class Coregex
     private Empty() {}
 
     @Override
-    public Map.Entry<RNG, String> apply(RNG rng) {
+    protected Map.Entry<RNG, String> apply(RNG rng, int remainder) {
       return new AbstractMap.SimpleEntry<>(rng, "");
     }
 
     @Override
-    protected int min() {
+    public int minLength() {
       return 0;
     }
 
     @Override
-    protected int max() {
+    public int maxLength() {
       return 0;
     }
 
     @Override
     public Coregex quantify(int min, int max) {
       return this;
-    }
-
-    @Override
-    public boolean test(String s) {
-      return s.isEmpty();
     }
 
     @Override
@@ -212,25 +191,24 @@ public abstract class Coregex
     }
 
     @Override
-    public Map.Entry<RNG, String> apply(RNG rng) {
+    protected Map.Entry<RNG, String> apply(RNG rng, int remainder) {
+      if (remainder < minLength()) {
+        throw new IllegalStateException(
+            "remainder: " + remainder + " has to be greater than " + minLength());
+      }
       Map.Entry<RNG, Long> rngAndSeed = rng.genLong();
       return new AbstractMap.SimpleEntry<>(
           rng, String.valueOf(set.generate(rngAndSeed.getValue())));
     }
 
     @Override
-    protected int min() {
+    public int minLength() {
       return 1;
     }
 
     @Override
-    protected int max() {
+    public int maxLength() {
       return 1;
-    }
-
-    @Override
-    public boolean test(String s) {
-      return 1 == s.length() && set.test(s.charAt(0));
     }
 
     @Override
@@ -256,51 +234,33 @@ public abstract class Coregex
     }
 
     @Override
-    public Map.Entry<RNG, String> apply(RNG rng) {
+    protected Map.Entry<RNG, String> apply(RNG rng, int remainder) {
+      if (remainder < minLength()) {
+        throw new IllegalStateException(
+            "remainder: " + remainder + " has to be greater than " + minLength());
+      }
       Map.Entry<RNG, Integer> rngAndQuantifier = rng.genInteger(min, max);
       rng = rngAndQuantifier.getKey();
       int quantifier = rngAndQuantifier.getValue();
-      String[] repeats = new String[quantifier];
-      for (int i = 0; i < quantifier; i++) {
-        Map.Entry<RNG, String> rngAndCoregex = quantified.apply(rng);
+      StringBuilder sb = new StringBuilder(Math.min(remainder, maxLength()));
+      for (int i = 0; i < quantifier && quantified.minLength() <= remainder; i++) {
+        Map.Entry<RNG, String> rngAndCoregex = quantified.apply(rng, remainder);
         rng = rngAndCoregex.getKey();
-        repeats[i] = rngAndCoregex.getValue();
+        String value = rngAndCoregex.getValue();
+        sb.append(value);
+        remainder -= value.length();
       }
-      return new AbstractMap.SimpleEntry<>(rng, String.join("", repeats));
+      return new AbstractMap.SimpleEntry<>(rng, sb.toString());
     }
 
     @Override
-    protected int min() {
-      return quantified.min() * min;
+    public int minLength() {
+      return quantified.minLength() * min;
     }
 
     @Override
-    protected int max() {
-      return quantified.max() * max;
-    }
-
-    @Override
-    public boolean test(String s) {
-      if (s.length() < min() || max() < s.length()) {
-        return false;
-      }
-      boolean result = false;
-      for (int i = min; i <= max && !result; i++) {
-        if (i == 0) {
-          result = s.isEmpty();
-          continue;
-        }
-        if (s.length() % i != 0) {
-          continue;
-        }
-        int chars = s.length() / i;
-        boolean segmentMatches = true;
-        for (int j = 0, idx = 0; j < s.length() && segmentMatches; j += chars, idx++) {
-          segmentMatches = quantified.test(s.substring(j, j + chars));
-        }
-        result = segmentMatches;
-      }
-      return result;
+    public int maxLength() {
+      return quantified.maxLength() * max;
     }
 
     @Override
@@ -326,45 +286,53 @@ public abstract class Coregex
     }
 
     @Override
-    public Map.Entry<RNG, String> apply(RNG rng) {
-      Map.Entry<RNG, Integer> rngAndWeightedSeed = rng.genInteger(0, weight());
-      rng = rngAndWeightedSeed.getKey();
-      int weightedSeed = rngAndWeightedSeed.getValue();
-      int threshold = 0;
+    protected Map.Entry<RNG, String> apply(RNG rng, int remainder) {
+      List<Coregex> fits = new ArrayList<>(rest.length + 1);
+      int weight = 0;
+      if (first.minLength() <= remainder) {
+        weight += first.weight();
+        fits.add(first);
+      }
       for (Coregex coregex : rest) {
-        threshold += coregex.weight();
-        if (weightedSeed < threshold) {
-          return coregex.apply(rng);
+        if (coregex.minLength() <= remainder) {
+          weight += coregex.weight();
+          fits.add(coregex);
         }
       }
-      return first.apply(rng);
+      if (fits.isEmpty()) {
+        throw new IllegalStateException(
+            "remainder: " + remainder + " has to be greater than " + minLength());
+      }
+
+      Map.Entry<RNG, Integer> rngAndWeightedSeed = rng.genInteger(0, weight);
+      rng = rngAndWeightedSeed.getKey();
+      int sample = rngAndWeightedSeed.getValue();
+      int threshold = 0;
+      for (Coregex coregex : fits) {
+        threshold += coregex.weight();
+        if (sample < threshold) {
+          return coregex.apply(rng, remainder);
+        }
+      }
+      return fits.get(fits.size() - 1).apply(rng, remainder);
     }
 
     @Override
-    protected int min() {
-      int min = first.min();
+    public int minLength() {
+      int min = first.minLength();
       for (Coregex coregex : rest) {
-        min = Math.min(min, coregex.min());
+        min = Math.min(min, coregex.minLength());
       }
       return min;
     }
 
     @Override
-    protected int max() {
-      int max = first.max();
+    public int maxLength() {
+      int max = first.maxLength();
       for (Coregex coregex : rest) {
-        max = Math.max(max, coregex.max());
+        max = Math.max(max, coregex.maxLength());
       }
       return max;
-    }
-
-    @Override
-    public boolean test(String s) {
-      boolean result = first.test(s);
-      for (int i = 0; i < rest.length && !result; i++) {
-        result = rest[i].test(s);
-      }
-      return result;
     }
 
     @Override
@@ -378,11 +346,12 @@ public abstract class Coregex
 
     @Override
     public String toString() {
-      StringJoiner joiner = new StringJoiner(" <|> ", " <|> ", ")").setEmptyValue(")");
+      StringJoiner joiner = new StringJoiner("|", "(?:", ")");
+      joiner.add(first.toString());
       for (Coregex coregex : rest) {
         joiner.add(coregex.toString());
       }
-      return "(" + first + joiner;
+      return joiner.toString();
     }
   }
 }
