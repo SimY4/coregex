@@ -47,12 +47,12 @@ public class CoregexGenerator extends Generator<String> {
     this.coregex = CoregexParser.getInstance().parse(Pattern.compile(regex.value()));
   }
 
+  public void configure(Size size) {
+    this.size = size.max();
+  }
+
   @Override
   public String generate(SourceOfRandomness random, GenerationStatus status) {
     return coregex.generate(new SourceOfRandomnessRNG(random), size);
-  }
-
-  public void configure(Size size) {
-    this.size = size.max();
   }
 }

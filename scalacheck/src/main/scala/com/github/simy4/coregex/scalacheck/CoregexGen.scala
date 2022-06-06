@@ -31,7 +31,7 @@ object CoregexGen {
 
   def apply(regex: Pattern): Gen[String] = apply(CoregexParser.getInstance().parse(regex))
 
-  def apply(implicit coregex: Coregex): Gen[String] = {
-    for (seed <- Gen.long) yield coregex.generate(new SimpleRNG(seed))
+  def apply(coregex: Coregex): Gen[String] = {
+    for (seed <- Gen.long) yield coregex.generate(new SimpleRNG(seed), Int.MaxValue)
   }
 }
