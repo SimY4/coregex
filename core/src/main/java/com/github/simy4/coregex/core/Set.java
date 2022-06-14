@@ -28,9 +28,11 @@ public final class Set implements Serializable {
   }
 
   private final BitSet chars;
+  private final String description;
 
-  private Set(BitSet chars) {
+  private Set(BitSet chars, String description) {
     this.chars = chars;
+    this.description = description;
   }
 
   public char generate(long seed) {
@@ -38,7 +40,7 @@ public final class Set implements Serializable {
         stream()
             .skip(Math.abs(seed % weight()))
             .findFirst()
-            .orElseThrow(() -> new IllegalStateException("empty set"));
+            .orElseThrow(() -> new IllegalStateException("empty set: " + description));
   }
 
   public int weight() {
@@ -51,13 +53,12 @@ public final class Set implements Serializable {
 
   @Override
   public String toString() {
-    return (weight() > 50 ? IntStream.concat(stream().limit(50L), IntStream.of('…')) : stream())
-        .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
-        .toString();
+    return description;
   }
 
   public static final class Builder {
     private final BitSet chars = new BitSet(256);
+    private final StringBuilder description = new StringBuilder();
 
     private Builder() {}
 
@@ -66,34 +67,40 @@ public final class Set implements Serializable {
         throw new IllegalArgumentException("start: " + start + " should be < end: " + end);
       }
       chars.set(start, end + 1);
+      description.append(start).append('-').append(end);
       return this;
     }
 
     public Builder set(char first, char... rest) {
       chars.set(first);
+      description.append(first);
       for (char ch : rest) {
         chars.set(ch);
+        description.append(ch);
       }
       return this;
     }
 
     public Builder set(Set set) {
       chars.or(set.chars);
+      description.append(set);
       return this;
     }
 
     public Builder single(char ch) {
       chars.set(ch);
+      description.append(ch);
       return this;
     }
 
     public Builder negate() {
       chars.flip(0, chars.size());
+      description.insert(0, '^');
       return this;
     }
 
     public Set build() {
-      return new Set(chars);
+      return new Set(chars, description.toString());
     }
   }
 }

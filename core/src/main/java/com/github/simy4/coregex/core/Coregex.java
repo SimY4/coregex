@@ -33,7 +33,7 @@ public abstract class Coregex implements Serializable {
   private static final Coregex ANY =
       set(
           com.github.simy4.coregex.core.Set.builder()
-              .range(Character.MIN_VALUE, Character.MAX_VALUE)
+              .range(Character.MIN_VALUE, (char) (Character.MIN_SURROGATE - 1))
               .build());
 
   public static Coregex any() {

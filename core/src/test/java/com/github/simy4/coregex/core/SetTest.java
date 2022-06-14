@@ -3,13 +3,11 @@ package com.github.simy4.coregex.core;
 import com.github.simy4.coregex.core.generators.SetGenerator;
 import com.pholser.junit.quickcheck.From;
 import com.pholser.junit.quickcheck.Property;
-import com.pholser.junit.quickcheck.generator.InRange;
 import com.pholser.junit.quickcheck.runner.JUnitQuickcheck;
 import org.junit.runner.RunWith;
 
 import java.util.List;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -20,6 +18,7 @@ public class SetTest {
   public void generatedShouldBeInRange(char ch1, char ch2, long seed) {
     char start = (char) Math.min(ch1, ch2);
     char end = (char) Math.max(ch1, ch2);
+    end = start == end ? (char) (end + 1) : end;
     Set range = Set.builder().range(start, end).build();
     char generated = range.generate(seed);
     assertTrue(start + " <= " + generated + " <= " + end, start <= generated && generated <= end);
@@ -31,15 +30,12 @@ public class SetTest {
     char generated = set.generate(seed);
     assertTrue(
         generated + " in [" + set + ']',
-        first == generated
-            || IntStream.range(0, rest.length()).anyMatch(i -> rest.charAt(i) == generated));
+        first == generated || rest.chars().anyMatch(ch -> ch == generated));
   }
 
   @Property
   public void generatedShouldBeInUnion(
-      @From(SetGenerator.class) @InRange(minChar = 'a', maxChar = 'z') Set first,
-      List<@From(SetGenerator.class) @InRange(minChar = 'a', maxChar = 'z') Set> rest,
-      long seed) {
+      @From(SetGenerator.class) Set first, List<@From(SetGenerator.class) Set> rest, long seed) {
     Set union =
         rest.stream()
             .reduce(
