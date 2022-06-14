@@ -115,7 +115,7 @@ public final class CoregexParser {
     switch (ch) {
       case '.':
         ctx.match('.');
-        elementaryRE = Coregex.set(SetItem.any());
+        elementaryRE = Coregex.any();
         break;
       case '[':
         elementaryRE = Coregex.set(set(ctx));
@@ -134,51 +134,52 @@ public final class CoregexParser {
       case '\\':
         ctx.match('\\');
         ch = ctx.peek();
-        elementaryRE = Coregex.set(isREMetachar(ch) ? SetItem.single(ch) : metachar(ctx));
-        break;
+        if (!isREMetachar(ch)) {
+          elementaryRE = Coregex.set(metachar(ctx));
+          break;
+        }
+        // fall through
       default:
         ctx.match(ch);
-        elementaryRE = Coregex.set(SetItem.single(ch));
+        elementaryRE = Coregex.literal(String.valueOf(ch));
         break;
     }
     return elementaryRE;
   }
 
-  private SetItem set(Context ctx) {
+  private Set set(Context ctx) {
     ctx.match('[');
     boolean negated = false;
     if ('^' == ctx.peek()) {
       ctx.match('^');
       negated = true;
     }
-    SetItem setItem = setItem(ctx);
+    Set.Builder set = Set.builder();
+    setItem(set, ctx);
     if (']' != ctx.peek()) {
-      List<SetItem> setItems = new ArrayList<>();
       while (']' != ctx.peek()) {
-        setItems.add(setItem(ctx));
+        setItem(set, ctx);
       }
-      setItem = SetItem.union(setItem, setItems.toArray(new SetItem[0]));
     }
     ctx.match(']');
-    return negated ? setItem.negate() : setItem;
+    return (negated ? set.negate() : set).build();
   }
 
-  private SetItem setItem(Context ctx) {
-    SetItem setItem;
+  private void setItem(Set.Builder set, Context ctx) {
     char ch = ctx.peek();
     switch (ch) {
       case '[':
-        setItem = set(ctx);
+        set.set(set(ctx));
         break;
       case '-':
         ctx.match('-');
-        setItem = SetItem.single('-');
+        set.single('-');
         break;
       case '\\':
         ctx.match('\\');
         ch = ctx.peek();
         if (!isSetMetachar(ch)) {
-          setItem = metachar(ctx);
+          set.set(metachar(ctx));
           break;
         }
         // fall through
@@ -189,7 +190,7 @@ public final class CoregexParser {
           char end = ctx.peek();
           switch (end) {
             case ']':
-              setItem = SetItem.set(ch, '-');
+              set.set(ch, '-');
               break;
             case '\\':
               ctx.match('\\');
@@ -197,14 +198,13 @@ public final class CoregexParser {
               // fall through
             default:
               ctx.match(end);
-              setItem = SetItem.range(ch, end);
+              set.range(ch, end);
               break;
           }
         } else {
-          setItem = SetItem.single(ch);
+          set.single(ch);
         }
     }
-    return setItem;
   }
 
   private Coregex group(Context ctx) {
@@ -250,44 +250,39 @@ public final class CoregexParser {
     return group;
   }
 
-  private SetItem metachar(Context ctx) {
+  private Set metachar(Context ctx) {
     char ch = ctx.peek();
-    SetItem charSet;
+    Set.Builder metachar = Set.builder();
     switch (ch) {
       case 't':
         ctx.match('t');
-        charSet = SetItem.set('\t');
+        metachar.single('\t');
         break;
       case 'r':
         ctx.match('r');
-        charSet = SetItem.set('\r');
+        metachar.single('\r');
         break;
       case 'n':
         ctx.match('n');
-        charSet = SetItem.set('\n');
+        metachar.single('\n');
         break;
       case 'd':
         ctx.match('d');
-        charSet = SetItem.range('0', '9');
+        metachar.range('0', '9');
         break;
       case 'w':
         ctx.match('w');
-        charSet =
-            SetItem.union(
-                SetItem.range('0', '9'),
-                SetItem.range('a', 'z'),
-                SetItem.range('A', 'Z'),
-                SetItem.set('_'));
+        metachar.range('0', '9').range('a', 'z').range('A', 'Z').single('_');
         break;
       case 's':
         ctx.match('s');
-        charSet = SetItem.set(' ', '\t', '\r', '\n');
+        metachar.set(' ', '\t', '\r', '\n');
         break;
       default:
-        charSet = ctx.error("metacharacter \\" + ch + " is not supported");
+        ctx.error("metacharacter \\" + ch + " is not supported");
         break;
     }
-    return charSet;
+    return metachar.build();
   }
 
   private boolean isREMetachar(int ch) {

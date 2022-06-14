@@ -19,7 +19,6 @@ package com.github.simy4.coregex.core;
 import java.io.Serializable;
 import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
@@ -31,11 +30,25 @@ public abstract class Coregex implements Serializable {
     return new Concat(requireNonNull(first, "first"), requireNonNull(rest, "rest"));
   }
 
-  public static Coregex empty() {
-    return Empty.INSTANCE;
+  private static final Coregex ANY =
+      set(
+          com.github.simy4.coregex.core.Set.builder()
+              .range(Character.MIN_VALUE, Character.MAX_VALUE)
+              .build());
+
+  public static Coregex any() {
+    return ANY;
   }
 
-  public static Coregex set(SetItem set) {
+  public static Coregex empty() {
+    return new Literal("");
+  }
+
+  public static Coregex literal(String literal) {
+    return new Literal(requireNonNull(literal, "literal"));
+  }
+
+  public static Coregex set(com.github.simy4.coregex.core.Set set) {
     return new Set(requireNonNull(set, "set"));
   }
 
@@ -54,7 +67,7 @@ public abstract class Coregex implements Serializable {
     return apply(requireNonNull(rng, "rng"), remainder).getValue();
   }
 
-  public Coregex quantify(int min, int max) {
+  public final Coregex quantify(int min, int max) {
     if (min < 0 || max < 0 || min > max) {
       throw new IllegalArgumentException(
           "min: " + min + " and max: " + max + " has to be positive with min being <= max");
@@ -86,19 +99,16 @@ public abstract class Coregex implements Serializable {
             "remainder: " + remainder + " has to be greater than " + minLength());
       }
       StringBuilder sb = new StringBuilder(Math.min(remainder, maxLength()));
-      Map.Entry<RNG, String> rngAndCoregex =
-          first.apply(rng, remainder - minLength() + first.minLength());
-      rng = rngAndCoregex.getKey();
-      String value = rngAndCoregex.getValue();
-      sb.append(value);
-      remainder -= (value.length() - first.minLength());
-      for (Coregex coregex : rest) {
-        rngAndCoregex = coregex.apply(rng, remainder - minLength() + coregex.minLength());
+      Coregex chunk = first;
+      int i = 0;
+      do {
+        Map.Entry<RNG, String> rngAndCoregex =
+            chunk.apply(rng, remainder - minLength() + chunk.minLength());
         rng = rngAndCoregex.getKey();
-        value = rngAndCoregex.getValue();
+        String value = rngAndCoregex.getValue();
         sb.append(value);
-        remainder -= (value.length() - coregex.minLength());
-      }
+        remainder -= (value.length() - chunk.minLength());
+      } while (i < rest.length && (chunk = rest[i++]) != null);
       return new AbstractMap.SimpleEntry<>(rng, sb.toString());
     }
 
@@ -140,30 +150,32 @@ public abstract class Coregex implements Serializable {
     }
   }
 
-  private static final class Empty extends Coregex {
+  private static final class Literal extends Coregex {
     private static final long serialVersionUID = 1L;
-    private static final Empty INSTANCE = new Empty();
 
-    private Empty() {}
+    private final String literal;
+
+    private Literal(String literal) {
+      this.literal = literal;
+    }
 
     @Override
     protected Map.Entry<RNG, String> apply(RNG rng, int remainder) {
-      return new AbstractMap.SimpleEntry<>(rng, "");
+      if (remainder < minLength()) {
+        throw new IllegalStateException(
+            "remainder: " + remainder + " has to be greater than " + minLength());
+      }
+      return new AbstractMap.SimpleEntry<>(rng, literal);
     }
 
     @Override
     public int minLength() {
-      return 0;
+      return literal.length();
     }
 
     @Override
     public int maxLength() {
-      return 0;
-    }
-
-    @Override
-    public Coregex quantify(int min, int max) {
-      return this;
+      return literal.length();
     }
 
     @Override
@@ -171,22 +183,18 @@ public abstract class Coregex implements Serializable {
       return 1;
     }
 
-    private Object readResolve() {
-      return INSTANCE;
-    }
-
     @Override
     public String toString() {
-      return "∅";
+      return literal;
     }
   }
 
   private static final class Set extends Coregex {
     private static final long serialVersionUID = 1L;
 
-    private final SetItem set;
+    private final com.github.simy4.coregex.core.Set set;
 
-    private Set(SetItem set) {
+    private Set(com.github.simy4.coregex.core.Set set) {
       this.set = set;
     }
 

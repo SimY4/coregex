@@ -4,26 +4,35 @@ import com.github.simy4.coregex.core.Coregex;
 import com.pholser.junit.quickcheck.generator.Gen;
 import com.pholser.junit.quickcheck.generator.GenerationStatus;
 import com.pholser.junit.quickcheck.generator.Generator;
+import com.pholser.junit.quickcheck.generator.InRange;
 import com.pholser.junit.quickcheck.random.SourceOfRandomness;
 
 import java.util.Optional;
 
+@InRange(maxChar = Character.MIN_SURROGATE - 1)
 public class CoregexGenerator extends Generator<Coregex> {
   private static final GenerationStatus.Key<Integer> DEPTH =
       new GenerationStatus.Key<>("depth", Integer.class);
 
+  private InRange range;
+
   public CoregexGenerator() {
     super(Coregex.class);
+    configure(getClass());
   }
 
   @Override
   public Coregex generate(SourceOfRandomness random, GenerationStatus status) {
+    Concat concatGen = gen().make(Concat.class);
+    Literal literalGen = gen().make(Literal.class);
+    Set setGen = gen().make(Set.class);
+    Union unionGen = gen().make(Union.class);
+    concatGen.configure(range);
+    literalGen.configure(range);
+    setGen.configure(range);
+    unionGen.configure(range);
     return gen()
-        .oneOf(
-            gen().make(Concat.class),
-            gen().make(Empty.class),
-            gen().make(Set.class),
-            gen().make(Union.class))
+        .oneOf(concatGen, literalGen, setGen, unionGen)
         .flatMap(
             coregex ->
                 Gen.frequency(
@@ -38,16 +47,27 @@ public class CoregexGenerator extends Generator<Coregex> {
         .generate(random, status);
   }
 
+  public void configure(InRange range) {
+    this.range = range;
+  }
+
+  @InRange(maxChar = Character.MIN_SURROGATE - 1)
   public static class Concat extends Generator<Coregex> {
+    private InRange range;
+
     public Concat() {
       super(Coregex.class);
+      configure(getClass());
     }
 
     @Override
     public Coregex generate(SourceOfRandomness random, GenerationStatus status) {
-      Empty emptyGen = gen().make(Empty.class);
+      Literal literalGen = gen().make(Literal.class);
       Set setGen = gen().make(Set.class);
       Union unionGen = gen().make(Union.class);
+      literalGen.configure(range);
+      setGen.configure(range);
+      unionGen.configure(range);
 
       int depth;
       Optional<Integer> maybeDepth = status.valueOf(DEPTH);
@@ -58,13 +78,13 @@ public class CoregexGenerator extends Generator<Coregex> {
         depth = random.nextInt(0, 2);
         status.setValue(DEPTH, depth);
       }
-      return concatGen(coregexGen(emptyGen, setGen, unionGen, depth)).generate(random, status);
+      return concatGen(coregexGen(literalGen, setGen, unionGen, depth)).generate(random, status);
     }
 
-    private Gen<Coregex> coregexGen(Empty emptyGen, Set setGen, Union unionGen, int depth) {
+    private Gen<Coregex> coregexGen(Literal literalGen, Set setGen, Union unionGen, int depth) {
       if (depth > 0) {
         return Gen.frequency(
-            Gen.freq(1, this), Gen.freq(1, emptyGen), Gen.freq(3, setGen), Gen.freq(1, unionGen));
+            Gen.freq(1, this), Gen.freq(1, literalGen), Gen.freq(3, setGen), Gen.freq(1, unionGen));
       } else {
         return Gen.oneOf(setGen);
       }
@@ -80,40 +100,72 @@ public class CoregexGenerator extends Generator<Coregex> {
         return Coregex.union(first, rest);
       };
     }
+
+    public void configure(InRange range) {
+      this.range = range;
+    }
   }
 
-  public static class Empty extends Generator<Coregex> {
-    public Empty() {
+  @InRange(maxChar = Character.MIN_SURROGATE - 1)
+  public static class Literal extends Generator<Coregex> {
+    private char min;
+    private char max;
+
+    public Literal() {
       super(Coregex.class);
+      configure(getClass());
     }
 
     @Override
     public Coregex generate(SourceOfRandomness random, GenerationStatus status) {
-      return Coregex.empty();
+      return Gen.oneOf(Coregex.empty(), Coregex.literal(String.valueOf(random.nextChar(min, max))))
+          .generate(random, status);
+    }
+
+    public void configure(InRange range) {
+      this.min = range.minChar();
+      this.max = range.maxChar();
     }
   }
 
+  @InRange(maxChar = Character.MIN_SURROGATE - 1)
   public static class Set extends Generator<Coregex> {
+    private InRange range;
+
     public Set() {
       super(Coregex.class);
+      configure(getClass());
     }
 
     @Override
     public Coregex generate(SourceOfRandomness random, GenerationStatus status) {
-      return gen().make(SetItemGenerator.class).map(Coregex::set).generate(random, status);
+      SetGenerator setGenerator = gen().make(SetGenerator.class);
+      setGenerator.configure(range);
+      return setGenerator.map(Coregex::set).generate(random, status);
+    }
+
+    public void configure(InRange range) {
+      this.range = range;
     }
   }
 
+  @InRange(maxChar = Character.MIN_SURROGATE - 1)
   public static class Union extends Generator<Coregex> {
+    private InRange range;
+
     public Union() {
       super(Coregex.class);
+      configure(getClass());
     }
 
     @Override
     public Coregex generate(SourceOfRandomness random, GenerationStatus status) {
       Concat concatGen = gen().make(Concat.class);
-      Empty emptyGen = gen().make(Empty.class);
+      Literal literalGen = gen().make(Literal.class);
       Set setGen = gen().make(Set.class);
+      concatGen.configure(range);
+      literalGen.configure(range);
+      setGen.configure(range);
 
       int depth;
       Optional<Integer> maybeDepth = status.valueOf(DEPTH);
@@ -124,13 +176,16 @@ public class CoregexGenerator extends Generator<Coregex> {
         depth = random.nextInt(0, 2);
         status.setValue(DEPTH, depth);
       }
-      return unionGen(coregexGen(concatGen, emptyGen, setGen, depth)).generate(random, status);
+      return unionGen(coregexGen(concatGen, literalGen, setGen, depth)).generate(random, status);
     }
 
-    private Gen<Coregex> coregexGen(Concat concatGen, Empty emptyGen, Set setGen, int depth) {
+    private Gen<Coregex> coregexGen(Concat concatGen, Literal literalGen, Set setGen, int depth) {
       if (depth > 0) {
         return Gen.frequency(
-            Gen.freq(1, concatGen), Gen.freq(1, emptyGen), Gen.freq(3, setGen), Gen.freq(1, this));
+            Gen.freq(1, concatGen),
+            Gen.freq(2, literalGen),
+            Gen.freq(2, setGen),
+            Gen.freq(1, this));
       } else {
         return Gen.oneOf(setGen);
       }
@@ -145,6 +200,10 @@ public class CoregexGenerator extends Generator<Coregex> {
         }
         return Coregex.union(first, rest);
       };
+    }
+
+    public void configure(InRange range) {
+      this.range = range;
     }
   }
 }
