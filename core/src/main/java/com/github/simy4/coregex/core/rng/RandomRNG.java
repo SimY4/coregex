@@ -2,25 +2,22 @@ package com.github.simy4.coregex.core.rng;
 
 import com.github.simy4.coregex.core.RNG;
 
-import java.io.Serializable;
 import java.util.AbstractMap;
 import java.util.Map;
-import java.util.Random;
+import java.util.SplittableRandom;
 
-public class RandomRNG implements RNG, Serializable {
-  private static final long serialVersionUID = 1L;
-
-  private final Random random;
+public class RandomRNG implements RNG {
+  private final SplittableRandom random;
 
   public RandomRNG() {
-    this(new Random());
+    this(new SplittableRandom());
   }
 
   public RandomRNG(long seed) {
-    this(new Random(seed));
+    this(new SplittableRandom(seed));
   }
 
-  public RandomRNG(Random random) {
+  public RandomRNG(SplittableRandom random) {
     this.random = random;
   }
 
@@ -33,12 +30,14 @@ public class RandomRNG implements RNG, Serializable {
     } else if (startInc == endInc) {
       return new AbstractMap.SimpleEntry<>(this, startInc);
     }
+    SplittableRandom rng = random.split();
     return new AbstractMap.SimpleEntry<>(
-        this, random.ints(1, startInc, endInc + 1).findFirst().getAsInt());
+        new RandomRNG(rng), rng.ints(1, startInc, endInc + 1).findFirst().getAsInt());
   }
 
   @Override
   public Map.Entry<RNG, Long> genLong() {
-    return new AbstractMap.SimpleEntry<>(this, random.nextLong());
+    SplittableRandom rng = random.split();
+    return new AbstractMap.SimpleEntry<>(new RandomRNG(rng), rng.nextLong());
   }
 }
