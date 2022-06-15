@@ -76,12 +76,12 @@ public final class CoregexParser {
       case '+':
         ctx.match('+');
         quantifierMin = 1;
-        quantifierMax = 32;
+        quantifierMax = -1;
         break;
       case '*':
         ctx.match('*');
         quantifierMin = 0;
-        quantifierMax = 32;
+        quantifierMax = -1;
         break;
       case '?':
         ctx.match('?');
@@ -95,7 +95,7 @@ public final class CoregexParser {
         if (',' == ctx.peek()) {
           ctx.match(',');
           String end = ctx.takeWhile(this::isDigit);
-          quantifierMax = end.isEmpty() ? 32 : Integer.parseInt(end);
+          quantifierMax = end.isEmpty() ? -1 : Integer.parseInt(end);
         } else {
           quantifierMax = quantifierMin;
         }
@@ -133,9 +133,9 @@ public final class CoregexParser {
         elementaryRE = Coregex.empty();
         break;
       case '\\':
-        ctx.match('\\');
-        ch = ctx.peek();
+        ch = ctx.peek(1);
         if (!isREMetachar(ch)) {
+          ctx.match('\\');
           elementaryRE = Coregex.set(metachar(ctx));
           break;
         }
@@ -147,6 +147,7 @@ public final class CoregexParser {
     return elementaryRE;
   }
 
+  @SuppressWarnings("fallthrough")
   private Coregex literal(Context ctx) {
     StringBuilder literal = new StringBuilder();
     do {
@@ -157,9 +158,16 @@ public final class CoregexParser {
         case '(':
         case '^':
         case '$':
-        case '\\':
           return Coregex.literal(literal.toString());
+        case '\\':
+          ch = ctx.peek(1);
+          if (!isREMetachar(ch)) {
+            return Coregex.literal(literal.toString());
+          }
+          ctx.match('\\');
+          // fall through
         default:
+          ctx.match(ch);
           literal.append(ch);
           break;
       }
@@ -368,10 +376,14 @@ public final class CoregexParser {
     }
 
     private char peek() {
-      if (!hasMoreElements()) {
+      return peek(0);
+    }
+
+    private char peek(int i) {
+      if (regex.length() <= cursor + i) {
         error("No more elements");
       }
-      return regex.charAt(cursor);
+      return regex.charAt(cursor + i);
     }
 
     private void match(char ch) {

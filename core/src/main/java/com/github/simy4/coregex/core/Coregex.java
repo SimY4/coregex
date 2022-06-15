@@ -70,7 +70,7 @@ public abstract class Coregex implements Serializable {
   }
 
   public final Coregex quantify(int min, int max) {
-    if (min < 0 || max < 0 || min > max) {
+    if (min < 0 || (-1 != max && min > max)) {
       throw new IllegalArgumentException(
           "min: " + min + " and max: " + max + " has to be positive with min being <= max");
     }
@@ -187,7 +187,7 @@ public abstract class Coregex implements Serializable {
 
     @Override
     public String toString() {
-      return literal;
+      return literal.replaceAll("[.\\[(^$\\\\]", "\\\\$0");
     }
   }
 
@@ -228,12 +228,14 @@ public abstract class Coregex implements Serializable {
 
     @Override
     public String toString() {
-      return "[" + set + ']';
+      return ANY == this ? "." : "[" + set + ']';
     }
   }
 
   private static final class Quantified extends Coregex {
     private static final long serialVersionUID = 1L;
+
+    private static final int MAX_QUANTIFIER = 32;
 
     private final Coregex quantified;
     private final int min;
@@ -251,7 +253,7 @@ public abstract class Coregex implements Serializable {
         throw new IllegalStateException(
             "remainder: " + remainder + " has to be greater than " + minLength());
       }
-      Map.Entry<RNG, Integer> rngAndQuantifier = rng.genInteger(min, max);
+      Map.Entry<RNG, Integer> rngAndQuantifier = rng.genInteger(min, -1 == max ? MAX_QUANTIFIER : max);
       rng = rngAndQuantifier.getKey();
       int quantifier = rngAndQuantifier.getValue();
       StringBuilder sb = new StringBuilder(Math.min(remainder, maxLength()));
@@ -272,7 +274,7 @@ public abstract class Coregex implements Serializable {
 
     @Override
     public int maxLength() {
-      return quantified.maxLength() * max;
+      return quantified.maxLength() * (-1 == max ? MAX_QUANTIFIER : max);
     }
 
     @Override
@@ -282,7 +284,18 @@ public abstract class Coregex implements Serializable {
 
     @Override
     public String toString() {
-      return quantified.toString() + '{' + min + ',' + max + '}';
+      if (-1 == max) {
+        switch (min) {
+          case 0:
+            return quantified + "*";
+          case 1:
+            return quantified + "+";
+          default:
+            return quantified.toString() + '{' + min + ",}";
+        }
+      } else {
+        return quantified.toString() + '{' + min + ',' + max + '}';
+      }
     }
   }
 
