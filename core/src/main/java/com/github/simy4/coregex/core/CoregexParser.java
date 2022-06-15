@@ -109,6 +109,7 @@ public final class CoregexParser {
     return basicRE.quantify(quantifierMin, quantifierMax);
   }
 
+  @SuppressWarnings("fallthrough")
   private Coregex elementaryRE(Context ctx) {
     Coregex elementaryRE;
     char ch = ctx.peek();
@@ -140,11 +141,30 @@ public final class CoregexParser {
         }
         // fall through
       default:
-        ctx.match(ch);
-        elementaryRE = Coregex.literal(String.valueOf(ch));
+        elementaryRE = literal(ctx);
         break;
     }
     return elementaryRE;
+  }
+
+  private Coregex literal(Context ctx) {
+    StringBuilder literal = new StringBuilder();
+    do {
+      char ch = ctx.peek();
+      switch (ch) {
+        case '.':
+        case '[':
+        case '(':
+        case '^':
+        case '$':
+        case '\\':
+          return Coregex.literal(literal.toString());
+        default:
+          literal.append(ch);
+          break;
+      }
+    } while (ctx.hasMoreElements());
+    return Coregex.literal(literal.toString());
   }
 
   private Set set(Context ctx) {
@@ -165,6 +185,7 @@ public final class CoregexParser {
     return (negated ? set.negate() : set).build();
   }
 
+  @SuppressWarnings("fallthrough")
   private void setItem(Set.Builder set, Context ctx) {
     char ch = ctx.peek();
     switch (ch) {

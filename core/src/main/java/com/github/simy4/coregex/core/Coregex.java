@@ -26,6 +26,8 @@ import java.util.StringJoiner;
 import static java.util.Objects.requireNonNull;
 
 public abstract class Coregex implements Serializable {
+  private static final long serialVersionUID = 1L;
+
   public static Coregex concat(Coregex first, Coregex... rest) {
     return new Concat(requireNonNull(first, "first"), requireNonNull(rest, "rest"));
   }
@@ -231,6 +233,8 @@ public abstract class Coregex implements Serializable {
   }
 
   private static final class Quantified extends Coregex {
+    private static final long serialVersionUID = 1L;
+
     private final Coregex quantified;
     private final int min;
     private final int max;

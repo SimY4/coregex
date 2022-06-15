@@ -22,6 +22,7 @@ public class CoregexGenerator extends Generator<Coregex> {
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public Coregex generate(SourceOfRandomness random, GenerationStatus status) {
     Concat concatGen = gen().make(Concat.class);
     Literal literalGen = gen().make(Literal.class);

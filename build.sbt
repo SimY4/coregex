@@ -47,6 +47,7 @@ lazy val core = (project in file("core"))
       "com.github.sbt" % "junit-interface" % "0.13.3" % Test
     ),
     crossScalaVersions := Nil,
+    javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:all", "-Werror"),
   )
 
 lazy val junitQuickcheck = (project in file("junit-quickcheck"))
@@ -62,7 +63,8 @@ lazy val junitQuickcheck = (project in file("junit-quickcheck"))
       "org.slf4j" % "slf4j-simple" % "1.7.25" % Test,
       "com.github.sbt" % "junit-interface" % "0.13.3" % Test
     ),
-    crossScalaVersions := Nil
+    crossScalaVersions := Nil,
+    javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:all", "-Werror"),
   )
   .dependsOn(core)
 
@@ -71,7 +73,7 @@ lazy val scalacheck = (project in file("scalacheck"))
     name := "scalacheck",
     moduleName := "coregex-scalacheck",
     libraryDependencies ++= Seq(
-      "org.scalacheck" %% "scalacheck" % "1.15.4" % Provided
+      "org.scalacheck" %% "scalacheck" % "1.16.0" % Provided
     ),
     crossScalaVersions := supportedScalaVersions
   )
