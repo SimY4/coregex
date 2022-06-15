@@ -253,7 +253,8 @@ public abstract class Coregex implements Serializable {
         throw new IllegalStateException(
             "remainder: " + remainder + " has to be greater than " + minLength());
       }
-      Map.Entry<RNG, Integer> rngAndQuantifier = rng.genInteger(min, -1 == max ? MAX_QUANTIFIER : max);
+      Map.Entry<RNG, Integer> rngAndQuantifier =
+          rng.genInteger(min, -1 == max ? MAX_QUANTIFIER : max);
       rng = rngAndQuantifier.getKey();
       int quantifier = rngAndQuantifier.getValue();
       StringBuilder sb = new StringBuilder(Math.min(remainder, maxLength()));
