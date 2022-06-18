@@ -20,4 +20,4 @@ jobs:
         distribution: temurin
         cache: sbt
     - name: Build with sbt
-      run: sbt ++${{ matrix.scala }} test
+      run: sbt ++${{ matrix.scala }} build
