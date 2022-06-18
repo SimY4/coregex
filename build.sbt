@@ -1,6 +1,5 @@
 ThisBuild / organization := "com.github.simy4.coregex"
 ThisBuild / organizationName := "Alex Simkin"
-ThisBuild / version := "0.1.0-SNAPSHOT"
 ThisBuild / scmInfo := Some(
   ScmInfo(
     url("https://github.com/SimY4/coregex"),
