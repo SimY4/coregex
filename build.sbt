@@ -74,7 +74,7 @@ lazy val scalacheck = (project in file("scalacheck"))
     libraryDependencies ++= Seq(
       "org.scalacheck" %% "scalacheck" % "1.16.0" % Provided
     ),
-    crossScalaVersions := supportedScalaVersions
+    crossScalaVersions := supportedScalaVersions,
   )
   .dependsOn(core)
 
