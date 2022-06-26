@@ -1,4 +1,4 @@
-ThisBuild / organization := "com.github.simy4.coregex"
+ThisBuild / organization     := "com.github.simy4.coregex"
 ThisBuild / organizationName := "Alex Simkin"
 ThisBuild / scmInfo := Some(
   ScmInfo(
@@ -15,66 +15,70 @@ ThisBuild / developers := List(
   )
 )
 
-lazy val scala212 = "2.12.16"
-lazy val scala213 = "2.13.8"
-lazy val scala3 = "3.1.2"
+lazy val scala212               = "2.12.16"
+lazy val scala213               = "2.13.8"
+lazy val scala3                 = "3.1.3"
 lazy val supportedScalaVersions = List(scala212, scala213, scala3)
 
 ThisBuild / scalaVersion := scala213
-ThisBuild / startYear := Some(2021)
+ThisBuild / startYear    := Some(2021)
 ThisBuild / licenses += ("Apache-2.0", new URL("https://www.apache.org/licenses/LICENSE-2.0.txt"))
 
 lazy val root = (project in file("."))
   .settings(
-    name := "coregex-parent",
+    name               := "coregex-parent",
     crossScalaVersions := Nil,
-    publish / skip := true
+    publish / skip     := true
   )
   .aggregate(core, junitQuickcheck, scalacheck)
 
 lazy val core = (project in file("core"))
   .settings(
-    name := "core",
-    moduleName := "coregex-core",
-    crossPaths := false,
+    name             := "core",
+    moduleName       := "coregex-core",
+    crossPaths       := false,
     autoScalaLibrary := false,
     libraryDependencies ++= Seq(
-      "com.pholser" % "junit-quickcheck-core" % "1.0" % Test,
-      "com.pholser" % "junit-quickcheck-generators" % "1.0" % Test,
-      "junit" % "junit" % "4.13.2" % Test,
-      "org.slf4j" % "slf4j-simple" % "1.7.25" % Test,
-      "com.github.sbt" % "junit-interface" % "0.13.3" % Test
+      "com.pholser"    % "junit-quickcheck-core"       % "1.0"    % Test,
+      "com.pholser"    % "junit-quickcheck-generators" % "1.0"    % Test,
+      "junit"          % "junit"                       % "4.13.2" % Test,
+      "org.slf4j"      % "slf4j-simple"                % "1.7.25" % Test,
+      "com.github.sbt" % "junit-interface"             % "0.13.3" % Test
     ),
     crossScalaVersions := Nil,
-    javacOptions ++= Seq("-Xlint:all", "-Werror") ++ (if(scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8") else Seq("-source", "1.8", "-target", "1.8")),
+    javacOptions ++= Seq("-Xlint:all", "-Werror") ++ (if scala.util.Properties.isJavaAtLeast("9") then
+                                                        Seq("--release", "8")
+                                                      else Seq("-source", "1.8", "-target", "1.8"))
   )
 
 lazy val junitQuickcheck = (project in file("junit-quickcheck"))
   .settings(
-    name := "junit-quickcheck",
-    moduleName := "coregex-junit-quickcheck",
-    crossPaths := false,
+    name             := "junit-quickcheck",
+    moduleName       := "coregex-junit-quickcheck",
+    crossPaths       := false,
     autoScalaLibrary := false,
     libraryDependencies ++= Seq(
-      "com.pholser" % "junit-quickcheck-core" % "1.0" % Provided,
-      "com.pholser" % "junit-quickcheck-generators" % "1.0" % Test,
-      "junit" % "junit" % "4.13.2" % Test,
-      "org.slf4j" % "slf4j-simple" % "1.7.25" % Test,
-      "com.github.sbt" % "junit-interface" % "0.13.3" % Test
+      "com.pholser"    % "junit-quickcheck-core"       % "1.0"    % Provided,
+      "com.pholser"    % "junit-quickcheck-generators" % "1.0"    % Test,
+      "junit"          % "junit"                       % "4.13.2" % Test,
+      "org.slf4j"      % "slf4j-simple"                % "1.7.25" % Test,
+      "com.github.sbt" % "junit-interface"             % "0.13.3" % Test
     ),
     crossScalaVersions := Nil,
-    javacOptions ++= Seq("-Xlint:all", "-Werror") ++ (if(scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8") else Seq("-source", "1.8", "-target", "1.8")),
+    javacOptions ++= Seq("-Xlint:all", "-Werror") ++ (if scala.util.Properties.isJavaAtLeast("9") then
+                                                        Seq("--release", "8")
+                                                      else Seq("-source", "1.8", "-target", "1.8"))
   )
   .dependsOn(core)
 
 lazy val scalacheck = (project in file("scalacheck"))
   .settings(
-    name := "scalacheck",
+    name       := "scalacheck",
     moduleName := "coregex-scalacheck",
     libraryDependencies ++= Seq(
       "org.scalacheck" %% "scalacheck" % "1.16.0" % Provided
     ),
-    crossScalaVersions := supportedScalaVersions,
+    crossScalaVersions := supportedScalaVersions
   )
   .dependsOn(core)
 
