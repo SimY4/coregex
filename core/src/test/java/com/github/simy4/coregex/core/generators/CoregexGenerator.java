@@ -114,7 +114,7 @@ public class CoregexGenerator extends Generator<Coregex> {
         for (int i = 0; i < rest.length; i++) {
           rest[i] = coregexGen.generate(random, status);
         }
-        return Coregex.union(first, rest);
+        return new Coregex.Union(first, rest);
       };
     }
 
@@ -135,7 +135,7 @@ public class CoregexGenerator extends Generator<Coregex> {
 
     @Override
     public Coregex generate(SourceOfRandomness random, GenerationStatus status) {
-      return Gen.oneOf(Coregex.empty(), Coregex.literal(String.valueOf(random.nextChar(min, max))))
+      return Gen.oneOf(Coregex.empty(), new Coregex.Literal(String.valueOf(random.nextChar(min, max))))
           .generate(random, status);
     }
 
@@ -158,7 +158,7 @@ public class CoregexGenerator extends Generator<Coregex> {
     public Coregex generate(SourceOfRandomness random, GenerationStatus status) {
       SetGenerator setGenerator = gen().make(SetGenerator.class);
       setGenerator.configure(range);
-      return setGenerator.map(Coregex::set).generate(random, status);
+      return setGenerator.map(Coregex.Set::new).generate(random, status);
     }
 
     public void configure(InRange range) {
@@ -215,7 +215,7 @@ public class CoregexGenerator extends Generator<Coregex> {
         for (int i = 0; i < rest.length; i++) {
           rest[i] = coregexGen.generate(random, status);
         }
-        return Coregex.union(first, rest);
+        return new Coregex.Union(first, rest);
       };
     }
 

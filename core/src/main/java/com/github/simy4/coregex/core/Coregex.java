@@ -19,6 +19,7 @@ package com.github.simy4.coregex.core;
 import java.io.Serializable;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
@@ -28,12 +29,8 @@ import static java.util.Objects.requireNonNull;
 public abstract class Coregex implements Serializable {
   private static final long serialVersionUID = 1L;
 
-  public static Coregex concat(Coregex first, Coregex... rest) {
-    return new Concat(requireNonNull(first, "first"), requireNonNull(rest, "rest"));
-  }
-
   private static final Coregex ANY =
-      set(
+      new Set(
           com.github.simy4.coregex.core.Set.builder()
               .range(Character.MIN_VALUE, (char) (Character.MIN_SURROGATE - 1))
               .build());
@@ -44,18 +41,6 @@ public abstract class Coregex implements Serializable {
 
   public static Coregex empty() {
     return new Literal("");
-  }
-
-  public static Coregex literal(String literal) {
-    return new Literal(requireNonNull(literal, "literal"));
-  }
-
-  public static Coregex set(com.github.simy4.coregex.core.Set set) {
-    return new Set(requireNonNull(set, "set"));
-  }
-
-  public static Coregex union(Coregex first, Coregex... rest) {
-    return new Union(requireNonNull(first, "first"), requireNonNull(rest, "rest"));
   }
 
   private Coregex() {}
@@ -70,10 +55,6 @@ public abstract class Coregex implements Serializable {
   }
 
   public final Coregex quantify(int min, int max) {
-    if (min < 0 || (-1 != max && min > max)) {
-      throw new IllegalArgumentException(
-          "min: " + min + " and max: " + max + " has to be positive with min being <= max");
-    }
     return 1 == min && 1 == max ? this : new Quantified(this, min, max);
   }
 
@@ -83,15 +64,15 @@ public abstract class Coregex implements Serializable {
 
   abstract int weight();
 
-  private static final class Concat extends Coregex {
+  public static final class Concat extends Coregex {
     private static final long serialVersionUID = 1L;
 
     private final Coregex first;
     private final Coregex[] rest;
 
-    private Concat(Coregex first, Coregex[] rest) {
-      this.first = first;
-      this.rest = rest;
+    public Concat(Coregex first, Coregex[] rest) {
+      this.first = requireNonNull(first, "first");
+      this.rest = Arrays.copyOf(rest, rest.length);
     }
 
     @Override
@@ -141,6 +122,13 @@ public abstract class Coregex implements Serializable {
       return weight / (rest.length + 1);
     }
 
+    public List<Coregex> concat() {
+      List<Coregex> concat = new ArrayList<>(rest.length + 1);
+      concat.add(first);
+      concat.addAll(Arrays.asList(rest));
+      return concat;
+    }
+
     @Override
     public String toString() {
       StringBuilder sb = new StringBuilder();
@@ -152,12 +140,12 @@ public abstract class Coregex implements Serializable {
     }
   }
 
-  private static final class Literal extends Coregex {
+  public static final class Literal extends Coregex {
     private static final long serialVersionUID = 1L;
 
     private final String literal;
 
-    private Literal(String literal) {
+    public Literal(String literal) {
       this.literal = literal;
     }
 
@@ -185,18 +173,22 @@ public abstract class Coregex implements Serializable {
       return 1;
     }
 
+    public String literal() {
+      return literal;
+    }
+
     @Override
     public String toString() {
       return literal.replaceAll("[.\\[(^$\\\\]", "\\\\$0");
     }
   }
 
-  private static final class Set extends Coregex {
+  public static final class Set extends Coregex {
     private static final long serialVersionUID = 1L;
 
     private final com.github.simy4.coregex.core.Set set;
 
-    private Set(com.github.simy4.coregex.core.Set set) {
+    public Set(com.github.simy4.coregex.core.Set set) {
       this.set = set;
     }
 
@@ -226,13 +218,17 @@ public abstract class Coregex implements Serializable {
       return set.weight();
     }
 
+    public com.github.simy4.coregex.core.Set set() {
+      return set;
+    }
+
     @Override
     public String toString() {
       return ANY == this ? "." : "[" + set + ']';
     }
   }
 
-  private static final class Quantified extends Coregex {
+  public static final class Quantified extends Coregex {
     private static final long serialVersionUID = 1L;
 
     private static final int MAX_QUANTIFIER = 32;
@@ -241,8 +237,12 @@ public abstract class Coregex implements Serializable {
     private final int min;
     private final int max;
 
-    private Quantified(Coregex quantified, int min, int max) {
-      this.quantified = quantified;
+    public Quantified(Coregex quantified, int min, int max) {
+      this.quantified = requireNonNull(quantified, "quantified");
+      if (min < 0 || (-1 != max && min > max)) {
+        throw new IllegalArgumentException(
+            "min: " + min + " and max: " + max + " has to be positive with min being <= max");
+      }
       this.min = min;
       this.max = max;
     }
@@ -283,6 +283,18 @@ public abstract class Coregex implements Serializable {
       return quantified.weight();
     }
 
+    public Coregex quantified() {
+      return quantified;
+    }
+
+    public int min() {
+      return min;
+    }
+
+    public int max() {
+      return max;
+    }
+
     @Override
     public String toString() {
       if (-1 == max) {
@@ -300,15 +312,15 @@ public abstract class Coregex implements Serializable {
     }
   }
 
-  private static final class Union extends Coregex {
+  public static final class Union extends Coregex {
     private static final long serialVersionUID = 1L;
 
     private final Coregex first;
     private final Coregex[] rest;
 
-    private Union(Coregex first, Coregex[] rest) {
-      this.first = first;
-      this.rest = rest;
+    public Union(Coregex first, Coregex[] rest) {
+      this.first = requireNonNull(first, "first");
+      this.rest = Arrays.copyOf(rest, rest.length);
     }
 
     @Override
@@ -368,6 +380,13 @@ public abstract class Coregex implements Serializable {
         result += coregex.weight();
       }
       return result;
+    }
+
+    public List<Coregex> union() {
+      List<Coregex> union = new ArrayList<>(rest.length + 1);
+      union.add(first);
+      union.addAll(Arrays.asList(rest));
+      return union;
     }
 
     @Override

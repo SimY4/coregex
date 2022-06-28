@@ -48,7 +48,7 @@ public final class CoregexParser {
         ctx.match('|');
         union.add(simpleRE(ctx));
       }
-      re = Coregex.union(re, union.toArray(new Coregex[0]));
+      re = new Coregex.Union(re, union.toArray(new Coregex[0]));
     }
     return re;
   }
@@ -60,7 +60,7 @@ public final class CoregexParser {
       while (ctx.hasMoreElements() && '|' != ctx.peek() && ')' != ctx.peek()) {
         concatenation.add(basicRE(ctx));
       }
-      simpleRE = Coregex.concat(simpleRE, concatenation.toArray(new Coregex[0]));
+      simpleRE = new Coregex.Concat(simpleRE, concatenation.toArray(new Coregex[0]));
     }
     return simpleRE;
   }
@@ -119,7 +119,7 @@ public final class CoregexParser {
         elementaryRE = Coregex.any();
         break;
       case '[':
-        elementaryRE = Coregex.set(set(ctx));
+        elementaryRE = new Coregex.Set(set(ctx));
         break;
       case '(':
         elementaryRE = group(ctx);
@@ -136,7 +136,7 @@ public final class CoregexParser {
         ch = ctx.peek(1);
         if (!isREMetachar(ch)) {
           ctx.match('\\');
-          elementaryRE = Coregex.set(metachar(ctx));
+          elementaryRE = new Coregex.Set(metachar(ctx));
           break;
         }
         // fall through
@@ -158,11 +158,11 @@ public final class CoregexParser {
         case '(':
         case '^':
         case '$':
-          return Coregex.literal(literal.toString());
+          return new Coregex.Literal(literal.toString());
         case '\\':
           ch = ctx.peek(1);
           if (!isREMetachar(ch)) {
-            return Coregex.literal(literal.toString());
+            return new Coregex.Literal(literal.toString());
           }
           ctx.match('\\');
           // fall through
@@ -172,7 +172,7 @@ public final class CoregexParser {
           break;
       }
     } while (ctx.hasMoreElements());
-    return Coregex.literal(literal.toString());
+    return new Coregex.Literal(literal.toString());
   }
 
   private Set set(Context ctx) {

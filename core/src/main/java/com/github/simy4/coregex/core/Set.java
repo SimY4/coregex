@@ -24,7 +24,7 @@ public final class Set implements Serializable {
   private static final long serialVersionUID = 1L;
 
   public static Builder builder() {
-    return new Builder();
+    return new Builder(256);
   }
 
   private final BitSet chars;
@@ -57,10 +57,12 @@ public final class Set implements Serializable {
   }
 
   public static final class Builder {
-    private final BitSet chars = new BitSet(256);
+    private final BitSet chars;
     private final StringBuilder description = new StringBuilder();
 
-    private Builder() {}
+    private Builder(int size) {
+      chars = new BitSet(size);
+    }
 
     public Builder range(char start, char end) {
       if (start >= end) {

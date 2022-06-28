@@ -41,7 +41,7 @@ public class CoregexTest {
         @From(CoregexGenerator.class) @InRange(minChar = 'a', maxChar = 'z') Coregex first,
         List<@From(CoregexGenerator.class) @InRange(minChar = 'a', maxChar = 'z') Coregex> rest,
         @From(RNGGenerator.class) RNG rng) {
-      Coregex concat = Coregex.concat(first, rest.toArray(new Coregex[0]));
+      Coregex concat = new Coregex.Concat(first, rest.toArray(new Coregex[0]));
       assertTrue(
           "0 <= " + concat.minLength() + " <= " + concat.maxLength(),
           0 <= concat.minLength() && concat.minLength() <= concat.maxLength());
@@ -108,7 +108,7 @@ public class CoregexTest {
   public static class LiteralTest {
     @Property
     public void generatedShouldBeLiteral(String literal, @From(RNGGenerator.class) RNG rng) {
-      assertEquals(literal, Coregex.literal(literal).generate(rng, literal.length()));
+      assertEquals(literal, new Coregex.Literal(literal).generate(rng, literal.length()));
     }
 
     @Property
@@ -120,7 +120,7 @@ public class CoregexTest {
         @InRange(minInt = 0) int length) {
       int start = Math.min(i1, i2);
       int end = Math.max(i1, i2);
-      Coregex coregex = Coregex.literal(literal);
+      Coregex coregex = new Coregex.Literal(literal);
       Coregex quantified = coregex.quantify(start, end);
       assertTrue(
           "0 <= quantified.minLength(" + quantified.minLength() + ") <= " + quantified.maxLength(),
@@ -133,14 +133,14 @@ public class CoregexTest {
   public static class SetTest {
     @Property
     public void generatedShouldBeInSet(
-        @From(SetGenerator.class) @InRange(minChar = 'a', maxChar = 'z') Set setItem,
+        @From(SetGenerator.class) @InRange(minChar = 'a', maxChar = 'z') com.github.simy4.coregex.core.Set charSet,
         @From(RNGGenerator.class) RNG rng,
         @InRange(minInt = 1) int length) {
-      Coregex set = Coregex.set(setItem);
+      Coregex set = new Coregex.Set(charSet);
       String generated = set.generate(rng, length);
       assertTrue(
           generated + " all match " + set,
-          generated.chars().allMatch(ch -> setItem.stream().anyMatch(i -> ch == i)));
+          generated.chars().allMatch(ch -> charSet.stream().anyMatch(i -> ch == i)));
       assertTrue(
           generated + ".length(" + generated.length() + ") <= " + length,
           generated.length() <= length);
@@ -188,7 +188,7 @@ public class CoregexTest {
         @From(CoregexGenerator.class) @InRange(minChar = 'a', maxChar = 'z') Coregex first,
         List<@From(CoregexGenerator.class) @InRange(minChar = 'a', maxChar = 'z') Coregex> rest,
         @From(RNGGenerator.class) RNG rng) {
-      Coregex union = Coregex.union(first, rest.toArray(new Coregex[0]));
+      Coregex union = new Coregex.Union(first, rest.toArray(new Coregex[0]));
       assertTrue(
           "0 <= " + union.minLength() + " <= " + union.maxLength(),
           0 <= union.minLength() && union.minLength() <= union.maxLength());
