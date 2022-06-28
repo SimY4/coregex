@@ -135,7 +135,8 @@ public class CoregexGenerator extends Generator<Coregex> {
 
     @Override
     public Coregex generate(SourceOfRandomness random, GenerationStatus status) {
-      return Gen.oneOf(Coregex.empty(), new Coregex.Literal(String.valueOf(random.nextChar(min, max))))
+      return Gen.oneOf(
+              Coregex.empty(), new Coregex.Literal(String.valueOf(random.nextChar(min, max))))
           .generate(random, status);
     }
 

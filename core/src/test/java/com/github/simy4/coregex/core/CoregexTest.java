@@ -133,7 +133,8 @@ public class CoregexTest {
   public static class SetTest {
     @Property
     public void generatedShouldBeInSet(
-        @From(SetGenerator.class) @InRange(minChar = 'a', maxChar = 'z') com.github.simy4.coregex.core.Set charSet,
+        @From(SetGenerator.class) @InRange(minChar = 'a', maxChar = 'z')
+            com.github.simy4.coregex.core.Set charSet,
         @From(RNGGenerator.class) RNG rng,
         @InRange(minInt = 1) int length) {
       Coregex set = new Coregex.Set(charSet);

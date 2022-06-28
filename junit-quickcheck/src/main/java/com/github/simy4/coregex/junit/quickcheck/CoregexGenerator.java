@@ -18,14 +18,19 @@ package com.github.simy4.coregex.junit.quickcheck;
 
 import com.github.simy4.coregex.core.Coregex;
 import com.github.simy4.coregex.core.CoregexParser;
+import com.github.simy4.coregex.core.RNG;
 import com.pholser.junit.quickcheck.generator.GenerationStatus;
 import com.pholser.junit.quickcheck.generator.Generator;
 import com.pholser.junit.quickcheck.generator.Size;
 import com.pholser.junit.quickcheck.random.SourceOfRandomness;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class CoregexGenerator extends Generator<String> {
+  private Pattern regex;
   private Coregex coregex;
   private int size;
 
@@ -39,12 +44,14 @@ public class CoregexGenerator extends Generator<String> {
 
   public CoregexGenerator(Pattern regex, int size) {
     this();
+    this.regex = regex;
     this.coregex = CoregexParser.getInstance().parse(regex);
     this.size = size;
   }
 
   public void configure(Regex regex) {
-    this.coregex = CoregexParser.getInstance().parse(Pattern.compile(regex.value()));
+    this.regex = Pattern.compile(regex.value());
+    this.coregex = CoregexParser.getInstance().parse(this.regex);
   }
 
   public void configure(Size size) {
@@ -54,5 +61,27 @@ public class CoregexGenerator extends Generator<String> {
   @Override
   public String generate(SourceOfRandomness random, GenerationStatus status) {
     return coregex.generate(new SourceOfRandomnessRNG(random), size);
+  }
+
+  @Override
+  public boolean canShrink(Object larger) {
+    return regex.matcher(narrow(larger)).matches();
+  }
+
+  @Override
+  public List<String> doShrink(SourceOfRandomness random, String larger) {
+    List<String> shrinks = new ArrayList<>();
+    RNG rng = new SourceOfRandomnessRNG(random);
+    for (int remainder = coregex.minLength();
+        remainder < larger.length();
+        remainder = (remainder * 2) + 1) {
+      shrinks.add(coregex.generate(rng, remainder));
+    }
+    return shrinks;
+  }
+
+  @Override
+  public BigDecimal magnitude(Object value) {
+    return BigDecimal.valueOf(narrow(value).length());
   }
 }
