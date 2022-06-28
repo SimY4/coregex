@@ -46,9 +46,9 @@ lazy val core = (project in file("core"))
       "com.github.sbt" % "junit-interface"             % "0.13.3" % Test
     ),
     crossScalaVersions := Nil,
-    javacOptions ++= Seq("-Xlint:all", "-Werror") ++ (if scala.util.Properties.isJavaAtLeast("9") then
-                                                        Seq("--release", "8")
-                                                      else Seq("-source", "1.8", "-target", "1.8"))
+    javacOptions ++= Seq("-Xlint:all", "-Werror") ++
+      (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8")
+      else Seq("-source", "1.8", "-target", "1.8"))
   )
 
 lazy val junitQuickcheck = (project in file("junit-quickcheck"))
@@ -65,9 +65,9 @@ lazy val junitQuickcheck = (project in file("junit-quickcheck"))
       "com.github.sbt" % "junit-interface"             % "0.13.3" % Test
     ),
     crossScalaVersions := Nil,
-    javacOptions ++= Seq("-Xlint:all", "-Werror") ++ (if scala.util.Properties.isJavaAtLeast("9") then
-                                                        Seq("--release", "8")
-                                                      else Seq("-source", "1.8", "-target", "1.8"))
+    javacOptions ++= Seq("-Xlint:all", "-Werror") ++
+      (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8")
+      else Seq("-source", "1.8", "-target", "1.8"))
   )
   .dependsOn(core)
 
