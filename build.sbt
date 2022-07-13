@@ -24,6 +24,10 @@ ThisBuild / scalaVersion := scala213
 ThisBuild / startYear    := Some(2021)
 ThisBuild / licenses += ("Apache-2.0", new URL("https://www.apache.org/licenses/LICENSE-2.0.txt"))
 
+releaseTagComment        := s"[sbt release] - releasing ${(ThisBuild / version).value}"
+releaseCommitMessage     := s"[sbt release] - setting version to ${(ThisBuild / version).value}"
+releaseNextCommitMessage := s"[skip ci][sbt release] - new version commit: ${(ThisBuild / version).value}"
+
 lazy val root = (project in file("."))
   .settings(
     name               := "coregex-parent",
