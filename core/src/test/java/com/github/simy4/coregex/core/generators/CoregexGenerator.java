@@ -59,7 +59,8 @@ public class CoregexGenerator extends Generator<Coregex> {
                         (rng, sts) -> {
                           int i1 = rng.nextInt(0, 20);
                           int i2 = rng.nextInt(0, 20);
-                          return coregex.quantify(Math.min(i1, i2), Math.max(i1, i2));
+                          boolean greedy = rng.nextBoolean();
+                          return coregex.quantify(Math.min(i1, i2), Math.max(i1, i2), greedy);
                         })))
         .generate(random, status);
   }

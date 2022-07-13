@@ -30,6 +30,11 @@ final class SourceOfRandomnessRNG implements RNG {
   }
 
   @Override
+  public Map.Entry<RNG, Boolean> genBoolean() {
+    return new AbstractMap.SimpleEntry<>(this, sourceOfRandomness.nextBoolean());
+  }
+
+  @Override
   public Map.Entry<RNG, Integer> genInteger(int startInc, int endInc) {
     return new AbstractMap.SimpleEntry<>(this, sourceOfRandomness.nextInt(startInc, endInc));
   }

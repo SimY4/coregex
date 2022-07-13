@@ -21,7 +21,6 @@ import com.github.simy4.coregex.core.CoregexParser;
 import com.github.simy4.coregex.core.RNG;
 import com.pholser.junit.quickcheck.generator.GenerationStatus;
 import com.pholser.junit.quickcheck.generator.Generator;
-import com.pholser.junit.quickcheck.generator.Size;
 import com.pholser.junit.quickcheck.random.SourceOfRandomness;
 
 import java.math.BigDecimal;
@@ -32,21 +31,15 @@ import java.util.regex.Pattern;
 public class CoregexGenerator extends Generator<String> {
   private Pattern regex;
   private Coregex coregex;
-  private int size;
 
   public CoregexGenerator() {
     super(String.class);
   }
 
   public CoregexGenerator(Pattern regex) {
-    this(regex, Integer.MAX_VALUE);
-  }
-
-  public CoregexGenerator(Pattern regex, int size) {
     this();
     this.regex = regex;
     this.coregex = CoregexParser.getInstance().parse(regex);
-    this.size = size;
   }
 
   public void configure(Regex regex) {
@@ -54,13 +47,9 @@ public class CoregexGenerator extends Generator<String> {
     this.coregex = CoregexParser.getInstance().parse(this.regex);
   }
 
-  public void configure(Size size) {
-    this.size = size.max();
-  }
-
   @Override
   public String generate(SourceOfRandomness random, GenerationStatus status) {
-    return coregex.generate(new SourceOfRandomnessRNG(random), size);
+    return coregex.sized(Math.max(coregex.minLength(), status.size())).generate(new SourceOfRandomnessRNG(random));
   }
 
   @Override
@@ -75,7 +64,7 @@ public class CoregexGenerator extends Generator<String> {
     for (int remainder = coregex.minLength();
         remainder < larger.length();
         remainder = (remainder * 2) + 1) {
-      shrinks.add(coregex.generate(rng, remainder));
+      shrinks.add(coregex.sized(remainder).generate(rng));
     }
     return shrinks;
   }

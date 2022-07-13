@@ -106,7 +106,12 @@ public final class CoregexParser {
         quantifierMax = 1;
         break;
     }
-    return basicRE.quantify(quantifierMin, quantifierMax);
+    boolean greedy = true;
+    if ('?' == ctx.peek()) {
+      ctx.match('?');
+      greedy = false;
+    }
+    return basicRE.quantify(quantifierMin, quantifierMax, greedy);
   }
 
   @SuppressWarnings("fallthrough")

@@ -38,6 +38,12 @@ public class RandomRNG implements RNG {
   }
 
   @Override
+  public Map.Entry<RNG, Boolean> genBoolean() {
+    SplittableRandom rng = random.split();
+    return new AbstractMap.SimpleEntry<>(new RandomRNG(rng), rng.nextBoolean());
+  }
+
+  @Override
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   public Map.Entry<RNG, Integer> genInteger(int startInc, int endInc) {
     if (startInc > endInc) {
