@@ -47,9 +47,12 @@ lazy val core = (project in file("core"))
     ),
     crossScalaVersions := Nil,
     testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
-    javacOptions ++= Seq("-Xlint:all", "-Werror") ++
+    Compile / compile / javacOptions ++= Seq("-Xlint:all", "-Werror") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8")
-       else Seq("-source", "1.8", "-target", "1.8"))
+       else Seq("-source", "1.8", "-target", "1.8")),
+    Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing") ++
+      (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8", "-html5")
+      else Seq("-source", "1.8", "-target", "1.8"))
   )
 
 lazy val jqwik = (project in file("jqwik"))
@@ -65,9 +68,12 @@ lazy val jqwik = (project in file("jqwik"))
     ),
     crossScalaVersions := Nil,
     testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v"),
-    javacOptions ++= Seq("-Xlint:all", "-Werror") ++
+    Compile / compile / javacOptions ++= Seq("-Xlint:all", "-Werror") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8")
-       else Seq("-source", "1.8", "-target", "1.8"))
+       else Seq("-source", "1.8", "-target", "1.8")),
+    Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing") ++
+      (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8", "-html5")
+      else Seq("-source", "1.8", "-target", "1.8"))
   )
   .dependsOn(core)
 
@@ -86,9 +92,12 @@ lazy val junitQuickcheck = (project in file("junit-quickcheck"))
     ),
     crossScalaVersions := Nil,
     testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
-    javacOptions ++= Seq("-Xlint:all", "-Werror") ++
+    Compile / compile / javacOptions ++= Seq("-Xlint:all", "-Werror") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8")
-       else Seq("-source", "1.8", "-target", "1.8"))
+       else Seq("-source", "1.8", "-target", "1.8")),
+    Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing") ++
+      (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8", "-html5")
+      else Seq("-source", "1.8", "-target", "1.8"))
   )
   .dependsOn(core)
 
