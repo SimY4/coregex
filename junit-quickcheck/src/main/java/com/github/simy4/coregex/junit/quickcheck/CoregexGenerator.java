@@ -49,7 +49,9 @@ public class CoregexGenerator extends Generator<String> {
 
   @Override
   public String generate(SourceOfRandomness random, GenerationStatus status) {
-    return coregex.sized(Math.max(coregex.minLength(), status.size())).generate(new SourceOfRandomnessRNG(random));
+    return coregex
+        .sized(Math.max(coregex.minLength(), status.size()))
+        .generate(new SourceOfRandomnessRNG(random));
   }
 
   @Override

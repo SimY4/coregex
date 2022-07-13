@@ -49,8 +49,27 @@ lazy val core = (project in file("core"))
     testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
     javacOptions ++= Seq("-Xlint:all", "-Werror") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8")
-      else Seq("-source", "1.8", "-target", "1.8"))
+       else Seq("-source", "1.8", "-target", "1.8"))
   )
+
+lazy val jqwik = (project in file("jqwik"))
+  .settings(
+    name             := "jqwik",
+    moduleName       := "coregex-jqwik",
+    crossPaths       := false,
+    autoScalaLibrary := false,
+    libraryDependencies ++= Seq(
+      "net.jqwik"   % "jqwik-api"         % "1.6.5"  % Provided,
+      "net.jqwik"   % "jqwik-engine"      % "1.6.5"  % Test,
+      "net.aichler" % "jupiter-interface" % "0.10.0" % Test
+    ),
+    crossScalaVersions := Nil,
+    testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v"),
+    javacOptions ++= Seq("-Xlint:all", "-Werror") ++
+      (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8")
+       else Seq("-source", "1.8", "-target", "1.8"))
+  )
+  .dependsOn(core)
 
 lazy val junitQuickcheck = (project in file("junit-quickcheck"))
   .settings(
@@ -69,7 +88,7 @@ lazy val junitQuickcheck = (project in file("junit-quickcheck"))
     testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
     javacOptions ++= Seq("-Xlint:all", "-Werror") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8")
-      else Seq("-source", "1.8", "-target", "1.8"))
+       else Seq("-source", "1.8", "-target", "1.8"))
   )
   .dependsOn(core)
 

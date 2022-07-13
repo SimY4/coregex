@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.simy4.coregex.junit.quickcheck;
-
-import com.pholser.junit.quickcheck.generator.GeneratorConfiguration;
+package com.github.simy4.coregex.jqwik;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Inherited;
@@ -25,7 +23,6 @@ import java.lang.annotation.RetentionPolicy;
 
 @Inherited
 @Documented
-@GeneratorConfiguration
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Regex {
   String value();
