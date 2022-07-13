@@ -27,6 +27,7 @@ ThisBuild / licenses += ("Apache-2.0", new URL("https://www.apache.org/licenses/
 releaseTagComment        := s"[sbt release] - releasing ${(ThisBuild / version).value}"
 releaseCommitMessage     := s"[sbt release] - setting version to ${(ThisBuild / version).value}"
 releaseNextCommitMessage := s"[skip ci][sbt release] - new version commit: ${(ThisBuild / version).value}"
+sonatypeProfileName      := "com.github.simy4"
 
 lazy val root = (project in file("."))
   .settings(
