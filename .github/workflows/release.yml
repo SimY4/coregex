@@ -7,7 +7,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
 
-    if: github.repository == 'SimY4/xpath-to-xml'
+    if: github.repository == 'SimY4/coregex'
       && !contains(toJSON(github.event.commits.*.message), '[skip release]')
 
     steps:
@@ -17,12 +17,11 @@ jobs:
         with:
           distribution: temurin
           java-version: 11
-          cache: gradle
-      - name: Release with Gradle
-        run: |
-          sbt ci-release
+          cache: sbt
+      - name: Release with sbt
+        run: sbt ci-release
         env:
-          PGP_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
-          PGP_SECRET: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
-          SONATYPE_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          SONATYPE_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+          PGP_SECRET: ${{ secrets.PGP_SECRET }}
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
