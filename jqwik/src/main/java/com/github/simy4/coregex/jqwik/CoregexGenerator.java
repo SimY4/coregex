@@ -27,7 +27,8 @@ public class CoregexGenerator implements RandomGenerator<String> {
 
   @Override
   public Shrinkable<String> next(Random random) {
-    return new ShrinkableString(coregex, coregex.sized(size).generate(new RandomRNG(random.nextLong())));
+    return new ShrinkableString(
+        coregex, coregex.sized(size).generate(new RandomRNG(random.nextLong())));
   }
 }
 
@@ -50,8 +51,8 @@ final class ShrinkableString implements Shrinkable<String> {
     Stream.Builder<Shrinkable<String>> shrinks = Stream.builder();
     RNG rng = new RandomRNG();
     for (int remainder = coregex.minLength();
-         remainder < value.length();
-         remainder = (remainder * 2) + 1) {
+        remainder < value.length();
+        remainder = (remainder * 2) + 1) {
       shrinks.add(new ShrinkableString(coregex, coregex.sized(remainder).generate(rng)));
     }
     return shrinks.build();
