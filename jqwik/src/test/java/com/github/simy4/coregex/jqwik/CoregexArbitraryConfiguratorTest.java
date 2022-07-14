@@ -16,17 +16,21 @@
 
 package com.github.simy4.coregex.jqwik;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import net.jqwik.api.ForAll;
+import net.jqwik.api.Property;
 
-@Target({ElementType.ANNOTATION_TYPE, ElementType.PARAMETER, ElementType.TYPE_USE})
-@Inherited
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Regex {
-  String value();
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+class CoregexArbitraryConfiguratorTest {
+  @Property
+  void shouldGenerateMatchingUUIDString(
+      @ForAll @Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}")
+          String uuid) {
+    assertEquals(uuid, UUID.fromString(uuid).toString());
+  }
+
+  @Property
+  void shouldGenerateAnyString(@ForAll String any) {}
 }

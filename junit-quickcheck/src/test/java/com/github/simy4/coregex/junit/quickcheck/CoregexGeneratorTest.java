@@ -16,25 +16,23 @@
 
 package com.github.simy4.coregex.junit.quickcheck;
 
-import com.pholser.junit.quickcheck.generator.GeneratorConfiguration;
+import com.pholser.junit.quickcheck.Property;
+import com.pholser.junit.quickcheck.runner.JUnitQuickcheck;
+import org.junit.runner.RunWith;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.util.UUID;
 
-@Target({
-  ElementType.PARAMETER,
-  ElementType.FIELD,
-  ElementType.ANNOTATION_TYPE,
-  ElementType.TYPE_USE
-})
-@Inherited
-@Documented
-@GeneratorConfiguration
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Regex {
-  String value();
+import static org.junit.Assert.assertEquals;
+
+@RunWith(JUnitQuickcheck.class)
+public class CoregexGeneratorTest {
+  @Property
+  public void shouldGenerateMatchingUUIDString(
+      @Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}")
+          String uuid) {
+    assertEquals(uuid, UUID.fromString(uuid).toString());
+  }
+
+  @Property
+  public void shouldGenerateAnyString(String any) {}
 }
