@@ -16,14 +16,33 @@
 
 package com.github.simy4.coregex.jqwik;
 
-import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
+import net.jqwik.api.EdgeCases;
+import net.jqwik.api.RandomGenerator;
 import net.jqwik.api.configurators.ArbitraryConfiguratorBase;
 
 import java.util.regex.Pattern;
 
 public class CoregexArbitraryConfigurator extends ArbitraryConfiguratorBase {
   public Arbitrary<String> configure(Arbitrary<String> arbitrary, Regex regex) {
-    return Arbitraries.fromGenerator(new CoregexGenerator(Pattern.compile(regex.value())));
+    return new SizedArbitrary(Pattern.compile(regex.value()));
+  }
+}
+
+final class SizedArbitrary implements Arbitrary<String> {
+  private final Pattern pattern;
+
+  SizedArbitrary(Pattern pattern) {
+    this.pattern = pattern;
+  }
+
+  @Override
+  public RandomGenerator<String> generator(int genSize) {
+    return new CoregexGenerator(pattern, genSize);
+  }
+
+  @Override
+  public EdgeCases<String> edgeCases(int maxEdgeCases) {
+    return EdgeCases.none();
   }
 }

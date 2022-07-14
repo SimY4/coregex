@@ -38,7 +38,7 @@ public class CoregexGenerator implements RandomGenerator<String> {
 
   public CoregexGenerator(Pattern regex, int size) {
     this.coregex = CoregexParser.getInstance().parse(regex);
-    this.size = size;
+    this.size = Math.max(size, coregex.minLength());
   }
 
   @Override
