@@ -37,7 +37,7 @@ lazy val root = (project in file("."))
     crossScalaVersions := Nil,
     publish / skip     := true
   )
-  .aggregate(core, junitQuickcheck, scalacheck)
+  .aggregate(core, jqwik, junitQuickcheck, scalacheck)
 
 lazy val core = (project in file("core"))
   .settings(
