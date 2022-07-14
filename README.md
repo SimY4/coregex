@@ -9,5 +9,6 @@ Convenient utility for generating strings that would comply to given regular exp
 
 # Supported generators
 
-- JUnit Quickcheck
-- scalacheck
+- [Jqwik](https://jqwik.net/) 
+- [JUnit Quickcheck](https://pholser.github.io/junit-quickcheck)
+- [scalacheck](https://scalacheck.org/)
