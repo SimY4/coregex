@@ -411,42 +411,42 @@ public final class CoregexParser {
     }
 
     private <T> T error(String expected) {
-      String messagePrefix = "Unable to parse regex: '";
-      char[] cursor = new char[messagePrefix.length() + this.cursor];
+      char[] cursor = new char[this.cursor];
       Arrays.fill(cursor, ' ');
       cursor[cursor.length - 1] = '^';
       String message =
           String.join(
               System.lineSeparator(),
-              messagePrefix + regex + '\'',
+              "Unable to parse regex:",
+              regex,
               new String(cursor),
               "Expected: '" + expected + "' Actual: '" + regex.charAt(this.cursor) + "'");
       throw new IllegalArgumentException(message);
     }
 
     private void eol() {
-      String messagePrefix = "Unable to parse regex: '";
-      char[] cursor = new char[messagePrefix.length() + this.cursor];
+      char[] cursor = new char[this.cursor];
       Arrays.fill(cursor, ' ');
       cursor[cursor.length - 1] = '^';
       String message =
           String.join(
               System.lineSeparator(),
-              messagePrefix + regex + '\'',
+              "Unable to parse regex:",
+              regex,
               new String(cursor),
-              "Expected: more characters Actual: EOL");
+              "Expected: <MORE> Actual: <EOL>");
       throw new IllegalArgumentException(message);
     }
 
     private <T> T unsupported(String reason) {
-      String messagePrefix = "Unable to parse regex: '";
-      char[] cursor = new char[messagePrefix.length() + this.cursor];
+      char[] cursor = new char[this.cursor];
       Arrays.fill(cursor, ' ');
       cursor[cursor.length - 1] = '^';
       String message =
           String.join(
               System.lineSeparator(),
-              messagePrefix + regex + '\'',
+              "Unable to parse regex:",
+              regex,
               new String(cursor),
               "Reason: " + reason);
       throw new UnsupportedOperationException(message);
