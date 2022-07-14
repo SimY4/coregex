@@ -42,9 +42,9 @@ public final class CoregexParser {
 
   private Coregex RE(Context ctx) {
     Coregex re = simpleRE(ctx);
-    if (ctx.hasMoreElements() && '|' == ctx.peek()) {
+    if ('|' == ctx.peek()) {
       List<Coregex> union = new ArrayList<>();
-      while (ctx.hasMoreElements() && '|' == ctx.peek()) {
+      while ('|' == ctx.peek()) {
         ctx.match('|');
         union.add(simpleRE(ctx));
       }
@@ -67,9 +67,6 @@ public final class CoregexParser {
 
   private Coregex basicRE(Context ctx) {
     Coregex basicRE = elementaryRE(ctx);
-    if (!ctx.hasMoreElements()) {
-      return basicRE;
-    }
     int quantifierMin;
     int quantifierMax;
     switch (ctx.peek()) {
@@ -107,7 +104,7 @@ public final class CoregexParser {
         break;
     }
     boolean greedy = true;
-    if (ctx.hasMoreElements() && '?' == ctx.peek()) {
+    if ('?' == ctx.peek()) {
       ctx.match('?');
       greedy = false;
     }
@@ -386,7 +383,7 @@ public final class CoregexParser {
 
     private char peek(int i) {
       if (regex.length() <= cursor + i) {
-        eol();
+        return (char) -1;
       }
       return regex.charAt(cursor + i);
     }
@@ -399,9 +396,9 @@ public final class CoregexParser {
     }
 
     private String takeWhile(IntPredicate charPredicate) {
-      if (hasMoreElements() && charPredicate.test(peek())) {
+      if (charPredicate.test(peek())) {
         int start = cursor++;
-        while (hasMoreElements() && charPredicate.test(peek())) {
+        while (charPredicate.test(peek())) {
           cursor++;
         }
         return regex.substring(start, cursor);
@@ -421,20 +418,6 @@ public final class CoregexParser {
               regex,
               new String(cursor),
               "Expected: '" + expected + "' Actual: '" + regex.charAt(this.cursor) + "'");
-      throw new IllegalArgumentException(message);
-    }
-
-    private void eol() {
-      char[] cursor = new char[this.cursor];
-      Arrays.fill(cursor, ' ');
-      cursor[cursor.length - 1] = '^';
-      String message =
-          String.join(
-              System.lineSeparator(),
-              "Unable to parse regex:",
-              regex,
-              new String(cursor),
-              "Expected: <MORE> Actual: <EOL>");
       throw new IllegalArgumentException(message);
     }
 
