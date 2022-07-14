@@ -16,10 +16,9 @@ ThisBuild / developers := List(
   )
 )
 
-lazy val scala212               = "2.12.16"
 lazy val scala213               = "2.13.8"
 lazy val scala3                 = "3.1.3"
-lazy val supportedScalaVersions = List(scala212, scala213, scala3)
+lazy val supportedScalaVersions = List(scala213, scala3)
 
 ThisBuild / scalaVersion := scala213
 ThisBuild / startYear    := Some(2021)

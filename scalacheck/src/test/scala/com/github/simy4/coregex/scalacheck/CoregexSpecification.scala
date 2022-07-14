@@ -14,24 +14,16 @@
  * limitations under the License.
  */
 
-package com.github.simy4.coregex
-package scalacheck
+package com.github.simy4.coregex.scalacheck
 
-import core.{ Coregex, CoregexParser }
-import core.rng.RandomRNG
-import org.scalacheck.Gen
+import org.scalacheck.Prop.forAll
+import org.scalacheck.Properties
 
-import java.util.regex.Pattern
-import scala.util.matching.Regex
+import java.util.UUID
 
-object CoregexGen {
-  def apply(regex: Regex): Gen[String] = apply(regex.pattern)
-
-  def apply(regex: Pattern): Gen[String] = apply(CoregexParser.getInstance().parse(regex))
-
-  def apply(coregex: Coregex): Gen[String] =
-    for {
-      seed <- Gen.long
-      size <- Gen.size
-    } yield coregex.sized(coregex.minLength() max size).generate(new RandomRNG(seed))
+object CoregexSpecification extends Properties("Coregex") with CoregexInstances {
+  property("") = forAll {
+    (uuid: String Matching "[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}") =>
+      uuid == UUID.fromString(uuid).toString
+  }
 }
