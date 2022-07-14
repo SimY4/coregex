@@ -29,15 +29,17 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class CoregexGenerator extends Generator<String> {
+  private static final Pattern ANY = Pattern.compile(".*");
+
   private Pattern regex;
   private Coregex coregex;
 
   public CoregexGenerator() {
-    super(String.class);
+    this(ANY);
   }
 
   public CoregexGenerator(Pattern regex) {
-    this();
+    super(String.class);
     this.regex = regex;
     this.coregex = CoregexParser.getInstance().parse(regex);
   }

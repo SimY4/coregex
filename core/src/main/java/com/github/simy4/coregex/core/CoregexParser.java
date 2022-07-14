@@ -107,7 +107,7 @@ public final class CoregexParser {
         break;
     }
     boolean greedy = true;
-    if ('?' == ctx.peek()) {
+    if (ctx.hasMoreElements() && '?' == ctx.peek()) {
       ctx.match('?');
       greedy = false;
     }
@@ -386,7 +386,7 @@ public final class CoregexParser {
 
     private char peek(int i) {
       if (regex.length() <= cursor + i) {
-        error("No more elements");
+        eol();
       }
       return regex.charAt(cursor + i);
     }
@@ -418,10 +418,24 @@ public final class CoregexParser {
       String message =
           String.join(
               System.lineSeparator(),
-              "Unable to parse regex: '" + regex + "'",
+              messagePrefix + regex + '\'',
               new String(cursor),
               "Expected: '" + expected + "' Actual: '" + regex.charAt(this.cursor) + "'");
-      throw new UnsupportedOperationException(message);
+      throw new IllegalArgumentException(message);
+    }
+
+    private void eol() {
+      String messagePrefix = "Unable to parse regex: '";
+      char[] cursor = new char[messagePrefix.length() + this.cursor];
+      Arrays.fill(cursor, ' ');
+      cursor[cursor.length - 1] = '^';
+      String message =
+          String.join(
+              System.lineSeparator(),
+              messagePrefix + regex + '\'',
+              new String(cursor),
+              "Expected: more characters Actual: EOL");
+      throw new IllegalArgumentException(message);
     }
 
     private <T> T unsupported(String reason) {
@@ -432,7 +446,7 @@ public final class CoregexParser {
       String message =
           String.join(
               System.lineSeparator(),
-              "Unable to parse regex: '" + regex + "'",
+              messagePrefix + regex + '\'',
               new String(cursor),
               "Reason: " + reason);
       throw new UnsupportedOperationException(message);
