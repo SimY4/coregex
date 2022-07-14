@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.StringJoiner;
 
 import static java.util.Objects.requireNonNull;
@@ -72,7 +73,7 @@ public abstract class Coregex implements Serializable {
     private final Coregex first;
     private final Coregex[] rest;
 
-    public Concat(Coregex first, Coregex[] rest) {
+    public Concat(Coregex first, Coregex... rest) {
       this.first = requireNonNull(first, "first");
       this.rest = Arrays.copyOf(rest, rest.length);
     }
@@ -139,6 +140,25 @@ public abstract class Coregex implements Serializable {
     }
 
     @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      Concat concat = (Concat) o;
+      return first.equals(concat.first) && Arrays.equals(rest, concat.rest);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = first.hashCode();
+      result = 31 * result + Arrays.hashCode(rest);
+      return result;
+    }
+
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder();
       sb.append(first.toString());
@@ -155,7 +175,7 @@ public abstract class Coregex implements Serializable {
     private final String literal;
 
     public Literal(String literal) {
-      this.literal = literal;
+      this.literal = requireNonNull(literal, "literal");
     }
 
     @Override
@@ -184,6 +204,23 @@ public abstract class Coregex implements Serializable {
 
     public String literal() {
       return literal;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      Literal literal = (Literal) o;
+      return this.literal.equals(literal.literal);
+    }
+
+    @Override
+    public int hashCode() {
+      return literal.hashCode();
     }
 
     @Override
@@ -268,24 +305,46 @@ public abstract class Coregex implements Serializable {
     }
 
     @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      Quantified that = (Quantified) o;
+      return min == that.min
+          && max == that.max
+          && greedy == that.greedy
+          && quantified.equals(that.quantified);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(quantified, min, max, greedy);
+    }
+
+    @Override
     public String toString() {
-      String string;
+      StringBuilder string = new StringBuilder(quantified.toString());
       if (-1 == max) {
         switch (min) {
           case 0:
-            string = quantified + "*";
+            string.append('*');
             break;
           case 1:
-            string = quantified + "+";
+            string.append('+');
             break;
           default:
-            string = quantified.toString() + '{' + min + ",}";
+            string.append('{').append(min).append(",}");
             break;
         }
+      } else if (min == max) {
+        string.append('{').append(min).append('}');
       } else {
-        string = quantified.toString() + '{' + min + ',' + max + '}';
+        string.append('{').append(min).append(',').append(max).append('}');
       }
-      return greedy ? string : string + '?';
+      return (greedy ? string : string.append('?')).toString();
     }
   }
 
@@ -295,7 +354,7 @@ public abstract class Coregex implements Serializable {
     private final com.github.simy4.coregex.core.Set set;
 
     public Set(com.github.simy4.coregex.core.Set set) {
-      this.set = set;
+      this.set = requireNonNull(set, "set");
     }
 
     @Override
@@ -326,6 +385,23 @@ public abstract class Coregex implements Serializable {
 
     public com.github.simy4.coregex.core.Set set() {
       return set;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      Set set = (Set) o;
+      return this.set.equals(set.set);
+    }
+
+    @Override
+    public int hashCode() {
+      return set.hashCode();
     }
 
     @Override
@@ -387,6 +463,23 @@ public abstract class Coregex implements Serializable {
     }
 
     @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      Sized sized = (Sized) o;
+      return size == sized.size && this.sized.equals(sized.sized);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(sized, size);
+    }
+
+    @Override
     public String toString() {
       return sized.toString();
     }
@@ -398,7 +491,7 @@ public abstract class Coregex implements Serializable {
     private final Coregex first;
     private final Coregex[] rest;
 
-    public Union(Coregex first, Coregex[] rest) {
+    public Union(Coregex first, Coregex... rest) {
       this.first = requireNonNull(first, "first");
       this.rest = Arrays.copyOf(rest, rest.length);
     }
@@ -474,6 +567,25 @@ public abstract class Coregex implements Serializable {
       union.add(first);
       union.addAll(Arrays.asList(rest));
       return union;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      Union union = (Union) o;
+      return first.equals(union.first) && Arrays.equals(rest, union.rest);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = first.hashCode();
+      result = 31 * result + Arrays.hashCode(rest);
+      return result;
     }
 
     @Override

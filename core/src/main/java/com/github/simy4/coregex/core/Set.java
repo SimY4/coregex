@@ -18,6 +18,7 @@ package com.github.simy4.coregex.core;
 
 import java.io.Serializable;
 import java.util.BitSet;
+import java.util.Objects;
 import java.util.stream.IntStream;
 
 public final class Set implements Serializable {
@@ -49,6 +50,23 @@ public final class Set implements Serializable {
 
   public IntStream stream() {
     return chars.stream();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    Set set = (Set) o;
+    return chars.equals(set.chars) && description.equals(set.description);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(chars, description);
   }
 
   @Override

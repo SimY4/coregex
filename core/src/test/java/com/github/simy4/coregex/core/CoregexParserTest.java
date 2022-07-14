@@ -21,6 +21,7 @@ import com.pholser.junit.quickcheck.From;
 import com.pholser.junit.quickcheck.Property;
 import com.pholser.junit.quickcheck.runner.JUnitQuickcheck;
 import org.junit.Ignore;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.regex.Pattern;
@@ -29,6 +30,35 @@ import static org.junit.Assert.*;
 
 @RunWith(JUnitQuickcheck.class)
 public class CoregexParserTest {
+  @Test
+  public void shouldParseUUIDRegex() {
+    assertEquals(
+        new Coregex.Concat(
+            new Coregex.Quantified(
+                new Coregex.Set(Set.builder().range('0', '9').range('a', 'f').build()), 8, 8, true),
+            new Coregex.Literal("-"),
+            new Coregex.Quantified(
+                new Coregex.Set(Set.builder().range('0', '9').range('a', 'f').build()), 4, 4, true),
+            new Coregex.Literal("-"),
+            new Coregex.Set(Set.builder().range('0', '5').build()),
+            new Coregex.Quantified(
+                new Coregex.Set(Set.builder().range('0', '9').range('a', 'f').build()), 3, 3, true),
+            new Coregex.Literal("-"),
+            new Coregex.Set(Set.builder().set('0', '8', '9', 'a', 'b').build()),
+            new Coregex.Quantified(
+                new Coregex.Set(Set.builder().range('0', '9').range('a', 'f').build()), 3, 3, true),
+            new Coregex.Literal("-"),
+            new Coregex.Quantified(
+                new Coregex.Set(Set.builder().range('0', '9').range('a', 'f').build()),
+                12,
+                12,
+                true)),
+        CoregexParser.getInstance()
+            .parse(
+                Pattern.compile(
+                    "[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}")));
+  }
+
   @Property
   @Ignore
   public void shouldParse(@From(CoregexGenerator.class) Coregex coregex) {
