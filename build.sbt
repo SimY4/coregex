@@ -1,5 +1,6 @@
 ThisBuild / organization     := "com.github.simy4.coregex"
 ThisBuild / organizationName := "Alex Simkin"
+ThisBuild / homepage         := Some(url("https://github.com/SimY4/coregex"))
 ThisBuild / scmInfo := Some(
   ScmInfo(
     url("https://github.com/SimY4/coregex"),
@@ -23,6 +24,7 @@ lazy val supportedScalaVersions = List(scala212, scala213, scala3)
 ThisBuild / scalaVersion := scala213
 ThisBuild / startYear    := Some(2021)
 ThisBuild / licenses += ("Apache-2.0", new URL("https://www.apache.org/licenses/LICENSE-2.0.txt"))
+ThisBuild / versionScheme := Some("early-semver")
 
 releaseTagComment        := s"[sbt release] - releasing ${(ThisBuild / version).value}"
 releaseCommitMessage     := s"[sbt release] - setting version to ${(ThisBuild / version).value}"
