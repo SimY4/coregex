@@ -60,7 +60,7 @@ public final class CoregexParser {
       while (ctx.hasMoreElements() && '|' != ctx.peek() && ')' != ctx.peek()) {
         concatenation.add(basicRE(ctx));
       }
-      simpleRE = new Coregex.Concat(simpleRE, concatenation.toArray(new Coregex[0]));
+      simpleRE = new Coregex.Concat(simpleRE, concatenation.toArray(new Coregex[0])).simplify();
     }
     return simpleRE;
   }

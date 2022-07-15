@@ -68,8 +68,8 @@ public class CoregexParserTest {
                 new Coregex.Concat(
                     new Coregex.Literal("http"),
                     new Coregex.Quantified(new Coregex.Literal("s"), 0, 1, true)),
-                new Coregex.Concat(new Coregex.Literal("ftp")),
-                new Coregex.Concat(new Coregex.Literal("file"))),
+                new Coregex.Literal("ftp"),
+                new Coregex.Literal("file")),
             new Coregex.Literal("://"),
             new Coregex.Quantified(
                 new Coregex.Set(

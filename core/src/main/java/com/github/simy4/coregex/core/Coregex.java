@@ -70,9 +70,76 @@ public abstract class Coregex implements Serializable {
   public static final class Concat extends Coregex {
     private static final long serialVersionUID = 1L;
 
-    private final Coregex[] concat;
+    private final Coregex first;
+    private final Coregex[] rest;
 
     public Concat(Coregex first, Coregex... rest) {
+      this.first = requireNonNull(first, "first");
+      this.rest = Arrays.copyOf(rest, rest.length);
+    }
+
+    @Override
+    protected Map.Entry<RNG, String> apply(RNG rng, int remainder) {
+      if (remainder < minLength()) {
+        throw new IllegalStateException(
+            "remainder: " + remainder + " has to be greater than " + minLength());
+      }
+      StringBuilder sb = new StringBuilder(minLength() + 16);
+      Coregex chunk = first;
+      int i = 0;
+      do {
+        Map.Entry<RNG, String> rngAndCoregex =
+            chunk.apply(rng, remainder - minLength() + chunk.minLength());
+        rng = rngAndCoregex.getKey();
+        String value = rngAndCoregex.getValue();
+        sb.append(value);
+        remainder -= (value.length() - chunk.minLength());
+      } while (i < rest.length && (chunk = rest[i++]) != null);
+      return new AbstractMap.SimpleEntry<>(rng, sb.toString());
+    }
+
+    @Override
+    public int minLength() {
+      int min = first.minLength();
+      for (Coregex coregex : rest) {
+        min += coregex.minLength();
+      }
+      return min;
+    }
+
+    @Override
+    public int maxLength() {
+      int sum = first.maxLength();
+      if (-1 == sum) {
+        return sum;
+      }
+      for (Coregex coregex : rest) {
+        int max = coregex.maxLength();
+        if (-1 == max) {
+          return max;
+        }
+        sum += max;
+      }
+      return sum;
+    }
+
+    @Override
+    int weight() {
+      int weight = first.weight();
+      for (Coregex coregex : rest) {
+        weight += coregex.weight();
+      }
+      return weight / (rest.length + 1);
+    }
+
+    public List<Coregex> concat() {
+      List<Coregex> concat = new ArrayList<>(rest.length + 1);
+      concat.add(first);
+      concat.addAll(Arrays.asList(rest));
+      return concat;
+    }
+
+    public Coregex simplify() {
       List<Coregex> concat = new ArrayList<>(rest.length + 1);
       concat.add(requireNonNull(first, "first"));
       int idx = 0;
@@ -85,60 +152,7 @@ public abstract class Coregex implements Serializable {
           idx++;
         }
       }
-      this.concat = concat.toArray(new Coregex[0]);
-    }
-
-    @Override
-    protected Map.Entry<RNG, String> apply(RNG rng, int remainder) {
-      if (remainder < minLength()) {
-        throw new IllegalStateException(
-            "remainder: " + remainder + " has to be greater than " + minLength());
-      }
-      StringBuilder sb = new StringBuilder(minLength() + 16);
-      for (Coregex coregex : concat) {
-        Map.Entry<RNG, String> rngAndCoregex =
-            coregex.apply(rng, remainder - minLength() + coregex.minLength());
-        rng = rngAndCoregex.getKey();
-        String value = rngAndCoregex.getValue();
-        sb.append(value);
-        remainder -= (value.length() - coregex.minLength());
-      }
-      return new AbstractMap.SimpleEntry<>(rng, sb.toString());
-    }
-
-    @Override
-    public int minLength() {
-      int min = 0;
-      for (Coregex coregex : concat) {
-        min += coregex.minLength();
-      }
-      return min;
-    }
-
-    @Override
-    public int maxLength() {
-      int sum = 0;
-      for (Coregex coregex : concat) {
-        int max = coregex.maxLength();
-        if (-1 == max) {
-          return max;
-        }
-        sum += max;
-      }
-      return sum;
-    }
-
-    @Override
-    int weight() {
-      int weight = 0;
-      for (Coregex coregex : concat) {
-        weight += coregex.weight();
-      }
-      return (0 == concat.length ? 0 : weight / concat.length);
-    }
-
-    public List<Coregex> concat() {
-      return Arrays.asList(concat);
+      return 1 == concat.size() ? concat.get(0) : new Concat(concat.get(0), concat.subList(1, concat.size()).toArray(new Coregex[0]));
     }
 
     @Override
@@ -150,18 +164,21 @@ public abstract class Coregex implements Serializable {
         return false;
       }
       Concat concat = (Concat) o;
-      return Arrays.equals(this.concat, concat.concat);
+      return first.equals(concat.first) && Arrays.equals(rest, concat.rest);
     }
 
     @Override
     public int hashCode() {
-      return Arrays.hashCode(concat);
+      int result = first.hashCode();
+      result = 31 * result + Arrays.hashCode(rest);
+      return result;
     }
 
     @Override
     public String toString() {
       StringBuilder sb = new StringBuilder();
-      for (Coregex coregex : concat) {
+      sb.append(first.toString());
+      for (Coregex coregex : rest) {
         sb.append(coregex.toString());
       }
       return sb.toString();
