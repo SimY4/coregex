@@ -19,6 +19,7 @@ package com.github.simy4.coregex.jqwik;
 import net.jqwik.api.ForAll;
 import net.jqwik.api.Property;
 
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,6 +30,16 @@ class CoregexArbitraryConfiguratorTest {
       @ForAll @Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}")
           String uuid) {
     assertEquals(uuid, UUID.fromString(uuid).toString());
+  }
+
+  @Property
+  void shouldGenerateMatchingIsoDateString(
+      @ForAll
+          @Regex(
+              "[12]\\d{3}-(?:0[1-9]|1[012])-(?:0[1-9]|1\\d|2[0-8])T(?:1\\d|2[0-3]):[0-5]\\d:[0-5]\\dZ")
+          String iso8601Date) {
+    DateTimeFormatter formatter = DateTimeFormatter.ISO_INSTANT;
+    assertEquals(iso8601Date, formatter.format(formatter.parse(iso8601Date)));
   }
 
   @Property

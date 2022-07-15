@@ -16,19 +16,12 @@
 
 package com.github.simy4.coregex.core;
 
-import com.github.simy4.coregex.core.generators.CoregexGenerator;
-import com.pholser.junit.quickcheck.From;
-import com.pholser.junit.quickcheck.Property;
-import com.pholser.junit.quickcheck.runner.JUnitQuickcheck;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.util.regex.Pattern;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
-@RunWith(JUnitQuickcheck.class)
 public class CoregexParserTest {
   @Test
   public void shouldParseUUIDRegex() {
@@ -99,11 +92,39 @@ public class CoregexParserTest {
                     "^(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]")));
   }
 
-  @Property
-  @Ignore
-  public void shouldParse(@From(CoregexGenerator.class) Coregex coregex) {
-    String regex = coregex.toString();
-    Coregex parsed = CoregexParser.getInstance().parse(Pattern.compile(regex));
-    assertEquals(regex, parsed.toString());
+  @Test
+  public void shouldParseIso8601DateString() {
+    assertEquals(
+        new Coregex.Concat(
+            new Coregex.Quantified(
+                new Coregex.Set(Set.builder().range('0', '9').build()), 4, 4, true),
+            new Coregex.Literal("-"),
+            new Coregex.Set(Set.builder().set('0', '1').build()),
+            new Coregex.Set(Set.builder().range('0', '9').build()),
+            new Coregex.Literal("-"),
+            new Coregex.Set(Set.builder().range('0', '3').build()),
+            new Coregex.Set(Set.builder().range('0', '9').build()),
+            new Coregex.Literal("T"),
+            new Coregex.Set(Set.builder().range('0', '2').build()),
+            new Coregex.Set(Set.builder().range('0', '9').build()),
+            new Coregex.Literal(":"),
+            new Coregex.Set(Set.builder().range('0', '5').build()),
+            new Coregex.Set(Set.builder().range('0', '9').build()),
+            new Coregex.Literal(":"),
+            new Coregex.Set(Set.builder().range('0', '5').build()),
+            new Coregex.Set(Set.builder().range('0', '9').build()),
+            new Coregex.Union(
+                new Coregex.Concat(
+                    new Coregex.Set(Set.builder().set('+', '-').build()),
+                    new Coregex.Set(Set.builder().range('0', '2').build()),
+                    new Coregex.Set(Set.builder().range('0', '9').build()),
+                    new Coregex.Literal(":"),
+                    new Coregex.Set(Set.builder().range('0', '5').build()),
+                    new Coregex.Set(Set.builder().range('0', '9').build())),
+                new Coregex.Literal("Z"))),
+        CoregexParser.getInstance()
+            .parse(
+                Pattern.compile(
+                    "\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d([+-][0-2]\\d:[0-5]\\d|Z)")));
   }
 }

@@ -135,9 +135,9 @@ public final class CoregexParser {
         elementaryRE = Coregex.empty();
         break;
       case '\\':
-        ch = ctx.peek(1);
+        ctx.match('\\');
+        ch = ctx.peek();
         if (!isREMetachar(ch)) {
-          ctx.match('\\');
           elementaryRE = new Coregex.Set(metachar(ctx));
           break;
         }

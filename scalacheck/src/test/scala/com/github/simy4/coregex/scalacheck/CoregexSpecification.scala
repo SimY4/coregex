@@ -19,11 +19,19 @@ package com.github.simy4.coregex.scalacheck
 import org.scalacheck.Prop.forAll
 import org.scalacheck.Properties
 
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 object CoregexSpecification extends Properties("Coregex") with CoregexInstances {
-  property("") = forAll {
+  property("should generate matching UUID string") = forAll {
     (uuid: String Matching "[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}") =>
       uuid == UUID.fromString(uuid).toString
+  }
+
+  property("should generate matching ISO-8601 date string") = forAll {
+    (iso8601Date: String Matching
+      "[12]\\d{3}-(?:0[1-9]|1[012])-(?:0[1-9]|1\\d|2[0-8])T(?:1\\d|2[0-3]):[0-5]\\d:[0-5]\\dZ") =>
+      val formatter = DateTimeFormatter.ISO_INSTANT
+      iso8601Date == formatter.format(formatter.parse(iso8601Date))
   }
 }

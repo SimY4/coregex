@@ -277,13 +277,15 @@ public abstract class Coregex implements Serializable {
       rng = rngAndNext.getKey();
       boolean next = rngAndNext.getValue();
       int quantifier = 0;
-      while (quantifier++ < min || (quantified.minLength() <= remainder && next)) {
+      while (quantifier < min
+          || (quantified.minLength() <= remainder && (-1 == max || quantifier < max) && next)) {
         Map.Entry<RNG, String> rngAndCoregex = quantified.apply(rng, remainder);
         rng = rngAndCoregex.getKey();
         String value = rngAndCoregex.getValue();
         sb.append(value);
         remainder -= value.length();
 
+        quantifier++;
         rngAndNext = rng.genBoolean();
         rng = rngAndNext.getKey();
         next = rngAndNext.getValue();

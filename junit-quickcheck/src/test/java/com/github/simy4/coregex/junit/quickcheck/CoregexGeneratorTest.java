@@ -20,6 +20,7 @@ import com.pholser.junit.quickcheck.Property;
 import com.pholser.junit.quickcheck.runner.JUnitQuickcheck;
 import org.junit.runner.RunWith;
 
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -31,6 +32,15 @@ public class CoregexGeneratorTest {
       @Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}")
           String uuid) {
     assertEquals(uuid, UUID.fromString(uuid).toString());
+  }
+
+  @Property
+  public void shouldGenerateMatchingIsoDateString(
+      @Regex(
+              "[12]\\d{3}-(?:0[1-9]|1[012])-(?:0[1-9]|1\\d|2[0-8])T(?:1\\d|2[0-3]):[0-5]\\d:[0-5]\\dZ")
+          String iso8601Date) {
+    DateTimeFormatter formatter = DateTimeFormatter.ISO_INSTANT;
+    assertEquals(iso8601Date, formatter.format(formatter.parse(iso8601Date)));
   }
 
   @Property
