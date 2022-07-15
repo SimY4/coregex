@@ -75,6 +75,6 @@ public class CoregexGenerator extends Generator<String> {
 
   @Override
   public BigDecimal magnitude(Object value) {
-    return BigDecimal.valueOf(narrow(value).length());
+    return BigDecimal.valueOf(narrow(value).length() - coregex.minLength());
   }
 }
