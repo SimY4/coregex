@@ -141,9 +141,9 @@ public abstract class Coregex implements Serializable {
 
     public Coregex simplify() {
       List<Coregex> concat = new ArrayList<>(rest.length + 1);
-      concat.add(requireNonNull(first, "first"));
+      concat.add(first);
       int idx = 0;
-      for (Coregex coregex : requireNonNull(rest, "rest")) {
+      for (Coregex coregex : rest) {
         Coregex last;
         if (coregex instanceof Literal && (last = concat.get(idx)) instanceof Literal) {
           concat.set(idx, new Literal(((Literal) last).literal + ((Literal) coregex).literal));
@@ -152,9 +152,11 @@ public abstract class Coregex implements Serializable {
           idx++;
         }
       }
-      return 1 == concat.size()
-          ? concat.get(0)
-          : new Concat(concat.get(0), concat.subList(1, concat.size()).toArray(new Coregex[0]));
+      return rest.length + 1 == concat.size()
+          ? this
+          : 1 == concat.size()
+              ? concat.get(0)
+              : new Concat(concat.get(0), concat.subList(1, concat.size()).toArray(new Coregex[0]));
     }
 
     @Override
