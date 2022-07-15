@@ -30,7 +30,7 @@ object CoregexSpecification extends Properties("Coregex") with CoregexInstances 
 
   property("should generate matching ISO-8601 date string") = forAll {
     (iso8601Date: String Matching
-      "[12]\\d{3}-(?:0[1-9]|1[012])-(?:0[1-9]|1\\d|2[0-8])T(?:1\\d|2[0-3]):[0-5]\\d:[0-5]\\dZ") =>
+      "[12]\\d{3}-(?:0[1-9]|1[012])-(?:0[1-9]|1\\d|2[0-8])T(?:1\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d{2}[1-9])?Z") =>
       val formatter = DateTimeFormatter.ISO_INSTANT
       iso8601Date == formatter.format(formatter.parse(iso8601Date))
   }

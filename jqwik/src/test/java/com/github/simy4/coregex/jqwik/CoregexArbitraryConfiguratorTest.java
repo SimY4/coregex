@@ -36,7 +36,7 @@ class CoregexArbitraryConfiguratorTest {
   void shouldGenerateMatchingIsoDateString(
       @ForAll
           @Regex(
-              "[12]\\d{3}-(?:0[1-9]|1[012])-(?:0[1-9]|1\\d|2[0-8])T(?:1\\d|2[0-3]):[0-5]\\d:[0-5]\\dZ")
+              "[12]\\d{3}-(?:0[1-9]|1[012])-(?:0[1-9]|1\\d|2[0-8])T(?:1\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d{2}[1-9])?Z")
           String iso8601Date) {
     DateTimeFormatter formatter = DateTimeFormatter.ISO_INSTANT;
     assertEquals(iso8601Date, formatter.format(formatter.parse(iso8601Date)));
