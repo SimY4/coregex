@@ -152,7 +152,9 @@ public abstract class Coregex implements Serializable {
           idx++;
         }
       }
-      return 1 == concat.size() ? concat.get(0) : new Concat(concat.get(0), concat.subList(1, concat.size()).toArray(new Coregex[0]));
+      return 1 == concat.size()
+          ? concat.get(0)
+          : new Concat(concat.get(0), concat.subList(1, concat.size()).toArray(new Coregex[0]));
     }
 
     @Override
