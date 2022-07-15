@@ -70,12 +70,22 @@ public abstract class Coregex implements Serializable {
   public static final class Concat extends Coregex {
     private static final long serialVersionUID = 1L;
 
-    private final Coregex first;
-    private final Coregex[] rest;
+    private final Coregex[] concat;
 
     public Concat(Coregex first, Coregex... rest) {
-      this.first = requireNonNull(first, "first");
-      this.rest = Arrays.copyOf(rest, rest.length);
+      List<Coregex> concat = new ArrayList<>(rest.length + 1);
+      concat.add(requireNonNull(first, "first"));
+      int idx = 0;
+      for (Coregex coregex : requireNonNull(rest, "rest")) {
+        Coregex last;
+        if (coregex instanceof Literal && (last = concat.get(idx)) instanceof Literal) {
+          concat.set(idx, new Literal(((Literal) last).literal + ((Literal) coregex).literal));
+        } else {
+          concat.add(coregex);
+          idx++;
+        }
+      }
+      this.concat = concat.toArray(new Coregex[0]);
     }
 
     @Override
@@ -84,24 +94,22 @@ public abstract class Coregex implements Serializable {
         throw new IllegalStateException(
             "remainder: " + remainder + " has to be greater than " + minLength());
       }
-      StringBuilder sb = new StringBuilder(minLength() + 10);
-      Coregex chunk = first;
-      int i = 0;
-      do {
+      StringBuilder sb = new StringBuilder(minLength() + 16);
+      for (Coregex coregex : concat) {
         Map.Entry<RNG, String> rngAndCoregex =
-            chunk.apply(rng, remainder - minLength() + chunk.minLength());
+            coregex.apply(rng, remainder - minLength() + coregex.minLength());
         rng = rngAndCoregex.getKey();
         String value = rngAndCoregex.getValue();
         sb.append(value);
-        remainder -= (value.length() - chunk.minLength());
-      } while (i < rest.length && (chunk = rest[i++]) != null);
+        remainder -= (value.length() - coregex.minLength());
+      }
       return new AbstractMap.SimpleEntry<>(rng, sb.toString());
     }
 
     @Override
     public int minLength() {
-      int min = first.minLength();
-      for (Coregex coregex : rest) {
+      int min = 0;
+      for (Coregex coregex : concat) {
         min += coregex.minLength();
       }
       return min;
@@ -109,11 +117,8 @@ public abstract class Coregex implements Serializable {
 
     @Override
     public int maxLength() {
-      int sum = first.maxLength();
-      if (-1 == sum) {
-        return sum;
-      }
-      for (Coregex coregex : rest) {
+      int sum = 0;
+      for (Coregex coregex : concat) {
         int max = coregex.maxLength();
         if (-1 == max) {
           return max;
@@ -125,18 +130,15 @@ public abstract class Coregex implements Serializable {
 
     @Override
     int weight() {
-      int weight = first.weight();
-      for (Coregex coregex : rest) {
+      int weight = 0;
+      for (Coregex coregex : concat) {
         weight += coregex.weight();
       }
-      return weight / (rest.length + 1);
+      return (0 == concat.length ? 0 : weight / concat.length);
     }
 
     public List<Coregex> concat() {
-      List<Coregex> concat = new ArrayList<>(rest.length + 1);
-      concat.add(first);
-      concat.addAll(Arrays.asList(rest));
-      return concat;
+      return Arrays.asList(concat);
     }
 
     @Override
@@ -148,21 +150,18 @@ public abstract class Coregex implements Serializable {
         return false;
       }
       Concat concat = (Concat) o;
-      return first.equals(concat.first) && Arrays.equals(rest, concat.rest);
+      return Arrays.equals(this.concat, concat.concat);
     }
 
     @Override
     public int hashCode() {
-      int result = first.hashCode();
-      result = 31 * result + Arrays.hashCode(rest);
-      return result;
+      return Arrays.hashCode(concat);
     }
 
     @Override
     public String toString() {
       StringBuilder sb = new StringBuilder();
-      sb.append(first.toString());
-      for (Coregex coregex : rest) {
+      for (Coregex coregex : concat) {
         sb.append(coregex.toString());
       }
       return sb.toString();
@@ -325,24 +324,36 @@ public abstract class Coregex implements Serializable {
     }
 
     @Override
+    @SuppressWarnings("fallthrough")
     public String toString() {
       StringBuilder string = new StringBuilder(quantified.toString());
-      if (-1 == max) {
-        switch (min) {
-          case 0:
-            string.append('*');
+      switch (max) {
+        case -1:
+          switch (min) {
+            case 0:
+              string.append('*');
+              break;
+            case 1:
+              string.append('+');
+              break;
+            default:
+              string.append('{').append(min).append(",}");
+              break;
+          }
+          break;
+        case 1:
+          if (min == 0) {
+            string.append('?');
             break;
-          case 1:
-            string.append('+');
-            break;
-          default:
-            string.append('{').append(min).append(",}");
-            break;
-        }
-      } else if (min == max) {
-        string.append('{').append(min).append('}');
-      } else {
-        string.append('{').append(min).append(',').append(max).append('}');
+          }
+          // fall through
+        default:
+          if (min == max) {
+            string.append('{').append(min).append('}');
+          } else {
+            string.append('{').append(min).append(',').append(max).append('}');
+          }
+          break;
       }
       return (greedy ? string : string.append('?')).toString();
     }

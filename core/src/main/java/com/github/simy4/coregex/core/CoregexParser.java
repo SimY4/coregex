@@ -33,11 +33,11 @@ public final class CoregexParser {
       return Coregex.empty();
     }
     Context ctx = new Context(regex);
-    Coregex regexGen = RE(ctx);
+    Coregex coregex = RE(ctx);
     if (ctx.hasMoreElements()) {
-      regexGen = ctx.error("EOL");
+      coregex = ctx.error("EOL");
     }
-    return regexGen;
+    return coregex;
   }
 
   private Coregex RE(Context ctx) {
@@ -143,38 +143,11 @@ public final class CoregexParser {
         }
         // fall through
       default:
-        elementaryRE = literal(ctx);
+        ctx.match(ch);
+        elementaryRE = new Coregex.Literal(String.valueOf(ch));
         break;
     }
     return elementaryRE;
-  }
-
-  @SuppressWarnings("fallthrough")
-  private Coregex literal(Context ctx) {
-    StringBuilder literal = new StringBuilder();
-    do {
-      char ch = ctx.peek();
-      switch (ch) {
-        case '.':
-        case '[':
-        case '(':
-        case '^':
-        case '$':
-          return new Coregex.Literal(literal.toString());
-        case '\\':
-          ch = ctx.peek(1);
-          if (!isREMetachar(ch)) {
-            return new Coregex.Literal(literal.toString());
-          }
-          ctx.match('\\');
-          // fall through
-        default:
-          ctx.match(ch);
-          literal.append(ch);
-          break;
-      }
-    } while (ctx.hasMoreElements());
-    return new Coregex.Literal(literal.toString());
   }
 
   private Set set(Context ctx) {
@@ -307,7 +280,7 @@ public final class CoregexParser {
         break;
       case 's':
         ctx.match('s');
-        metachar.set(' ', '\t', '\r', '\n');
+        metachar.set(' ', '\t');
         break;
       default:
         ctx.error("metacharacter \\" + ch + " is not supported");
@@ -411,13 +384,14 @@ public final class CoregexParser {
       char[] cursor = new char[this.cursor];
       Arrays.fill(cursor, ' ');
       cursor[cursor.length - 1] = '^';
+      String actual = hasMoreElements() ? String.valueOf(regex.charAt(this.cursor)) : "<EOL>";
       String message =
           String.join(
               System.lineSeparator(),
               "Unable to parse regex:",
               regex,
               new String(cursor),
-              "Expected: '" + expected + "' Actual: '" + regex.charAt(this.cursor) + "'");
+              "Expected: " + expected + " Actual: " + actual);
       throw new IllegalArgumentException(message);
     }
 

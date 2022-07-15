@@ -59,6 +59,46 @@ public class CoregexParserTest {
                     "[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}")));
   }
 
+  @Test
+  public void shouldParseURLRegex() {
+    assertEquals(
+        new Coregex.Concat(
+            new Coregex.Literal(""),
+            new Coregex.Union(
+                new Coregex.Concat(
+                    new Coregex.Literal("http"),
+                    new Coregex.Quantified(new Coregex.Literal("s"), 0, 1, true)),
+                new Coregex.Concat(new Coregex.Literal("ftp")),
+                new Coregex.Concat(new Coregex.Literal("file"))),
+            new Coregex.Literal("://"),
+            new Coregex.Quantified(
+                new Coregex.Set(
+                    Set.builder()
+                        .single('-')
+                        .range('a', 'z')
+                        .range('A', 'Z')
+                        .range('0', '9')
+                        .set(
+                            '+', '&', '@', '#', '/', '%', '?', '=', '~', '_', '|', '!', ':', ',',
+                            '.', ';')
+                        .build()),
+                0,
+                -1,
+                true),
+            new Coregex.Set(
+                Set.builder()
+                    .single('-')
+                    .range('a', 'z')
+                    .range('A', 'Z')
+                    .range('0', '9')
+                    .set('+', '&', '@', '#', '/', '%', '=', '~', '_', '|')
+                    .build())),
+        CoregexParser.getInstance()
+            .parse(
+                Pattern.compile(
+                    "^(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]")));
+  }
+
   @Property
   @Ignore
   public void shouldParse(@From(CoregexGenerator.class) Coregex coregex) {

@@ -21,6 +21,8 @@ import java.util.BitSet;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
+import static java.util.Objects.requireNonNull;
+
 public final class Set implements Serializable {
   private static final long serialVersionUID = 1L;
 
@@ -102,7 +104,7 @@ public final class Set implements Serializable {
     }
 
     public Builder set(Set set) {
-      chars.or(set.chars);
+      chars.or(requireNonNull(set, "set").chars);
       description.append(set);
       return this;
     }
