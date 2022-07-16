@@ -21,6 +21,7 @@ import com.github.simy4.coregex.core.rng.RandomRNG
 import org.scalacheck.{ Arbitrary, Gen, Shrink }
 
 import java.util.regex.Pattern
+import scala.annotation.nowarn
 
 trait CoregexInstances {
   type Matching[A >: Null <: String, Regex >: Null <: String with Singleton] <: A
@@ -31,6 +32,7 @@ trait CoregexInstances {
   ](implicit regex: ValueOf[Regex]): Arbitrary[Matching[A, Regex]] =
     Arbitrary(CoregexGen(Pattern.compile(regex.value)).asInstanceOf[Gen[Matching[A, Regex]]])
 
+  @nowarn("cat=deprecation")
   implicit def shrinkInputStringMatchingRegexStringWithSingleton[
     A >: Null <: String,
     Regex >: Null <: String with Singleton
