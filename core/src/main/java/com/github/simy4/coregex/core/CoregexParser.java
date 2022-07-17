@@ -137,7 +137,10 @@ public final class CoregexParser {
       case '\\':
         ctx.match('\\');
         ch = ctx.peek();
-        if (!isREMetachar(ch)) {
+        if ('Q' == ch) {
+          elementaryRE = quoted(ctx);
+          break;
+        } else if (!isREMetachar(ch)) {
           elementaryRE = new Coregex.Set(metachar(ctx));
           break;
         }
@@ -148,6 +151,17 @@ public final class CoregexParser {
         break;
     }
     return elementaryRE;
+  }
+
+  private Coregex quoted(Context ctx) {
+    ctx.match('Q');
+    StringBuilder literal = new StringBuilder();
+    do {
+      literal.append(ctx.takeWhile(ch -> '\\' != ch));
+      ctx.match('\\');
+    } while ('E' != ctx.peek() && (literal.append('\\') != null));
+    ctx.match('E');
+    return new Coregex.Literal(literal.toString());
   }
 
   private Set set(Context ctx) {

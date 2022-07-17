@@ -127,4 +127,14 @@ public class CoregexParserTest {
                 Pattern.compile(
                     "\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d([+-][0-2]\\d:[0-5]\\d|Z)")));
   }
+
+  @Test
+  public void shouldParseQuotedPattern() {
+    assertEquals(
+        new Coregex.Literal("whatever"),
+        CoregexParser.getInstance().parse(Pattern.compile(Pattern.quote("whatever"))));
+    assertEquals(
+        new Coregex.Literal("double\\Q\\Equoted"),
+        CoregexParser.getInstance().parse(Pattern.compile(Pattern.quote("double\\Q\\Equoted"))));
+  }
 }
