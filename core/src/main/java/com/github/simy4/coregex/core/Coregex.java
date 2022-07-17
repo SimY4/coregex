@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.StringJoiner;
+import java.util.regex.Pattern;
 
 import static java.util.Objects.requireNonNull;
 
@@ -245,7 +246,7 @@ public abstract class Coregex implements Serializable {
 
     @Override
     public String toString() {
-      return literal.replaceAll("[.\\[(^$\\\\]", "\\\\$0");
+      return -1 == literal.indexOf('\\') ? literal : Pattern.quote(literal);
     }
   }
 
