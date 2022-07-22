@@ -216,7 +216,8 @@ public class CoregexTest {
       assertTrue(
           generated + " in " + union,
           Stream.concat(Stream.of(first), rest.stream())
-              .map(coregex -> coregex.generate(nextRng))
+              .filter(coregex -> coregex.minLength() <= length)
+              .map(coregex -> coregex.sized(length).generate(nextRng))
               .anyMatch(generated::equals));
     }
 
