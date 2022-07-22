@@ -28,6 +28,7 @@ import org.junit.runner.RunWith;
 
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -210,6 +211,13 @@ public class CoregexTest {
               + ") <= "
               + length,
           union.minLength() <= generated.length() && generated.length() <= length);
+
+      RNG nextRng = rng.genLong().getKey(); // burn one
+      assertTrue(
+          generated + " in " + union,
+          Stream.concat(Stream.of(first), rest.stream())
+              .map(coregex -> coregex.generate(nextRng))
+              .anyMatch(generated::equals));
     }
 
     @Property
