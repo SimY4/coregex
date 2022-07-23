@@ -47,11 +47,11 @@ public abstract class Coregex implements Serializable {
 
   private Coregex() {}
 
-  protected abstract Map.Entry<RNG, String> apply(RNG rng, int remainder);
+  protected abstract Pair<RNG, String> apply(RNG rng, int remainder);
 
   public String generate(RNG rng) {
     int remainder = -1 == maxLength() ? Integer.MAX_VALUE - 2 : maxLength();
-    return apply(requireNonNull(rng, "rng"), remainder).getValue();
+    return apply(requireNonNull(rng, "rng"), remainder).getSecond();
   }
 
   public final Coregex quantify(int min, int max, boolean greedy) {
@@ -80,7 +80,7 @@ public abstract class Coregex implements Serializable {
     }
 
     @Override
-    protected Map.Entry<RNG, String> apply(RNG rng, int remainder) {
+    protected Pair<RNG, String> apply(RNG rng, int remainder) {
       if (remainder < minLength()) {
         throw new IllegalStateException(
             "remainder: " + remainder + " has to be greater than " + minLength());
@@ -89,14 +89,14 @@ public abstract class Coregex implements Serializable {
       Coregex chunk = first;
       int i = 0;
       do {
-        Map.Entry<RNG, String> rngAndCoregex =
+        Pair<RNG, String> rngAndCoregex =
             chunk.apply(rng, remainder - minLength() + chunk.minLength());
-        rng = rngAndCoregex.getKey();
-        String value = rngAndCoregex.getValue();
+        rng = rngAndCoregex.getFirst();
+        String value = rngAndCoregex.getSecond();
         sb.append(value);
         remainder -= (value.length() - chunk.minLength());
       } while (i < rest.length && (chunk = rest[i++]) != null);
-      return new AbstractMap.SimpleEntry<>(rng, sb.toString());
+      return new Pair<>(rng, sb.toString());
     }
 
     @Override
@@ -200,12 +200,12 @@ public abstract class Coregex implements Serializable {
     }
 
     @Override
-    protected Map.Entry<RNG, String> apply(RNG rng, int remainder) {
+    protected Pair<RNG, String> apply(RNG rng, int remainder) {
       if (remainder < minLength()) {
         throw new IllegalStateException(
             "remainder: " + remainder + " has to be greater than " + minLength());
       }
-      return new AbstractMap.SimpleEntry<>(rng, literal);
+      return new Pair<>(rng, literal);
     }
 
     @Override
@@ -270,30 +270,30 @@ public abstract class Coregex implements Serializable {
     }
 
     @Override
-    protected Map.Entry<RNG, String> apply(RNG rng, int remainder) {
+    protected Pair<RNG, String> apply(RNG rng, int remainder) {
       if (remainder < minLength()) {
         throw new IllegalStateException(
             "remainder: " + remainder + " has to be greater than " + minLength());
       }
       StringBuilder sb = new StringBuilder(minLength() + 16);
-      Map.Entry<RNG, Boolean> rngAndNext = rng.genBoolean();
-      rng = rngAndNext.getKey();
-      boolean next = rngAndNext.getValue();
+      Pair<RNG, Boolean> rngAndNext = rng.genBoolean();
+      rng = rngAndNext.getFirst();
+      boolean next = rngAndNext.getSecond();
       int quantifier = 0;
       while (quantifier < min
           || (quantified.minLength() <= remainder && (-1 == max || quantifier < max) && next)) {
-        Map.Entry<RNG, String> rngAndCoregex = quantified.apply(rng, remainder);
-        rng = rngAndCoregex.getKey();
-        String value = rngAndCoregex.getValue();
+        Pair<RNG, String> rngAndCoregex = quantified.apply(rng, remainder);
+        rng = rngAndCoregex.getFirst();
+        String value = rngAndCoregex.getSecond();
         sb.append(value);
         remainder -= value.length();
 
         quantifier++;
         rngAndNext = rng.genBoolean();
-        rng = rngAndNext.getKey();
-        next = rngAndNext.getValue();
+        rng = rngAndNext.getFirst();
+        next = rngAndNext.getSecond();
       }
-      return new AbstractMap.SimpleEntry<>(rng, sb.toString());
+      return new Pair<>(rng, sb.toString());
     }
 
     @Override
@@ -393,14 +393,13 @@ public abstract class Coregex implements Serializable {
     }
 
     @Override
-    protected Map.Entry<RNG, String> apply(RNG rng, int remainder) {
+    protected Pair<RNG, String> apply(RNG rng, int remainder) {
       if (remainder < minLength()) {
         throw new IllegalStateException(
             "remainder: " + remainder + " has to be greater than " + minLength());
       }
-      Map.Entry<RNG, Long> rngAndSeed = rng.genLong();
-      return new AbstractMap.SimpleEntry<>(
-          rng, String.valueOf(set.generate(rngAndSeed.getValue())));
+      Pair<RNG, Long> rngAndSeed = rng.genLong();
+      return new Pair<>(rng, String.valueOf(set.generate(rngAndSeed.getSecond())));
     }
 
     @Override
@@ -461,7 +460,7 @@ public abstract class Coregex implements Serializable {
     }
 
     @Override
-    protected Map.Entry<RNG, String> apply(RNG rng, int remainder) {
+    protected Pair<RNG, String> apply(RNG rng, int remainder) {
       if (remainder < minLength()) {
         throw new IllegalArgumentException(
             "remainder: " + remainder + " has to be greater than " + minLength());
@@ -471,7 +470,7 @@ public abstract class Coregex implements Serializable {
 
     @Override
     public String generate(RNG rng) {
-      return apply(requireNonNull(rng, "rng"), size).getValue();
+      return apply(requireNonNull(rng, "rng"), size).getSecond();
     }
 
     @Override
@@ -532,7 +531,7 @@ public abstract class Coregex implements Serializable {
     }
 
     @Override
-    protected Map.Entry<RNG, String> apply(RNG rng, int remainder) {
+    protected Pair<RNG, String> apply(RNG rng, int remainder) {
       List<Coregex> fits = new ArrayList<>(rest.length + 1);
       int weight = 0;
       if (first.minLength() <= remainder) {
@@ -550,9 +549,9 @@ public abstract class Coregex implements Serializable {
             "remainder: " + remainder + " has to be greater than " + minLength());
       }
 
-      Map.Entry<RNG, Integer> rngAndWeightedSeed = rng.genInteger(0, weight);
-      rng = rngAndWeightedSeed.getKey();
-      int sample = rngAndWeightedSeed.getValue();
+      Pair<RNG, Integer> rngAndWeightedSeed = rng.genInteger(0, weight);
+      rng = rngAndWeightedSeed.getFirst();
+      int sample = rngAndWeightedSeed.getSecond();
       int threshold = 0;
       for (Coregex coregex : fits) {
         threshold += coregex.weight();

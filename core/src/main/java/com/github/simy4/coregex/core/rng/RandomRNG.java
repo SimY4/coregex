@@ -16,11 +16,10 @@
 
 package com.github.simy4.coregex.core.rng;
 
+import com.github.simy4.coregex.core.Pair;
 import com.github.simy4.coregex.core.RNG;
 
 import java.io.Serializable;
-import java.util.AbstractMap;
-import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -38,28 +37,28 @@ public class RandomRNG implements RNG, Serializable {
   }
 
   @Override
-  public Map.Entry<RNG, Boolean> genBoolean() {
+  public Pair<RNG, Boolean> genBoolean() {
     Random rng = new Random(seed);
-    return new AbstractMap.SimpleEntry<>(new RandomRNG(rng.nextLong()), rng.nextBoolean());
+    return new Pair<>(new RandomRNG(rng.nextLong()), rng.nextBoolean());
   }
 
   @Override
   @SuppressWarnings("OptionalGetWithoutIsPresent")
-  public Map.Entry<RNG, Integer> genInteger(int startInc, int endInc) {
+  public Pair<RNG, Integer> genInteger(int startInc, int endInc) {
     if (startInc > endInc) {
       throw new IllegalArgumentException(
           "startInc: " + startInc + " should be <= than endInc: " + endInc);
     } else if (startInc == endInc) {
-      return new AbstractMap.SimpleEntry<>(this, startInc);
+      return new Pair<>(this, startInc);
     }
     Random rng = new Random(seed);
-    return new AbstractMap.SimpleEntry<>(
+    return new Pair<>(
         new RandomRNG(rng.nextLong()), rng.ints(1, startInc, endInc + 1).findFirst().getAsInt());
   }
 
   @Override
-  public Map.Entry<RNG, Long> genLong() {
+  public Pair<RNG, Long> genLong() {
     Random rng = new Random(seed);
-    return new AbstractMap.SimpleEntry<>(new RandomRNG(rng.nextLong()), rng.nextLong());
+    return new Pair<>(new RandomRNG(rng.nextLong()), rng.nextLong());
   }
 }

@@ -212,7 +212,7 @@ public class CoregexTest {
               + length,
           union.minLength() <= generated.length() && generated.length() <= length);
 
-      RNG nextRng = rng.genLong().getKey(); // burn one
+      RNG nextRng = rng.genLong().getFirst(); // burn one
       assertTrue(
           generated + " in " + union,
           Stream.concat(Stream.of(first), rest.stream())
