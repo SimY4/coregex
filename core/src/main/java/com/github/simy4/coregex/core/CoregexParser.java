@@ -288,13 +288,48 @@ public final class CoregexParser {
         ctx.match('d');
         metachar.range('0', '9');
         break;
+      case 'D':
+        ctx.match('D');
+        metachar.range('0', '9').negate();
+        break;
       case 'w':
         ctx.match('w');
         metachar.range('0', '9').range('a', 'z').range('A', 'Z').single('_');
         break;
+      case 'W':
+        ctx.match('W');
+        metachar.range('0', '9').range('a', 'z').range('A', 'Z').single('_').negate();
+        break;
       case 's':
         ctx.match('s');
         metachar.set(' ', '\t');
+        break;
+      case 'p':
+        ctx.match('p');
+        ctx.match('{');
+        String posix = ctx.takeWhile(pos -> '}' != pos);
+        switch (posix) {
+          case "Lower":
+            metachar.range('a', 'z');
+            break;
+          case "Upper":
+            metachar.range('A', 'Z');
+            break;
+          case "Digit":
+            metachar.range('0', '9');
+            break;
+          case "Alpha":
+            metachar.range('a', 'z').range('A', 'Z');
+            break;
+          case "Alnum":
+            metachar.range('a', 'z').range('A', 'Z').range('0', '9');
+            break;
+          case "Space":
+          case "Blank":
+            metachar.set(' ', '\t');
+            break;
+        }
+        ctx.match('}');
         break;
       default:
         ctx.error("metacharacter \\" + ch + " is not supported");
