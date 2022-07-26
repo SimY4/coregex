@@ -328,6 +328,9 @@ public final class CoregexParser {
           case "Blank":
             metachar.set(' ', '\t');
             break;
+          default:
+            ctx.error("posix char class \\" + posix + " is not supported");
+            break;
         }
         ctx.match('}');
         break;
