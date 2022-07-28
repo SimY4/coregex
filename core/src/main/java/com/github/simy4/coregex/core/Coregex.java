@@ -109,8 +109,9 @@ public abstract class Coregex implements Serializable {
    * @see Sized
    * @throws IllegalArgumentException if size is lesser than {@link #minLength()}
    */
-  public Coregex sized(int size) {
-    return new Sized(this, size);
+  public final Coregex sized(int size) {
+    int maxLength = maxLength();
+    return -1 != maxLength && maxLength <= size ? this : new Sized(this, size);
   }
 
   /** @return minimal possible length of all generated strings of this regex */
@@ -597,12 +598,6 @@ public abstract class Coregex implements Serializable {
     @Override
     int weight() {
       return sized.weight();
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public Coregex sized(int size) {
-      return new Sized(sized, Math.min(size, this.size));
     }
 
     /** @return sized regex */
