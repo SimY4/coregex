@@ -43,6 +43,17 @@ import static java.util.Objects.requireNonNull;
 public abstract class Coregex implements Serializable {
   private static final long serialVersionUID = 1L;
 
+  /**
+   * Constructs {@link Coregex} from provided {@link Pattern} instance.
+   *
+   * @param pattern regular expression to parse.
+   * @return parsed coregex instance.
+   * @throws UnsupportedOperationException if provided pattern constructs are not yet supported.
+   */
+  public static Coregex from(Pattern pattern) {
+    return CoregexParser.instance.parse(pattern);
+  }
+
   /** @return predefined constructor for regex that matches any character. */
   public static Coregex any() {
     return new Set(com.github.simy4.coregex.core.Set.ALL);

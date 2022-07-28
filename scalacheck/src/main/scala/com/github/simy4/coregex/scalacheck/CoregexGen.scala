@@ -17,7 +17,7 @@
 package com.github.simy4.coregex
 package scalacheck
 
-import core.{ Coregex, CoregexParser }
+import core.Coregex
 import core.rng.RandomRNG
 import org.scalacheck.Gen
 
@@ -27,7 +27,7 @@ import scala.util.matching.Regex
 object CoregexGen {
   def apply(regex: Regex): Gen[String] = apply(regex.pattern)
 
-  def apply(regex: Pattern): Gen[String] = apply(CoregexParser.getInstance().parse(regex))
+  def apply(regex: Pattern): Gen[String] = apply(Coregex.from(regex))
 
   def apply(coregex: Coregex): Gen[String] =
     for {

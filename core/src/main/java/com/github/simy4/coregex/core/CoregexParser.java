@@ -22,11 +22,22 @@ import java.util.List;
 import java.util.function.IntPredicate;
 import java.util.regex.Pattern;
 
+/**
+ * Coregex parser.
+ *
+ * @author Alex Simkin
+ * @since 0.1.0
+ */
 public final class CoregexParser {
-  public static CoregexParser getInstance() {
-    return new CoregexParser();
-  }
+  static final CoregexParser instance = new CoregexParser();
 
+  /**
+   * Constructs {@link Coregex} from provided {@link Pattern} instance.
+   *
+   * @param pattern regular expression to parse.
+   * @return parsed coregex instance.
+   * @throws UnsupportedOperationException if provided pattern constructs are not yet supported.
+   */
   public Coregex parse(Pattern pattern) {
     String regex = pattern.pattern();
     if (regex.isEmpty()) {

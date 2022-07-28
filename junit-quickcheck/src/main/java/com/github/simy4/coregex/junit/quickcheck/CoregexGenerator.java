@@ -17,7 +17,6 @@
 package com.github.simy4.coregex.junit.quickcheck;
 
 import com.github.simy4.coregex.core.Coregex;
-import com.github.simy4.coregex.core.CoregexParser;
 import com.github.simy4.coregex.core.RNG;
 import com.github.simy4.coregex.core.rng.RandomRNG;
 import com.pholser.junit.quickcheck.generator.GenerationStatus;
@@ -42,12 +41,12 @@ public class CoregexGenerator extends Generator<String> {
   public CoregexGenerator(Pattern regex) {
     super(String.class);
     this.regex = regex;
-    this.coregex = CoregexParser.getInstance().parse(regex);
+    this.coregex = Coregex.from(regex);
   }
 
   public void configure(Regex regex) {
     this.regex = Pattern.compile(regex.value());
-    this.coregex = CoregexParser.getInstance().parse(this.regex);
+    this.coregex = Coregex.from(this.regex);
   }
 
   @Override

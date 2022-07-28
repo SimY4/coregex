@@ -16,10 +16,28 @@
 
 package com.github.simy4.coregex.core;
 
+/**
+ * Random generator contract.
+ *
+ * <p><em>Implementation should be pure. Calling an instance 1 or more times should always produce
+ * the same result</em>
+ *
+ * @author Alex Simkin
+ * @since 0.1.0
+ */
 public interface RNG {
+  /** @return random boolean value. */
   Pair<RNG, Boolean> genBoolean();
 
+  /**
+   * Generates a random int value within closed range.
+   *
+   * @param startInc inclusive start value.
+   * @param endInc inclusive end value.
+   * @return random int value.
+   */
   Pair<RNG, Integer> genInteger(int startInc, int endInc);
 
+  /** @return random long value. */
   Pair<RNG, Long> genLong();
 }
