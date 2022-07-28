@@ -70,6 +70,7 @@ public abstract class Coregex implements Serializable {
    * Internal sampler of random strings.
    *
    * @param rng random number generator to use
+   * @param remainder remaining permitted length of the string to be generated
    * @return next random number generator state with sampled string
    */
   protected abstract Pair<RNG, String> apply(RNG rng, int remainder);
@@ -80,8 +81,9 @@ public abstract class Coregex implements Serializable {
    * @param rng random number generator to use
    * @return sampled string
    */
-  public String generate(RNG rng) {
-    int remainder = -1 == maxLength() ? Integer.MAX_VALUE - 2 : maxLength();
+  public final String generate(RNG rng) {
+    int remainder = maxLength();
+    remainder = -1 == remainder ? Integer.MAX_VALUE - 2 : remainder;
     return apply(requireNonNull(rng, "rng"), remainder).getSecond();
   }
 
@@ -208,7 +210,7 @@ public abstract class Coregex implements Serializable {
       return concat;
     }
 
-    /** @return underlying regexes in order of concatenation. */
+    /** @return simplified and more memory efficient version of this regex. */
     public Coregex simplify() {
       List<Coregex> concat = new ArrayList<>(rest.length + 1);
       concat.add(first);
@@ -577,12 +579,6 @@ public abstract class Coregex implements Serializable {
             "remainder: " + remainder + " has to be greater than " + minLength());
       }
       return sized.apply(rng, maxLength());
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public String generate(RNG rng) {
-      return apply(requireNonNull(rng, "rng"), size).getSecond();
     }
 
     /** {@inheritDoc} */
