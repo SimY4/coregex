@@ -72,6 +72,7 @@ public abstract class Coregex implements Serializable {
    * @param rng random number generator to use
    * @param remainder remaining permitted length of the string to be generated
    * @return next random number generator state with sampled string
+   * @throws IllegalArgumentException if remainder is lesser than {@link #minLength()}
    */
   protected abstract Pair<RNG, String> apply(RNG rng, int remainder);
 
@@ -528,6 +529,7 @@ public abstract class Coregex implements Serializable {
     /**
      * @param sized sized regex
      * @param size preferred size of generated string
+     * @throws IllegalArgumentException if size is lesser than {@link #minLength()}
      */
     public Sized(Coregex sized, int size) {
       this.sized = requireNonNull(sized, "sized");
@@ -626,9 +628,9 @@ public abstract class Coregex implements Serializable {
             "remainder: " + remainder + " has to be greater than " + minLength());
       }
 
-      Pair<RNG, Integer> rngAndWeightedSeed = rng.genInteger(fits.size());
-      rng = rngAndWeightedSeed.getFirst();
-      int index = rngAndWeightedSeed.getSecond();
+      Pair<RNG, Integer> rngAndIndex = rng.genInteger(fits.size());
+      rng = rngAndIndex.getFirst();
+      int index = rngAndIndex.getSecond();
       return fits.get(index).apply(rng, remainder);
     }
 
