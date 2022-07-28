@@ -51,7 +51,7 @@ public abstract class Coregex implements Serializable {
    * @throws UnsupportedOperationException if provided pattern constructs are not yet supported.
    */
   public static Coregex from(Pattern pattern) {
-    return CoregexParser.instance.parse(pattern);
+    return CoregexParser.getInstance().parse(pattern);
   }
 
   /** @return predefined constructor for regex that matches any character. */

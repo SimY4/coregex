@@ -29,7 +29,12 @@ import java.util.regex.Pattern;
  * @since 0.1.0
  */
 public final class CoregexParser {
-  static final CoregexParser instance = new CoregexParser();
+  private static final CoregexParser instance = new CoregexParser();
+
+  /** @return coregex parser singleton instance. */
+  public static CoregexParser getInstance() {
+    return instance;
+  }
 
   /**
    * Constructs {@link Coregex} from provided {@link Pattern} instance.
