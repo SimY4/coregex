@@ -23,9 +23,27 @@ import java.util.stream.IntStream;
 
 import static java.util.Objects.requireNonNull;
 
+/**
+ * Data representation of a set of characters AKA regular expression's char classes.
+ *
+ * @see Set.Builder
+ * @author Alex Simkin
+ * @since 0.1.0
+ */
 public final class Set implements Serializable {
   private static final long serialVersionUID = 1L;
 
+  static final Set ALL =
+      builder().range(Character.MIN_VALUE, (char) (Character.MIN_SURROGATE - 1)).build();
+
+  /**
+   * Creates an instance of {@link Set} builder.
+   *
+   * <p><em>This builder is not thread-safe and generally should not be stored in a field or
+   * collection, but instead used immediately to create instances.</em>
+   *
+   * @return staged set builder instance
+   */
   public static Builder builder() {
     return new Builder(256);
   }
@@ -38,6 +56,12 @@ public final class Set implements Serializable {
     this.description = description;
   }
 
+  /**
+   * Randomly selects one character in this set based on provided seed.
+   *
+   * @param seed seed to use for random selection
+   * @return selected character
+   */
   public char generate(long seed) {
     return (char)
         stream()
@@ -46,10 +70,12 @@ public final class Set implements Serializable {
             .orElseThrow(() -> new IllegalStateException("empty set: " + description));
   }
 
+  /** @return number of characters in this set. */
   public int weight() {
     return chars.cardinality();
   }
 
+  /** @return all characters in this set as a stream. */
   public IntStream stream() {
     return chars.stream();
   }
@@ -76,6 +102,13 @@ public final class Set implements Serializable {
     return description;
   }
 
+  /**
+   * Set of characters (AKA regular expression's char classes) builder.
+   *
+   * @see Set
+   * @author Alex Simkin
+   * @since 0.1.0
+   */
   public static final class Builder {
     private final BitSet chars;
     private final StringBuilder description = new StringBuilder();
@@ -84,6 +117,13 @@ public final class Set implements Serializable {
       chars = new BitSet(size);
     }
 
+    /**
+     * Adds a character range to this set.
+     *
+     * @param start first character in range
+     * @param end last character in range
+     * @return this builder instance
+     */
     public Builder range(char start, char end) {
       if (start >= end) {
         throw new IllegalArgumentException("start: " + start + " should be < end: " + end);
@@ -93,6 +133,13 @@ public final class Set implements Serializable {
       return this;
     }
 
+    /**
+     * Adds a set of characters to this set.
+     *
+     * @param first first character in set
+     * @param rest rest of characters in set
+     * @return this builder instance
+     */
     public Builder set(char first, char... rest) {
       chars.set(first);
       description.append(first);
@@ -103,24 +150,42 @@ public final class Set implements Serializable {
       return this;
     }
 
+    /**
+     * Adds a compiled set of characters to this set.
+     *
+     * @param set set of characters
+     * @return this builder instance
+     */
     public Builder set(Set set) {
       chars.or(requireNonNull(set, "set").chars);
       description.append(set);
       return this;
     }
 
+    /**
+     * Adds a single character to this set.
+     *
+     * @param ch character
+     * @return this builder instance
+     */
     public Builder single(char ch) {
       chars.set(ch);
       description.append(ch);
       return this;
     }
 
+    /**
+     * Negates this set.
+     *
+     * @return this builder instance
+     */
     public Builder negate() {
       chars.flip(0, chars.size());
       description.insert(0, '^');
       return this;
     }
 
+    /** @return compiled set */
     public Set build() {
       return new Set(chars, description.toString());
     }

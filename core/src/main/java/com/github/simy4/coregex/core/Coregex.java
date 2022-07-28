@@ -17,68 +17,121 @@
 package com.github.simy4.coregex.core;
 
 import java.io.Serializable;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.regex.Pattern;
 
 import static java.util.Objects.requireNonNull;
 
+/**
+ * Data representation of regex language.
+ *
+ * <p><em>Effectively sealed.</em>
+ *
+ * @see Coregex.Concat
+ * @see Coregex.Literal
+ * @see Coregex.Quantified
+ * @see Coregex.Set
+ * @see Coregex.Sized
+ * @see Coregex.Union
+ * @author Alex Simkin
+ * @since 0.1.0
+ */
 public abstract class Coregex implements Serializable {
   private static final long serialVersionUID = 1L;
 
-  private static final Coregex ANY =
-      new Set(
-          com.github.simy4.coregex.core.Set.builder()
-              .range(Character.MIN_VALUE, (char) (Character.MIN_SURROGATE - 1))
-              .build());
-
+  /** @return predefined constructor for regex that matches any character. */
   public static Coregex any() {
-    return ANY;
+    return new Set(com.github.simy4.coregex.core.Set.ALL);
   }
 
+  /** @return predefined constructor for empty regex. */
   public static Coregex empty() {
     return new Literal("");
   }
 
   private Coregex() {}
 
+  /**
+   * Internal sampler of random strings.
+   *
+   * @param rng random number generator to use
+   * @return next random number generator state with sampled string
+   */
   protected abstract Pair<RNG, String> apply(RNG rng, int remainder);
 
+  /**
+   * Samples one random string that matches this regex.
+   *
+   * @param rng random number generator to use
+   * @return sampled string
+   */
   public String generate(RNG rng) {
     int remainder = -1 == maxLength() ? Integer.MAX_VALUE - 2 : maxLength();
     return apply(requireNonNull(rng, "rng"), remainder).getSecond();
   }
 
+  /**
+   * Quantify this regex.
+   *
+   * @param min min number of times this regex should be repeated
+   * @param max max number of times this regex should be repeated. {@code -1} means no limit.
+   * @return quantified regex
+   * @see Quantified
+   * @throws IllegalArgumentException if min is greater than max or if min is negative or if called
+   *     on already quantified regex
+   */
   public final Coregex quantify(int min, int max, boolean greedy) {
     return 1 == min && 1 == max ? this : new Quantified(this, min, max, greedy);
   }
 
-  public final Coregex sized(int size) {
+  /**
+   * Size this regex. Generated string will be at most this long.
+   *
+   * @param size preferred size of generated string
+   * @return sized regex
+   * @see Sized
+   * @throws IllegalArgumentException if size is lesser than {@link #minLength()}
+   */
+  public Coregex sized(int size) {
     return new Sized(this, size);
   }
 
+  /** @return minimal possible length of all generated strings of this regex */
   public abstract int minLength();
 
+  /**
+   * @return maximal possible length of all generated strings of this regex. {@code -1} means no
+   *     upper limit.
+   */
   public abstract int maxLength();
 
+  /**
+   * @return weight of this regex. Used in sampling between multiple options.
+   * @see Union
+   */
   abstract int weight();
 
+  /** Sequential concatenation of regexes. */
   public static final class Concat extends Coregex {
     private static final long serialVersionUID = 1L;
 
     private final Coregex first;
     private final Coregex[] rest;
 
+    /**
+     * @param first first regex
+     * @param rest rest of regexes
+     */
     public Concat(Coregex first, Coregex... rest) {
       this.first = requireNonNull(first, "first");
       this.rest = Arrays.copyOf(rest, rest.length);
     }
 
+    /** {@inheritDoc} */
     @Override
     protected Pair<RNG, String> apply(RNG rng, int remainder) {
       if (remainder < minLength()) {
@@ -99,6 +152,7 @@ public abstract class Coregex implements Serializable {
       return new Pair<>(rng, sb.toString());
     }
 
+    /** {@inheritDoc} */
     @Override
     public int minLength() {
       int min = first.minLength();
@@ -108,6 +162,7 @@ public abstract class Coregex implements Serializable {
       return min;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int maxLength() {
       int sum = first.maxLength();
@@ -124,6 +179,7 @@ public abstract class Coregex implements Serializable {
       return sum;
     }
 
+    /** {@inheritDoc} */
     @Override
     int weight() {
       int weight = first.weight();
@@ -133,6 +189,7 @@ public abstract class Coregex implements Serializable {
       return weight / (rest.length + 1);
     }
 
+    /** @return underlying regexes in order of concatenation. */
     public List<Coregex> concat() {
       List<Coregex> concat = new ArrayList<>(rest.length + 1);
       concat.add(first);
@@ -140,6 +197,7 @@ public abstract class Coregex implements Serializable {
       return concat;
     }
 
+    /** @return underlying regexes in order of concatenation. */
     public Coregex simplify() {
       List<Coregex> concat = new ArrayList<>(rest.length + 1);
       concat.add(first);
@@ -190,15 +248,18 @@ public abstract class Coregex implements Serializable {
     }
   }
 
+  /** Literal string regex. */
   public static final class Literal extends Coregex {
     private static final long serialVersionUID = 1L;
 
     private final String literal;
 
+    /** @param literal literal */
     public Literal(String literal) {
       this.literal = requireNonNull(literal, "literal");
     }
 
+    /** {@inheritDoc} */
     @Override
     protected Pair<RNG, String> apply(RNG rng, int remainder) {
       if (remainder < minLength()) {
@@ -208,21 +269,25 @@ public abstract class Coregex implements Serializable {
       return new Pair<>(rng, literal);
     }
 
+    /** {@inheritDoc} */
     @Override
     public int minLength() {
       return literal.length();
     }
 
+    /** {@inheritDoc} */
     @Override
     public int maxLength() {
       return literal.length();
     }
 
+    /** {@inheritDoc} */
     @Override
     int weight() {
       return literal.length();
     }
 
+    /** @return literal */
     public String literal() {
       return literal;
     }
@@ -250,6 +315,7 @@ public abstract class Coregex implements Serializable {
     }
   }
 
+  /** Quantified regex. */
   public static final class Quantified extends Coregex {
     private static final long serialVersionUID = 1L;
 
@@ -258,7 +324,17 @@ public abstract class Coregex implements Serializable {
     private final int max;
     private final boolean greedy;
 
+    /**
+     * @param quantified quantified regex
+     * @param min min number of times this regex should be repeated
+     * @param max max number of times this regex should be repeated. {@code -1} means no limit.
+     * @throws IllegalArgumentException if min is greater than max or if min is negative or if
+     *     called on already quantified regex
+     */
     public Quantified(Coregex quantified, int min, int max, boolean greedy) {
+      if (quantified instanceof Quantified) {
+        throw new IllegalArgumentException("already quantified regex: " + quantified);
+      }
       this.quantified = requireNonNull(quantified, "quantified");
       if (min < 0 || (-1 != max && min > max)) {
         throw new IllegalArgumentException(
@@ -269,6 +345,7 @@ public abstract class Coregex implements Serializable {
       this.greedy = greedy;
     }
 
+    /** {@inheritDoc} */
     @Override
     protected Pair<RNG, String> apply(RNG rng, int remainder) {
       if (remainder < minLength()) {
@@ -296,29 +373,35 @@ public abstract class Coregex implements Serializable {
       return new Pair<>(rng, sb.toString());
     }
 
+    /** {@inheritDoc} */
     @Override
     public int minLength() {
       return quantified.minLength() * min;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int maxLength() {
       return -1 == max ? max : quantified.maxLength() * max;
     }
 
+    /** {@inheritDoc} */
     @Override
     int weight() {
       return quantified.weight();
     }
 
+    /** @return quantified regex */
     public Coregex quantified() {
       return quantified;
     }
 
+    /** @return min number of times this regex should be repeated */
     public int min() {
       return min;
     }
 
+    /** @return max number of times this regex should be repeated. {@code -1} means no limit. */
     public int max() {
       return max;
     }
@@ -383,15 +466,22 @@ public abstract class Coregex implements Serializable {
     }
   }
 
+  /**
+   * Character class regex.
+   *
+   * @see com.github.simy4.coregex.core.Set
+   */
   public static final class Set extends Coregex {
     private static final long serialVersionUID = 1L;
 
     private final com.github.simy4.coregex.core.Set set;
 
+    /** @param set set of characters */
     public Set(com.github.simy4.coregex.core.Set set) {
       this.set = requireNonNull(set, "set");
     }
 
+    /** {@inheritDoc} */
     @Override
     protected Pair<RNG, String> apply(RNG rng, int remainder) {
       if (remainder < minLength()) {
@@ -402,21 +492,25 @@ public abstract class Coregex implements Serializable {
       return new Pair<>(rng, String.valueOf(set.generate(rngAndSeed.getSecond())));
     }
 
+    /** {@inheritDoc} */
     @Override
     public int minLength() {
       return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int maxLength() {
       return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     int weight() {
       return set.weight();
     }
 
+    /** @return set of characters */
     public com.github.simy4.coregex.core.Set set() {
       return set;
     }
@@ -440,16 +534,21 @@ public abstract class Coregex implements Serializable {
 
     @Override
     public String toString() {
-      return ANY == this ? "." : "[" + set + ']';
+      return com.github.simy4.coregex.core.Set.ALL == set ? "." : "[" + set + ']';
     }
   }
 
+  /** Sized regex. */
   public static final class Sized extends Coregex {
     private static final long serialVersionUID = 1L;
 
     private final Coregex sized;
     private final int size;
 
+    /**
+     * @param sized sized regex
+     * @param size preferred size of generated string
+     */
     public Sized(Coregex sized, int size) {
       this.sized = requireNonNull(sized, "sized");
       if (size < sized.minLength()) {
@@ -459,6 +558,7 @@ public abstract class Coregex implements Serializable {
       this.size = size;
     }
 
+    /** {@inheritDoc} */
     @Override
     protected Pair<RNG, String> apply(RNG rng, int remainder) {
       if (remainder < minLength()) {
@@ -468,30 +568,42 @@ public abstract class Coregex implements Serializable {
       return sized.apply(rng, maxLength());
     }
 
+    /** {@inheritDoc} */
     @Override
     public String generate(RNG rng) {
       return apply(requireNonNull(rng, "rng"), size).getSecond();
     }
 
+    /** {@inheritDoc} */
     @Override
     public int minLength() {
       return Math.min(size, sized.minLength());
     }
 
+    /** {@inheritDoc} */
     @Override
     public int maxLength() {
       return -1 == sized.maxLength() ? size : Math.min(size, sized.maxLength());
     }
 
+    /** {@inheritDoc} */
     @Override
     int weight() {
       return sized.weight();
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public Coregex sized(int size) {
+      return new Sized(sized, Math.min(size, this.size));
+    }
+
+    /** @return sized regex */
     public Coregex sized() {
       return sized;
     }
 
+    /** @return preferred size of generated string */
     public int size() {
       return size;
     }
@@ -519,17 +631,23 @@ public abstract class Coregex implements Serializable {
     }
   }
 
+  /** Unification of regexes. */
   public static final class Union extends Coregex {
     private static final long serialVersionUID = 1L;
 
     private final Coregex first;
     private final Coregex[] rest;
 
+    /**
+     * @param first first regex
+     * @param rest rest of regexes
+     */
     public Union(Coregex first, Coregex... rest) {
       this.first = requireNonNull(first, "first");
       this.rest = Arrays.copyOf(rest, rest.length);
     }
 
+    /** {@inheritDoc} */
     @Override
     protected Pair<RNG, String> apply(RNG rng, int remainder) {
       List<Coregex> fits = new ArrayList<>(rest.length + 1);
@@ -562,6 +680,7 @@ public abstract class Coregex implements Serializable {
       return fits.get(fits.size() - 1).apply(rng, remainder);
     }
 
+    /** {@inheritDoc} */
     @Override
     public int minLength() {
       int min = first.minLength();
@@ -571,6 +690,7 @@ public abstract class Coregex implements Serializable {
       return min;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int maxLength() {
       int agg = first.maxLength();
@@ -587,6 +707,7 @@ public abstract class Coregex implements Serializable {
       return agg;
     }
 
+    /** {@inheritDoc} */
     @Override
     int weight() {
       int result = first.weight();
@@ -596,6 +717,7 @@ public abstract class Coregex implements Serializable {
       return result;
     }
 
+    /** @return underlying regexes forming this unification. */
     public List<Coregex> union() {
       List<Coregex> union = new ArrayList<>(rest.length + 1);
       union.add(first);
