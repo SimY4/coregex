@@ -220,7 +220,7 @@ public abstract class Coregex implements Serializable {
 
     @Override
     int weight() {
-      return 1;
+      return literal.length();
     }
 
     public String literal() {
