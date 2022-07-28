@@ -123,12 +123,6 @@ public abstract class Coregex implements Serializable {
    */
   public abstract int maxLength();
 
-  /**
-   * @return weight of this regex. Used in sampling between multiple options.
-   * @see Union
-   */
-  abstract int weight();
-
   /** Sequential concatenation of regexes. */
   public static final class Concat extends Coregex {
     private static final long serialVersionUID = 1L;
@@ -191,16 +185,6 @@ public abstract class Coregex implements Serializable {
         sum += max;
       }
       return sum;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    int weight() {
-      int weight = first.weight();
-      for (Coregex coregex : rest) {
-        weight += coregex.weight();
-      }
-      return weight / (rest.length + 1);
     }
 
     /** @return underlying regexes in order of concatenation. */
@@ -292,12 +276,6 @@ public abstract class Coregex implements Serializable {
     /** {@inheritDoc} */
     @Override
     public int maxLength() {
-      return literal.length();
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    int weight() {
       return literal.length();
     }
 
@@ -397,12 +375,6 @@ public abstract class Coregex implements Serializable {
     @Override
     public int maxLength() {
       return -1 == max ? max : quantified.maxLength() * max;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    int weight() {
-      return quantified.weight();
     }
 
     /** @return quantified regex */
@@ -518,12 +490,6 @@ public abstract class Coregex implements Serializable {
       return 1;
     }
 
-    /** {@inheritDoc} */
-    @Override
-    int weight() {
-      return set.weight();
-    }
-
     /** @return set of characters */
     public com.github.simy4.coregex.core.Set set() {
       return set;
@@ -594,12 +560,6 @@ public abstract class Coregex implements Serializable {
       return -1 == sized.maxLength() ? size : Math.min(size, sized.maxLength());
     }
 
-    /** {@inheritDoc} */
-    @Override
-    int weight() {
-      return sized.weight();
-    }
-
     /** @return sized regex */
     public Coregex sized() {
       return sized;
@@ -653,14 +613,11 @@ public abstract class Coregex implements Serializable {
     @Override
     protected Pair<RNG, String> apply(RNG rng, int remainder) {
       List<Coregex> fits = new ArrayList<>(rest.length + 1);
-      int weight = 0;
       if (first.minLength() <= remainder) {
-        weight += first.weight();
         fits.add(first);
       }
       for (Coregex coregex : rest) {
         if (coregex.minLength() <= remainder) {
-          weight += coregex.weight();
           fits.add(coregex);
         }
       }
@@ -669,17 +626,10 @@ public abstract class Coregex implements Serializable {
             "remainder: " + remainder + " has to be greater than " + minLength());
       }
 
-      Pair<RNG, Integer> rngAndWeightedSeed = rng.genInteger(0, weight);
+      Pair<RNG, Integer> rngAndWeightedSeed = rng.genInteger(fits.size());
       rng = rngAndWeightedSeed.getFirst();
-      int sample = rngAndWeightedSeed.getSecond();
-      int threshold = 0;
-      for (Coregex coregex : fits) {
-        threshold += coregex.weight();
-        if (sample < threshold) {
-          return coregex.apply(rng, remainder);
-        }
-      }
-      return fits.get(fits.size() - 1).apply(rng, remainder);
+      int index = rngAndWeightedSeed.getSecond();
+      return fits.get(index).apply(rng, remainder);
     }
 
     /** {@inheritDoc} */
@@ -707,16 +657,6 @@ public abstract class Coregex implements Serializable {
         agg = Math.max(agg, max);
       }
       return agg;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    int weight() {
-      int result = first.weight();
-      for (Coregex coregex : rest) {
-        result += coregex.weight();
-      }
-      return result;
     }
 
     /** @return underlying regexes forming this unification. */

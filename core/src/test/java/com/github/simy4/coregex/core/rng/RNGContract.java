@@ -26,16 +26,9 @@ public interface RNGContract {
   RNG rng(long seed);
 
   @Property
-  default void shouldGenerateIntInRange(int i1, int i2, long seed) {
-    int start = Math.min(i1, i2);
-    int end = Math.max(i1, i2);
-    int generated = rng(seed).genInteger(start, end).getSecond();
-    assertTrue(start + " <= " + generated + " <= " + end, start <= generated && generated <= end);
-  }
-
-  @Property
-  default void shouldGenerateIntWhenStartAndEndAreTheSame(int startAndEnd, long seed) {
-    int generated = rng(seed).genInteger(startAndEnd, startAndEnd).getSecond();
-    assertEquals(startAndEnd, generated);
+  default void shouldGenerateIntInRange(int bound, long seed) {
+    bound = Math.abs(bound);
+    int generated = rng(seed).genInteger(bound).getSecond();
+    assertTrue("0 <= " + generated + " < " + bound, 0 <= generated && generated < bound);
   }
 }

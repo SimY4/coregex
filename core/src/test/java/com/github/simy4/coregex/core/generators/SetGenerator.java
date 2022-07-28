@@ -57,7 +57,7 @@ public class SetGenerator extends Generator<Set> {
 
   @Override
   public BigDecimal magnitude(Object value) {
-    return BigDecimal.valueOf(narrow(value).weight());
+    return BigDecimal.valueOf(narrow(value).stream().count());
   }
 
   public void configure(InRange range) {

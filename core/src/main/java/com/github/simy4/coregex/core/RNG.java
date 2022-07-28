@@ -30,13 +30,12 @@ public interface RNG {
   Pair<RNG, Boolean> genBoolean();
 
   /**
-   * Generates a random int value within closed range.
+   * Generates a random int value between 0 and provided upper bound (exclusive).
    *
-   * @param startInc inclusive start value.
-   * @param endInc inclusive end value.
+   * @param bound upper bound.
    * @return random int value.
    */
-  Pair<RNG, Integer> genInteger(int startInc, int endInc);
+  Pair<RNG, Integer> genInteger(int bound);
 
   /** @return random long value. */
   Pair<RNG, Long> genLong();

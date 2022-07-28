@@ -65,14 +65,9 @@ public final class Set implements Serializable {
   public char generate(long seed) {
     return (char)
         stream()
-            .skip(Math.abs(seed % weight()))
+            .skip(Math.abs(seed % chars.cardinality()))
             .findFirst()
             .orElseThrow(() -> new IllegalStateException("empty set: " + description));
-  }
-
-  /** @return number of characters in this set. */
-  public int weight() {
-    return chars.cardinality();
   }
 
   /** @return all characters in this set as a stream. */

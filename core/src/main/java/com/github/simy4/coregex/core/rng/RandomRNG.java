@@ -43,17 +43,9 @@ public class RandomRNG implements RNG, Serializable {
   }
 
   @Override
-  @SuppressWarnings("OptionalGetWithoutIsPresent")
-  public Pair<RNG, Integer> genInteger(int startInc, int endInc) {
-    if (startInc > endInc) {
-      throw new IllegalArgumentException(
-          "startInc: " + startInc + " should be <= than endInc: " + endInc);
-    } else if (startInc == endInc) {
-      return new Pair<>(this, startInc);
-    }
+  public Pair<RNG, Integer> genInteger(int bound) {
     Random rng = new Random(seed);
-    return new Pair<>(
-        new RandomRNG(rng.nextLong()), rng.ints(1, startInc, endInc + 1).findFirst().getAsInt());
+    return new Pair<>(new RandomRNG(rng.nextLong()), rng.nextInt(bound));
   }
 
   @Override
