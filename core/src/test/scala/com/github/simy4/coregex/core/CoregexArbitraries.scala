@@ -22,7 +22,7 @@ import org.scalacheck.{ Arbitrary, Gen, Shrink }
 trait CoregexArbitraries {
   import scala.jdk.StreamConverters._
 
-  implicit def arbitraryCoregex: Arbitrary[Coregex] = Arbitrary(genCoregex())
+  implicit val arbitraryCoregex: Arbitrary[Coregex] = Arbitrary(genCoregex())
   def genCoregex(level: Int = 10, charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex] =
     if (level > 0)
       Gen.lzy(
@@ -36,7 +36,7 @@ trait CoregexArbitraries {
     else
       Gen.oneOf(genCoregexLiteral(charGen), genCoregexSet(charGen))
 
-  implicit def arbitraryCoregexConcat: Arbitrary[Coregex.Concat] = Arbitrary(genCoregexConcat())
+  implicit val arbitraryCoregexConcat: Arbitrary[Coregex.Concat] = Arbitrary(genCoregexConcat())
   def genCoregexConcat(level: Int = 10, charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex.Concat] =
     Gen.lzy(for {
       first <- genCoregex(level - 1, charGen)
@@ -44,17 +44,17 @@ trait CoregexArbitraries {
       rest  <- Gen.listOfN(size, genCoregex(level - 1, charGen))
     } yield new Coregex.Concat(first, rest: _*))
 
-  implicit def arbitraryCoregexLiteral: Arbitrary[Coregex.Literal] = Arbitrary(genCoregexLiteral())
+  implicit val arbitraryCoregexLiteral: Arbitrary[Coregex.Literal] = Arbitrary(genCoregexLiteral())
   def genCoregexLiteral(charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex.Literal] =
     Gen.stringOf(charGen).map(new Coregex.Literal(_))
 
-  implicit def arbitraryCoregexSet: Arbitrary[Coregex.Set] = Arbitrary(genCoregexSet())
-  implicit def shrinkCoregexSet(implicit S: Shrink[Set]): Shrink[Coregex.Set] = Shrink.withLazyList { set =>
-    S.shrink(set.set()).to(LazyList).map(set => new Coregex.Set(set))
+  implicit val arbitraryCoregexSet: Arbitrary[Coregex.Set] = Arbitrary(genCoregexSet())
+  implicit val shrinkCoregexSet: Shrink[Coregex.Set] = Shrink.withLazyList { set =>
+    shrinkSet(set.set()).map(set => new Coregex.Set(set))
   }
   def genCoregexSet(charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex.Set] = genSet(charGen).map(new Coregex.Set(_))
 
-  implicit def arbitraryCoregexUnion: Arbitrary[Coregex.Union] = Arbitrary(genCoregexUnion())
+  implicit val arbitraryCoregexUnion: Arbitrary[Coregex.Union] = Arbitrary(genCoregexUnion())
   def genCoregexUnion(level: Int = 10, charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex.Union] =
     Gen.lzy(for {
       first <- genCoregex(level - 1, charGen)
@@ -62,13 +62,11 @@ trait CoregexArbitraries {
       rest  <- Gen.listOfN(size, genCoregex(level - 1, charGen))
     } yield new Coregex.Union(first, rest: _*))
 
-  implicit def arbitraryRNG: Arbitrary[RNG] = Arbitrary(genRNG)
+  implicit val arbitraryRNG: Arbitrary[RNG] = Arbitrary(genRNG)
   def genRNG: Gen[RNG]                      = Gen.long.map(new RandomRNG(_))
 
-  implicit def arbitrarySet: Arbitrary[Set] = Arbitrary(genSet())
-  implicit def shrinkSet: Shrink[Set] = Shrink.withLazyList { set =>
-    set.stream().mapToObj(ch => Set.builder().set(ch.asInstanceOf[Char]).build()).toScala(LazyList)
-  }
+  implicit val arbitrarySet: Arbitrary[Set] = Arbitrary(genSet())
+  implicit val shrinkSet: Shrink[Set] = Shrink.withLazyList(shrinkSet(_))
   def genSet(charGen: Gen[Char] = Gen.asciiPrintableChar): Gen[Set] = Gen.recursive[Set] { fix =>
     Gen.frequency(
       (
@@ -91,4 +89,6 @@ trait CoregexArbitraries {
       (1, fix.map(set => Set.builder().set(set).build()))
     )
   }
+  def shrinkSet(set: Set): LazyList[Set] =
+    set.stream().mapToObj(ch => Set.builder().set(ch.asInstanceOf[Char]).build()).toScala(LazyList)
 }

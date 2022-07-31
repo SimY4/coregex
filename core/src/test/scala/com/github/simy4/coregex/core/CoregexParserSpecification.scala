@@ -107,6 +107,4 @@ object CoregexParserSpecification extends Properties("CoregexParser") {
       new Coregex.Literal("double\\Q\\Equoted") -> Pattern.compile(Pattern.quote("double\\Q\\Equoted"))
     )
   ) { case (coregex, regex) => coregex == Coregex.from(regex) }
-
-  final case class ~(coregex: Coregex, regex: Pattern)
 }
