@@ -14,16 +14,11 @@
  * limitations under the License.
  */
 
-package com.github.simy4.coregex.core.rng;
+package com.github.simy4.coregex.core.rng
 
-import com.github.simy4.coregex.core.RNG;
-import com.pholser.junit.quickcheck.runner.JUnitQuickcheck;
-import org.junit.runner.RunWith;
+import com.github.simy4.coregex.core.RNG
+import org.scalacheck.Properties
 
-@RunWith(JUnitQuickcheck.class)
-public class RandomRNGTest implements RNGContract {
-  @Override
-  public RNG rng(long seed) {
-    return new RandomRNG(seed);
-  }
+object RandomRNGSpecification extends Properties("RandomRNG") with RNGContract {
+  def rng(seed: Long): RNG = new RandomRNG(seed)
 }

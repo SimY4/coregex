@@ -14,21 +14,18 @@
  * limitations under the License.
  */
 
-package com.github.simy4.coregex.core.rng;
+package com.github.simy4.coregex.core.rng
 
-import com.github.simy4.coregex.core.RNG;
-import com.pholser.junit.quickcheck.Property;
+import com.github.simy4.coregex.core.RNG
+import org.scalacheck.Prop._
+import org.scalacheck.Properties
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+trait RNGContract { this: Properties =>
+  def rng(seed: Long): RNG
 
-public interface RNGContract {
-  RNG rng(long seed);
-
-  @Property
-  default void shouldGenerateIntInRange(int bound, long seed) {
-    bound = Math.abs(bound);
-    int generated = rng(seed).genInteger(bound).getSecond();
-    assertTrue("0 <= " + generated + " < " + bound, 0 <= generated && generated < bound);
+  property("should generate int in range") = forAll { (bound: Short, seed: Long) =>
+    val gt0Bound  = 1 + bound.toInt.abs
+    val generated = rng(seed).genInteger(gt0Bound).getSecond
+    (0 <= generated && generated < gt0Bound) :| s"0 <= $generated < $gt0Bound"
   }
 }
