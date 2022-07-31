@@ -19,10 +19,12 @@ package com.github.simy4.coregex.core;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 
@@ -124,6 +126,9 @@ public abstract class Coregex implements Serializable {
    */
   public abstract int maxLength();
 
+  /** @return simplified and more memory efficient version of this regex. */
+  public abstract Coregex simplify();
+
   /** Sequential concatenation of regexes. */
   public static final class Concat extends Coregex {
     private static final long serialVersionUID = 1L;
@@ -188,33 +193,46 @@ public abstract class Coregex implements Serializable {
       return sum;
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public Coregex simplify() {
+      List<Coregex> concat = new ArrayList<>(rest.length + 1);
+      Iterator<Coregex> iterator =
+          concat().stream()
+              .map(Coregex::simplify)
+              .flatMap(
+                  coregex ->
+                      coregex instanceof Concat
+                          ? ((Concat) coregex).concat().stream()
+                          : Stream.of(coregex))
+              .iterator();
+      while (iterator.hasNext()) {
+        Coregex next = iterator.next();
+        if (next instanceof Literal) {
+          StringBuilder sb = new StringBuilder();
+          sb.append(((Literal) next).literal());
+          while (iterator.hasNext() && (next = iterator.next()) instanceof Literal) {
+            sb.append(((Literal) next).literal());
+          }
+          concat.add(new Literal(sb.toString()));
+          if (!(next instanceof Literal)) {
+            concat.add(next);
+          }
+        } else {
+          concat.add(next);
+        }
+      }
+      return 1 == concat.size()
+          ? concat.get(0)
+          : new Concat(concat.get(0), concat.subList(1, concat.size()).toArray(new Coregex[0]));
+    }
+
     /** @return underlying regexes in order of concatenation. */
     public List<Coregex> concat() {
       List<Coregex> concat = new ArrayList<>(rest.length + 1);
       concat.add(first);
       concat.addAll(Arrays.asList(rest));
       return concat;
-    }
-
-    /** @return simplified and more memory efficient version of this regex. */
-    public Coregex simplify() {
-      List<Coregex> concat = new ArrayList<>(rest.length + 1);
-      concat.add(first);
-      int idx = 0;
-      for (Coregex coregex : rest) {
-        Coregex last;
-        if (coregex instanceof Literal && (last = concat.get(idx)) instanceof Literal) {
-          concat.set(idx, new Literal(((Literal) last).literal + ((Literal) coregex).literal));
-        } else {
-          concat.add(coregex);
-          idx++;
-        }
-      }
-      return rest.length + 1 == concat.size()
-          ? this
-          : 1 == concat.size()
-              ? concat.get(0)
-              : new Concat(concat.get(0), concat.subList(1, concat.size()).toArray(new Coregex[0]));
     }
 
     @Override
@@ -278,6 +296,12 @@ public abstract class Coregex implements Serializable {
     @Override
     public int maxLength() {
       return literal.length();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Coregex simplify() {
+      return this;
     }
 
     /** @return literal */
@@ -376,6 +400,14 @@ public abstract class Coregex implements Serializable {
     @Override
     public int maxLength() {
       return -1 == max ? max : quantified.maxLength() * max;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Coregex simplify() {
+      return 1 == min && 1 == max
+          ? quantified.simplify()
+          : new Quantified(quantified.simplify(), min, max, greedy);
     }
 
     /** @return quantified regex */
@@ -491,6 +523,12 @@ public abstract class Coregex implements Serializable {
       return 1;
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public Coregex simplify() {
+      return this;
+    }
+
     /** @return set of characters */
     public com.github.simy4.coregex.core.Set set() {
       return set;
@@ -560,6 +598,18 @@ public abstract class Coregex implements Serializable {
     @Override
     public int maxLength() {
       return -1 == sized.maxLength() ? size : Math.min(size, sized.maxLength());
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Coregex simplify() {
+      Coregex simplified = sized.simplify();
+      if (simplified instanceof Sized) {
+        Sized sized = (Sized) simplified;
+        return new Sized(sized.sized(), Math.min(size, sized.size()));
+      } else {
+        return new Sized(simplified, size);
+      }
     }
 
     /** @return sized regex */
@@ -659,6 +709,12 @@ public abstract class Coregex implements Serializable {
         agg = Math.max(agg, max);
       }
       return agg;
+    }
+
+    @Override
+    public Coregex simplify() {
+      return new Union(
+          first.simplify(), Arrays.stream(rest).map(Coregex::simplify).toArray(Coregex[]::new));
     }
 
     /** @return underlying regexes forming this unification. */

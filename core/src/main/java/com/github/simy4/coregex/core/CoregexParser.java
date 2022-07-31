@@ -66,7 +66,7 @@ public final class CoregexParser {
       }
       re = new Coregex.Union(re, union.toArray(new Coregex[0]));
     }
-    return re;
+    return re.simplify();
   }
 
   private Coregex simpleRE(Context ctx) {
@@ -76,7 +76,7 @@ public final class CoregexParser {
       while (ctx.hasMoreElements() && '|' != ctx.peek() && ')' != ctx.peek()) {
         concatenation.add(basicRE(ctx));
       }
-      simpleRE = new Coregex.Concat(simpleRE, concatenation.toArray(new Coregex[0])).simplify();
+      simpleRE = new Coregex.Concat(simpleRE, concatenation.toArray(new Coregex[0]));
     }
     return simpleRE;
   }
