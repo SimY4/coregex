@@ -19,8 +19,6 @@ package com.github.simy4.coregex.core
 import com.github.simy4.coregex.core.rng.RandomRNG
 import org.scalacheck.{ Arbitrary, Gen, Shrink }
 
-import scala.annotation.nowarn
-
 trait CoregexArbitraries {
   import scala.jdk.StreamConverters._
 
@@ -51,8 +49,8 @@ trait CoregexArbitraries {
     Gen.stringOf(charGen).map(new Coregex.Literal(_))
 
   implicit def arbitraryCoregexSet: Arbitrary[Coregex.Set] = Arbitrary(genCoregexSet())
-  implicit def shrinkCoregexSet(implicit S: Shrink[Set]): Shrink[Coregex.Set] = Shrink { set =>
-    S.shrink(set.set()).map(set => new Coregex.Set(set))
+  implicit def shrinkCoregexSet(implicit S: Shrink[Set]): Shrink[Coregex.Set] = Shrink.withLazyList { set =>
+    S.shrink(set.set()).to(LazyList).map(set => new Coregex.Set(set))
   }
   def genCoregexSet(charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex.Set] = genSet(charGen).map(new Coregex.Set(_))
 
@@ -68,9 +66,8 @@ trait CoregexArbitraries {
   def genRNG: Gen[RNG]                      = Gen.long.map(new RandomRNG(_))
 
   implicit def arbitrarySet: Arbitrary[Set] = Arbitrary(genSet())
-  @nowarn("cat=deprecation")
-  implicit def shrinkSet: Shrink[Set] = Shrink { set =>
-    set.stream().mapToObj(ch => Set.builder().set(ch.asInstanceOf[Char]).build()).toScala(Stream)
+  implicit def shrinkSet: Shrink[Set] = Shrink.withLazyList { set =>
+    set.stream().mapToObj(ch => Set.builder().set(ch.asInstanceOf[Char]).build()).toScala(LazyList)
   }
   def genSet(charGen: Gen[Char] = Gen.asciiPrintableChar): Gen[Set] = Gen.recursive[Set] { fix =>
     Gen.frequency(
