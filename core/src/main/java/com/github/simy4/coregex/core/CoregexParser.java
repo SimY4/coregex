@@ -345,13 +345,13 @@ public final class CoregexParser {
             metachar.set(' ', '\t');
             break;
           default:
-            ctx.error("posix char class \\" + posix + " is not supported");
+            ctx.unsupported("posix char class \\" + posix + " is not supported");
             break;
         }
         ctx.match('}');
         break;
       default:
-        ctx.error("metacharacter \\" + ch + " is not supported");
+        ctx.unsupported("metacharacter \\" + ch + " is not supported");
         break;
     }
     return metachar.build();
