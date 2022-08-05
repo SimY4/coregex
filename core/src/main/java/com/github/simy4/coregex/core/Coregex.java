@@ -95,13 +95,14 @@ public abstract class Coregex implements Serializable {
    *
    * @param min min number of times this regex should be repeated
    * @param max max number of times this regex should be repeated. {@code -1} means no limit.
+   * @param type quantifier type.
    * @return quantified regex
    * @see Quantified
    * @throws IllegalArgumentException if min is greater than max or if min is negative or if called
    *     on already quantified regex
    */
-  public final Coregex quantify(int min, int max, boolean greedy) {
-    return 1 == min && 1 == max ? this : new Quantified(this, min, max, greedy);
+  public final Coregex quantify(int min, int max, Quantified.Type type) {
+    return 1 == min && 1 == max ? this : new Quantified(this, min, max, type);
   }
 
   /**
@@ -339,16 +340,32 @@ public abstract class Coregex implements Serializable {
     private final Coregex quantified;
     private final int min;
     private final int max;
-    private final boolean greedy;
+    private final Type type;
 
     /**
+     * Greedily quantified regex.
+     *
      * @param quantified quantified regex
      * @param min min number of times this regex should be repeated
      * @param max max number of times this regex should be repeated. {@code -1} means no limit.
      * @throws IllegalArgumentException if min is greater than max or if min is negative or if
      *     called on already quantified regex
+     * @see Quantified(Coregex, int, int, Type)
      */
-    public Quantified(Coregex quantified, int min, int max, boolean greedy) {
+    public Quantified(Coregex quantified, int min, int max) {
+      this(quantified, min, max, Type.GREEDY);
+    }
+
+    /**
+     * @param quantified quantified regex
+     * @param min min number of times this regex should be repeated
+     * @param max max number of times this regex should be repeated. {@code -1} means no limit.
+     * @param type quantifier type.
+     * @throws IllegalArgumentException if min is greater than max or if min is negative or if
+     *     called on already quantified regex
+     * @see Quantified(Coregex, int, int)
+     */
+    public Quantified(Coregex quantified, int min, int max, Type type) {
       if (quantified instanceof Quantified) {
         throw new IllegalArgumentException("already quantified regex: " + quantified);
       }
@@ -359,7 +376,7 @@ public abstract class Coregex implements Serializable {
       }
       this.min = min;
       this.max = max;
-      this.greedy = greedy;
+      this.type = requireNonNull(type, "type");
     }
 
     /** {@inheritDoc} */
@@ -407,7 +424,7 @@ public abstract class Coregex implements Serializable {
     public Coregex simplify() {
       return 1 == min && 1 == max
           ? quantified.simplify()
-          : new Quantified(quantified.simplify(), min, max, greedy);
+          : new Quantified(quantified.simplify(), min, max, type);
     }
 
     /** @return quantified regex */
@@ -425,8 +442,8 @@ public abstract class Coregex implements Serializable {
       return max;
     }
 
-    public boolean greedy() {
-      return greedy;
+    public Type type() {
+      return type;
     }
 
     @Override
@@ -440,13 +457,13 @@ public abstract class Coregex implements Serializable {
       Quantified that = (Quantified) o;
       return min == that.min
           && max == that.max
-          && greedy == that.greedy
+          && type == that.type
           && quantified.equals(that.quantified);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(quantified, min, max, greedy);
+      return Objects.hash(quantified, min, max, type);
     }
 
     @Override
@@ -481,7 +498,24 @@ public abstract class Coregex implements Serializable {
           }
           break;
       }
-      return (greedy ? string : string.append('?')).toString();
+      switch (type) {
+        case RELUCTANT:
+          string.append('?');
+          break;
+        case POSSESSIVE:
+          string.append('+');
+          break;
+        default:
+          break;
+      }
+      return string.toString();
+    }
+
+    /** Quantifier type. */
+    public enum Type {
+      GREEDY,
+      RELUCTANT,
+      POSSESSIVE
     }
   }
 

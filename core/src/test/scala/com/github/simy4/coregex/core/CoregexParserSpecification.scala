@@ -25,23 +25,23 @@ object CoregexParserSpecification extends Properties("CoregexParser") {
   property("should parse example regex") = forAll(
     Gen.oneOf[(Coregex, Pattern)](
       new Coregex.Concat(
-        new Coregex.Quantified(new Coregex.Set(Set.builder().range('0', '9').range('a', 'f').build()), 8, 8, true),
+        new Coregex.Quantified(new Coregex.Set(Set.builder().range('0', '9').range('a', 'f').build()), 8, 8),
         new Coregex.Literal("-"),
-        new Coregex.Quantified(new Coregex.Set(Set.builder().range('0', '9').range('a', 'f').build()), 4, 4, true),
+        new Coregex.Quantified(new Coregex.Set(Set.builder().range('0', '9').range('a', 'f').build()), 4, 4),
         new Coregex.Literal("-"),
         new Coregex.Set(Set.builder().range('0', '5').build()),
-        new Coregex.Quantified(new Coregex.Set(Set.builder().range('0', '9').range('a', 'f').build()), 3, 3, true),
+        new Coregex.Quantified(new Coregex.Set(Set.builder().range('0', '9').range('a', 'f').build()), 3, 3),
         new Coregex.Literal("-"),
         new Coregex.Set(Set.builder().set('0', '8', '9', 'a', 'b').build()),
-        new Coregex.Quantified(new Coregex.Set(Set.builder().range('0', '9').range('a', 'f').build()), 3, 3, true),
+        new Coregex.Quantified(new Coregex.Set(Set.builder().range('0', '9').range('a', 'f').build()), 3, 3),
         new Coregex.Literal("-"),
-        new Coregex.Quantified(new Coregex.Set(Set.builder().range('0', '9').range('a', 'f').build()), 12, 12, true)
+        new Coregex.Quantified(new Coregex.Set(Set.builder().range('0', '9').range('a', 'f').build()), 12, 12)
       ) ->
         Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}"),
       new Coregex.Concat(
         new Coregex.Literal(""),
         new Coregex.Union(
-          new Coregex.Concat(new Coregex.Literal("http"), new Coregex.Quantified(new Coregex.Literal("s"), 0, 1, true)),
+          new Coregex.Concat(new Coregex.Literal("http"), new Coregex.Quantified(new Coregex.Literal("s"), 0, 1)),
           new Coregex.Literal("ftp"),
           new Coregex.Literal("file")
         ),
@@ -58,8 +58,7 @@ object CoregexParserSpecification extends Properties("CoregexParser") {
               .build()
           ),
           0,
-          -1,
-          true
+          -1
         ),
         new Coregex.Set(
           Set
@@ -74,7 +73,7 @@ object CoregexParserSpecification extends Properties("CoregexParser") {
       ) ->
         Pattern.compile("^(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]"),
       new Coregex.Concat(
-        new Coregex.Quantified(new Coregex.Set(Set.builder().range('0', '9').build()), 4, 4, true),
+        new Coregex.Quantified(new Coregex.Set(Set.builder().range('0', '9').build()), 4, 4),
         new Coregex.Literal("-"),
         new Coregex.Set(Set.builder().set('0', '1').build()),
         new Coregex.Set(Set.builder().range('0', '9').build()),

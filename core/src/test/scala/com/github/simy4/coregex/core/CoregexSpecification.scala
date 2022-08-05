@@ -37,17 +37,18 @@ object CoregexSpecification extends Properties("Coregex") with CoregexArbitrarie
         .length() <= length) :| s"concat.minLength(${concat.minLength()}) <= $generated.length(${generated.length}) <= $length"
     }
 
-    property("quantify") = forAll { (concat: Coregex.Concat, i1: SmallNat, i2: SmallNat, greedy: Boolean, rng: RNG) =>
-      val start      = i1.value min i2.value
-      val end        = i1.value max i2.value
-      val quantified = concat.quantify(start, end, greedy)
-      val length     = (quantified.maxLength() + quantified.minLength()) / 2
-      val generated  = quantified.sized(length).generate(rng)
-      (0 <= quantified.minLength() && quantified.minLength() <= quantified
-        .maxLength()) :| s"0 <= quantified.minLength(${quantified.minLength()}) <= ${quantified.maxLength()}" &&
-      (quantified.minLength() <= generated.length() && generated
-        .length() <= length) :| s"quantified.minLength(${quantified
-          .minLength()}) <= $generated.length(${generated.length}) <= $length"
+    property("quantify") = forAll {
+      (concat: Coregex.Concat, i1: SmallNat, i2: SmallNat, `type`: Coregex.Quantified.Type, rng: RNG) =>
+        val start      = i1.value min i2.value
+        val end        = i1.value max i2.value
+        val quantified = concat.quantify(start, end, `type`)
+        val length     = (quantified.maxLength() + quantified.minLength()) / 2
+        val generated  = quantified.sized(length).generate(rng)
+        (0 <= quantified.minLength() && quantified.minLength() <= quantified
+          .maxLength()) :| s"0 <= quantified.minLength(${quantified.minLength()}) <= ${quantified.maxLength()}" &&
+        (quantified.minLength() <= generated.length() && generated
+          .length() <= length) :| s"quantified.minLength(${quantified
+            .minLength()}) <= $generated.length(${generated.length}) <= $length"
     }
   }
 
@@ -56,13 +57,14 @@ object CoregexSpecification extends Properties("Coregex") with CoregexArbitrarie
       literal.literal() ?= literal.generate(rng)
     }
 
-    property("quantify") = forAll { (literal: Coregex.Literal, i1: SmallNat, i2: SmallNat, greedy: Boolean, rng: RNG) =>
-      val start      = i1.value min i2.value
-      val end        = i1.value max i2.value
-      val quantified = literal.quantify(start, end, greedy)
-      (0 <= quantified.minLength() && quantified.minLength() <= quantified
-        .maxLength()) :| s"0 <= quantified.minLength(${quantified.minLength()}) <= ${quantified.maxLength()}" &&
-      quantified.generate(rng).matches(s"(${Pattern.quote(literal.literal())})*")
+    property("quantify") = forAll {
+      (literal: Coregex.Literal, i1: SmallNat, i2: SmallNat, `type`: Coregex.Quantified.Type, rng: RNG) =>
+        val start      = i1.value min i2.value
+        val end        = i1.value max i2.value
+        val quantified = literal.quantify(start, end, `type`)
+        (0 <= quantified.minLength() && quantified.minLength() <= quantified
+          .maxLength()) :| s"0 <= quantified.minLength(${quantified.minLength()}) <= ${quantified.maxLength()}" &&
+        quantified.generate(rng).matches(s"(${Pattern.quote(literal.literal())})*")
     }
   }
 
@@ -74,17 +76,18 @@ object CoregexSpecification extends Properties("Coregex") with CoregexArbitrarie
       (generated.length <= gt0Length) :| s"$generated.length(${generated.length}) <= $gt0Length"
     }
 
-    property("quantify") = forAll { (set: Coregex.Set, i1: SmallNat, i2: SmallNat, greedy: Boolean, rng: RNG) =>
-      val start      = i1.value min i2.value
-      val end        = i1.value max i2.value
-      val gt0Length  = 1 + ((start + end) / 2)
-      val quantified = set.quantify(start, end, greedy)
-      val generated  = quantified.sized(gt0Length).generate(rng)
-      (0 <= quantified.minLength() && quantified.minLength() <= quantified
-        .maxLength()) :| s"0 <= quantified.minLength(${quantified.minLength()}) <= ${quantified.maxLength()}" &&
-      (quantified.minLength() <= generated.length() && generated
-        .length() <= gt0Length) :| s"quantified.minLength(${quantified
-          .minLength()}) <= $generated.length(${generated.length}) <= $gt0Length"
+    property("quantify") = forAll {
+      (set: Coregex.Set, i1: SmallNat, i2: SmallNat, `type`: Coregex.Quantified.Type, rng: RNG) =>
+        val start      = i1.value min i2.value
+        val end        = i1.value max i2.value
+        val gt0Length  = 1 + ((start + end) / 2)
+        val quantified = set.quantify(start, end, `type`)
+        val generated  = quantified.sized(gt0Length).generate(rng)
+        (0 <= quantified.minLength() && quantified.minLength() <= quantified
+          .maxLength()) :| s"0 <= quantified.minLength(${quantified.minLength()}) <= ${quantified.maxLength()}" &&
+        (quantified.minLength() <= generated.length() && generated
+          .length() <= gt0Length) :| s"quantified.minLength(${quantified
+            .minLength()}) <= $generated.length(${generated.length}) <= $gt0Length"
     }
   }
 
@@ -105,17 +108,18 @@ object CoregexSpecification extends Properties("Coregex") with CoregexArbitrarie
         .anyMatch(_ == generated) :| s"$generated in $union"
     }
 
-    property("quantify") = forAll { (union: Coregex.Union, i1: SmallNat, i2: SmallNat, greedy: Boolean, rng: RNG) =>
-      val start      = i1.value min i2.value
-      val end        = i1.value max i2.value
-      val quantified = union.quantify(start, end, greedy)
-      val length     = (quantified.maxLength() + quantified.minLength()) / 2
-      val generated  = quantified.sized(length).generate(rng)
-      (0 <= quantified.minLength() && quantified.minLength() <= quantified
-        .maxLength()) :| s"0 <= quantified.minLength(${quantified.minLength()}) <= ${quantified.maxLength()}" &&
-      (quantified.minLength() <= generated.length() && generated
-        .length() <= length) :| s"quantified.minLength(${quantified
-          .minLength()}) <= $generated.length(${generated.length}) <= $length"
+    property("quantify") = forAll {
+      (union: Coregex.Union, i1: SmallNat, i2: SmallNat, `type`: Coregex.Quantified.Type, rng: RNG) =>
+        val start      = i1.value min i2.value
+        val end        = i1.value max i2.value
+        val quantified = union.quantify(start, end, `type`)
+        val length     = (quantified.maxLength() + quantified.minLength()) / 2
+        val generated  = quantified.sized(length).generate(rng)
+        (0 <= quantified.minLength() && quantified.minLength() <= quantified
+          .maxLength()) :| s"0 <= quantified.minLength(${quantified.minLength()}) <= ${quantified.maxLength()}" &&
+        (quantified.minLength() <= generated.length() && generated
+          .length() <= length) :| s"quantified.minLength(${quantified
+            .minLength()}) <= $generated.length(${generated.length}) <= $length"
     }
   }
 }

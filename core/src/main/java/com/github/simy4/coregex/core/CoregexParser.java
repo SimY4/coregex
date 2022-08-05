@@ -119,12 +119,21 @@ public final class CoregexParser {
         quantifierMax = 1;
         break;
     }
-    boolean greedy = true;
-    if ('?' == ctx.peek()) {
-      ctx.match('?');
-      greedy = false;
+    Coregex.Quantified.Type type;
+    switch (ctx.peek()) {
+      case '?':
+        ctx.match('?');
+        type = Coregex.Quantified.Type.RELUCTANT;
+        break;
+      case '+':
+        ctx.match('+');
+        type = Coregex.Quantified.Type.POSSESSIVE;
+        break;
+      default:
+        type = Coregex.Quantified.Type.GREEDY;
+        break;
     }
-    return basicRE.quantify(quantifierMin, quantifierMax, greedy);
+    return basicRE.quantify(quantifierMin, quantifierMax, type);
   }
 
   @SuppressWarnings("fallthrough")
