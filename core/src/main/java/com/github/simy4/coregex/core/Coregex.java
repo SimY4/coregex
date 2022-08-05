@@ -387,22 +387,26 @@ public abstract class Coregex implements Serializable {
             "remainder: " + remainder + " has to be greater than " + minLength());
       }
       StringBuilder sb = new StringBuilder(minLength() + 16);
-      Pair<RNG, Boolean> rngAndNext = rng.genBoolean();
-      rng = rngAndNext.getFirst();
-      boolean next = rngAndNext.getSecond();
       int quantifier = 0;
-      while (quantifier < min
-          || (quantified.minLength() <= remainder && (-1 == max || quantifier < max) && next)) {
+      for (; quantifier < min; quantifier++) {
         Pair<RNG, String> rngAndCoregex = quantified.apply(rng, remainder);
         rng = rngAndCoregex.getFirst();
         String value = rngAndCoregex.getSecond();
         sb.append(value);
         remainder -= value.length();
-
-        quantifier++;
-        rngAndNext = rng.genBoolean();
+      }
+      while (quantified.minLength() <= remainder && (-1 == max || quantifier++ < max)) {
+        Pair<RNG, Boolean> rngAndNext = rng.genBoolean();
         rng = rngAndNext.getFirst();
-        next = rngAndNext.getSecond();
+        if (!rngAndNext.getSecond()) {
+          break;
+        }
+
+        Pair<RNG, String> rngAndCoregex = quantified.apply(rng, remainder);
+        rng = rngAndCoregex.getFirst();
+        String value = rngAndCoregex.getSecond();
+        sb.append(value);
+        remainder -= value.length();
       }
       return new Pair<>(rng, sb.toString());
     }
