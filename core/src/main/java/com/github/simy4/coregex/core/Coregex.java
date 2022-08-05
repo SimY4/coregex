@@ -276,22 +276,26 @@ public abstract class Coregex implements Serializable {
             "remainder: " + remainder + " has to be greater than " + minLength());
       }
       StringBuilder sb = new StringBuilder(minLength() + 16);
-      Map.Entry<RNG, Boolean> rngAndNext = rng.genBoolean();
-      rng = rngAndNext.getKey();
-      boolean next = rngAndNext.getValue();
       int quantifier = 0;
-      while (quantifier < min
-          || (quantified.minLength() <= remainder && (-1 == max || quantifier < max) && next)) {
+      for (; quantifier < min; quantifier++) {
         Map.Entry<RNG, String> rngAndCoregex = quantified.apply(rng, remainder);
         rng = rngAndCoregex.getKey();
         String value = rngAndCoregex.getValue();
         sb.append(value);
         remainder -= value.length();
-
-        quantifier++;
-        rngAndNext = rng.genBoolean();
+      }
+      while (quantified.minLength() <= remainder && (-1 == max || quantifier++ < max)) {
+        Map.Entry<RNG, Boolean> rngAndNext = rng.genBoolean();
         rng = rngAndNext.getKey();
-        next = rngAndNext.getValue();
+        if (!rngAndNext.getValue()) {
+          break;
+        }
+
+        Map.Entry<RNG, String> rngAndCoregex = quantified.apply(rng, remainder);
+        rng = rngAndCoregex.getKey();
+        String value = rngAndCoregex.getValue();
+        sb.append(value);
+        remainder -= value.length();
       }
       return new AbstractMap.SimpleEntry<>(rng, sb.toString());
     }
