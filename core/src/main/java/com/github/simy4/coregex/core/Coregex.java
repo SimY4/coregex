@@ -403,8 +403,9 @@ public abstract class Coregex implements Serializable {
             "remainder: " + remainder + " has to be greater than " + minLength());
       }
       Map.Entry<RNG, Long> rngAndSeed = rng.genLong();
-      return new AbstractMap.SimpleEntry<>(
-          rng, String.valueOf(set.generate(rngAndSeed.getValue())));
+      rng = rngAndSeed.getKey();
+      String sample = String.valueOf(set.generate(rngAndSeed.getValue()));
+      return new AbstractMap.SimpleEntry<>(rng, sample);
     }
 
     @Override
