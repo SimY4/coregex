@@ -149,20 +149,21 @@ public abstract class Coregex implements Serializable {
     /** {@inheritDoc} */
     @Override
     protected Pair<RNG, String> apply(RNG rng, int remainder) {
-      if (remainder < minLength()) {
+      int minLength = minLength();
+      if (remainder < minLength) {
         throw new IllegalStateException(
-            "remainder: " + remainder + " has to be greater than " + minLength());
+            "remainder: " + remainder + " has to be greater than " + minLength);
       }
-      StringBuilder sb = new StringBuilder(minLength() + 16);
+      StringBuilder sb = new StringBuilder(minLength + 16);
       Coregex chunk = first;
       int i = 0;
       do {
-        Pair<RNG, String> rngAndCoregex =
-            chunk.apply(rng, remainder - minLength() + chunk.minLength());
+        int chunkMinLength = chunk.minLength();
+        Pair<RNG, String> rngAndCoregex = chunk.apply(rng, remainder - minLength + chunkMinLength);
         rng = rngAndCoregex.getFirst();
         String value = rngAndCoregex.getSecond();
         sb.append(value);
-        remainder -= (value.length() - chunk.minLength());
+        remainder -= (value.length() - chunkMinLength);
       } while (i < rest.length && (chunk = rest[i++]) != null);
       return new Pair<>(rng, sb.toString());
     }
@@ -546,7 +547,9 @@ public abstract class Coregex implements Serializable {
             "remainder: " + remainder + " has to be greater than " + minLength());
       }
       Pair<RNG, Long> rngAndSeed = rng.genLong();
-      return new Pair<>(rng, String.valueOf(set.generate(rngAndSeed.getSecond())));
+      rng = rngAndSeed.getFirst();
+      String sample = String.valueOf(set.generate(rngAndSeed.getSecond()));
+      return new Pair<>(rng, sample);
     }
 
     /** {@inheritDoc} */
