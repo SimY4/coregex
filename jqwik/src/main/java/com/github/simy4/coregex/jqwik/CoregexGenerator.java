@@ -17,7 +17,6 @@
 package com.github.simy4.coregex.jqwik;
 
 import com.github.simy4.coregex.core.Coregex;
-import com.github.simy4.coregex.core.CoregexParser;
 import com.github.simy4.coregex.core.rng.RandomRNG;
 import net.jqwik.api.RandomGenerator;
 import net.jqwik.api.Shrinkable;
@@ -36,7 +35,7 @@ public class CoregexGenerator implements RandomGenerator<String> {
   }
 
   public CoregexGenerator(Pattern regex, int size) {
-    this.coregex = CoregexParser.getInstance().parse(regex);
+    this.coregex = Coregex.from(regex);
     this.size = Math.max(size, coregex.minLength());
   }
 

@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-package com.github.simy4.coregex.core.rng;
+package com.github.simy4.coregex.core.rng
 
-import com.github.simy4.coregex.core.RNG;
-import com.pholser.junit.quickcheck.runner.JUnitQuickcheck;
-import org.junit.runner.RunWith;
+import com.github.simy4.coregex.core.RNG
+import org.scalacheck.Prop._
+import org.scalacheck.Properties
 
-@RunWith(JUnitQuickcheck.class)
-public class RandomRNGTest implements RNGContract {
-  @Override
-  public RNG rng(long seed) {
-    return new RandomRNG(seed);
+trait RNGContract { this: Properties =>
+  def rng(seed: Long): RNG
+
+  property("should generate int in range") = forAll { (bound: Short, seed: Long) =>
+    val gt0Bound  = 1 + bound.toInt.abs
+    val generated = rng(seed).genInteger(gt0Bound).getSecond
+    (0 <= generated && generated < gt0Bound) :| s"0 <= $generated < $gt0Bound"
   }
 }

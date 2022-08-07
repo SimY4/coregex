@@ -16,50 +16,41 @@
 
 package com.github.simy4.coregex.core.rng;
 
+import com.github.simy4.coregex.core.Pair;
 import com.github.simy4.coregex.core.RNG;
 
-import java.util.AbstractMap;
-import java.util.Map;
-import java.util.SplittableRandom;
+import java.io.Serializable;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
-public class RandomRNG implements RNG {
-  private final SplittableRandom random;
+public class RandomRNG implements RNG, Serializable {
+  private static final long serialVersionUID = 1L;
+
+  private final long seed;
 
   public RandomRNG() {
-    this(new SplittableRandom());
+    this(ThreadLocalRandom.current().nextLong());
   }
 
   public RandomRNG(long seed) {
-    this(new SplittableRandom(seed));
-  }
-
-  public RandomRNG(SplittableRandom random) {
-    this.random = random;
+    this.seed = seed;
   }
 
   @Override
-  public Map.Entry<RNG, Boolean> genBoolean() {
-    SplittableRandom rng = random.split();
-    return new AbstractMap.SimpleEntry<>(new RandomRNG(rng), rng.nextBoolean());
+  public Pair<RNG, Boolean> genBoolean() {
+    Random rng = new Random(seed);
+    return new Pair<>(new RandomRNG(rng.nextLong()), rng.nextBoolean());
   }
 
   @Override
-  @SuppressWarnings("OptionalGetWithoutIsPresent")
-  public Map.Entry<RNG, Integer> genInteger(int startInc, int endInc) {
-    if (startInc > endInc) {
-      throw new IllegalArgumentException(
-          "startInc: " + startInc + " should be <= than endInc: " + endInc);
-    } else if (startInc == endInc) {
-      return new AbstractMap.SimpleEntry<>(this, startInc);
-    }
-    SplittableRandom rng = random.split();
-    return new AbstractMap.SimpleEntry<>(
-        new RandomRNG(rng), rng.ints(1, startInc, endInc + 1).findFirst().getAsInt());
+  public Pair<RNG, Integer> genInteger(int bound) {
+    Random rng = new Random(seed);
+    return new Pair<>(new RandomRNG(rng.nextLong()), rng.nextInt(bound));
   }
 
   @Override
-  public Map.Entry<RNG, Long> genLong() {
-    SplittableRandom rng = random.split();
-    return new AbstractMap.SimpleEntry<>(new RandomRNG(rng), rng.nextLong());
+  public Pair<RNG, Long> genLong() {
+    Random rng = new Random(seed);
+    return new Pair<>(new RandomRNG(rng.nextLong()), rng.nextLong());
   }
 }

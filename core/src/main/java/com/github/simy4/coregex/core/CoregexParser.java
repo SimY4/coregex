@@ -22,11 +22,27 @@ import java.util.List;
 import java.util.function.IntPredicate;
 import java.util.regex.Pattern;
 
+/**
+ * Coregex parser.
+ *
+ * @author Alex Simkin
+ * @since 0.1.0
+ */
 public final class CoregexParser {
+  private static final CoregexParser instance = new CoregexParser();
+
+  /** @return coregex parser singleton instance. */
   public static CoregexParser getInstance() {
-    return new CoregexParser();
+    return instance;
   }
 
+  /**
+   * Constructs {@link Coregex} from provided {@link Pattern} instance.
+   *
+   * @param pattern regular expression to parse.
+   * @return parsed coregex instance.
+   * @throws UnsupportedOperationException if provided pattern constructs are not yet supported.
+   */
   public Coregex parse(Pattern pattern) {
     String regex = pattern.pattern();
     if (regex.isEmpty()) {
@@ -50,7 +66,7 @@ public final class CoregexParser {
       }
       re = new Coregex.Union(re, union.toArray(new Coregex[0]));
     }
-    return re;
+    return re.simplify();
   }
 
   private Coregex simpleRE(Context ctx) {
@@ -60,7 +76,7 @@ public final class CoregexParser {
       while (ctx.hasMoreElements() && '|' != ctx.peek() && ')' != ctx.peek()) {
         concatenation.add(basicRE(ctx));
       }
-      simpleRE = new Coregex.Concat(simpleRE, concatenation.toArray(new Coregex[0])).simplify();
+      simpleRE = new Coregex.Concat(simpleRE, concatenation.toArray(new Coregex[0]));
     }
     return simpleRE;
   }
@@ -103,12 +119,21 @@ public final class CoregexParser {
         quantifierMax = 1;
         break;
     }
-    boolean greedy = true;
-    if ('?' == ctx.peek()) {
-      ctx.match('?');
-      greedy = false;
+    Coregex.Quantified.Type type;
+    switch (ctx.peek()) {
+      case '?':
+        ctx.match('?');
+        type = Coregex.Quantified.Type.RELUCTANT;
+        break;
+      case '+':
+        ctx.match('+');
+        type = Coregex.Quantified.Type.POSSESSIVE;
+        break;
+      default:
+        type = Coregex.Quantified.Type.GREEDY;
+        break;
     }
-    return basicRE.quantify(quantifierMin, quantifierMax, greedy);
+    return basicRE.quantify(quantifierMin, quantifierMax, type);
   }
 
   @SuppressWarnings("fallthrough")
@@ -137,7 +162,10 @@ public final class CoregexParser {
       case '\\':
         ctx.match('\\');
         ch = ctx.peek();
-        if (!isREMetachar(ch)) {
+        if ('Q' == ch) {
+          elementaryRE = quoted(ctx);
+          break;
+        } else if (!isREMetachar(ch)) {
           elementaryRE = new Coregex.Set(metachar(ctx));
           break;
         }
@@ -148,6 +176,17 @@ public final class CoregexParser {
         break;
     }
     return elementaryRE;
+  }
+
+  private Coregex quoted(Context ctx) {
+    ctx.match('Q');
+    StringBuilder literal = new StringBuilder();
+    do {
+      literal.append(ctx.takeWhile(ch -> '\\' != ch));
+      ctx.match('\\');
+    } while ('E' != ctx.peek() && (literal.append('\\') != null));
+    ctx.match('E');
+    return new Coregex.Literal(literal.toString());
   }
 
   private Set set(Context ctx) {
@@ -274,16 +313,54 @@ public final class CoregexParser {
         ctx.match('d');
         metachar.range('0', '9');
         break;
+      case 'D':
+        ctx.match('D');
+        metachar.range('0', '9').negate();
+        break;
       case 'w':
         ctx.match('w');
         metachar.range('0', '9').range('a', 'z').range('A', 'Z').single('_');
+        break;
+      case 'W':
+        ctx.match('W');
+        metachar.range('0', '9').range('a', 'z').range('A', 'Z').single('_').negate();
         break;
       case 's':
         ctx.match('s');
         metachar.set(' ', '\t');
         break;
+      case 'p':
+        ctx.match('p');
+        ctx.match('{');
+        String posix = ctx.takeWhile(pos -> '}' != pos);
+        switch (posix) {
+          case "Lower":
+            metachar.range('a', 'z');
+            break;
+          case "Upper":
+            metachar.range('A', 'Z');
+            break;
+          case "Digit":
+            metachar.range('0', '9');
+            break;
+          case "Alpha":
+            metachar.range('a', 'z').range('A', 'Z');
+            break;
+          case "Alnum":
+            metachar.range('a', 'z').range('A', 'Z').range('0', '9');
+            break;
+          case "Space":
+          case "Blank":
+            metachar.set(' ', '\t');
+            break;
+          default:
+            ctx.unsupported("posix char class \\" + posix + " is not supported");
+            break;
+        }
+        ctx.match('}');
+        break;
       default:
-        ctx.error("metacharacter \\" + ch + " is not supported");
+        ctx.unsupported("metacharacter \\" + ch + " is not supported");
         break;
     }
     return metachar.build();

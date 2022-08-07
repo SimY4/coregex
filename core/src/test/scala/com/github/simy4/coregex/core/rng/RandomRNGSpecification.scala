@@ -14,24 +14,11 @@
  * limitations under the License.
  */
 
-package com.github.simy4.coregex
-package scalacheck
+package com.github.simy4.coregex.core.rng
 
-import core.Coregex
-import core.rng.RandomRNG
-import org.scalacheck.Gen
+import com.github.simy4.coregex.core.RNG
+import org.scalacheck.Properties
 
-import java.util.regex.Pattern
-import scala.util.matching.Regex
-
-object CoregexGen {
-  def apply(regex: Regex): Gen[String] = apply(regex.pattern)
-
-  def apply(regex: Pattern): Gen[String] = apply(Coregex.from(regex))
-
-  def apply(coregex: Coregex): Gen[String] =
-    for {
-      seed <- Gen.long
-      size <- Gen.size
-    } yield coregex.sized(coregex.minLength() max size).generate(new RandomRNG(seed))
+object RandomRNGSpecification extends Properties("RandomRNG") with RNGContract {
+  def rng(seed: Long): RNG = new RandomRNG(seed)
 }

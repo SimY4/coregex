@@ -16,12 +16,27 @@
 
 package com.github.simy4.coregex.core;
 
-import java.util.Map;
-
+/**
+ * Random generator contract.
+ *
+ * <p><em>Implementation should be pure. Calling an instance 1 or more times should always produce
+ * the same result</em>
+ *
+ * @author Alex Simkin
+ * @since 0.1.0
+ */
 public interface RNG {
-  Map.Entry<RNG, Boolean> genBoolean();
+  /** @return random boolean value. */
+  Pair<RNG, Boolean> genBoolean();
 
-  Map.Entry<RNG, Integer> genInteger(int startInc, int endInc);
+  /**
+   * Generates a random int value between 0 and provided upper bound (exclusive).
+   *
+   * @param bound upper bound.
+   * @return random int value.
+   */
+  Pair<RNG, Integer> genInteger(int bound);
 
-  Map.Entry<RNG, Long> genLong();
+  /** @return random long value. */
+  Pair<RNG, Long> genLong();
 }

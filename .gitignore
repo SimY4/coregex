@@ -5,3 +5,4 @@
 .vscode/
 target/
 *.iml
+.jqwik-database

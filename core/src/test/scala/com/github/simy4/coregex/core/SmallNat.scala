@@ -14,24 +14,11 @@
  * limitations under the License.
  */
 
-package com.github.simy4.coregex
-package scalacheck
+package com.github.simy4.coregex.core
 
-import core.Coregex
-import core.rng.RandomRNG
-import org.scalacheck.Gen
+import org.scalacheck.{ Arbitrary, Gen }
 
-import java.util.regex.Pattern
-import scala.util.matching.Regex
-
-object CoregexGen {
-  def apply(regex: Regex): Gen[String] = apply(regex.pattern)
-
-  def apply(regex: Pattern): Gen[String] = apply(Coregex.from(regex))
-
-  def apply(coregex: Coregex): Gen[String] =
-    for {
-      seed <- Gen.long
-      size <- Gen.size
-    } yield coregex.sized(coregex.minLength() max size).generate(new RandomRNG(seed))
+case class SmallNat(value: Int) extends AnyVal
+object SmallNat {
+  implicit val arbitrarySmallInt: Arbitrary[SmallNat] = Arbitrary(Gen.choose(0, 20).map(SmallNat(_)))
 }
