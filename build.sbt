@@ -58,7 +58,7 @@ lazy val core = (project in file("core"))
        else Seq("-source", "1.8", "-target", "1.8")),
     Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8", "-html5")
-      else Seq("-source", "1.8", "-target", "1.8"))
+       else Seq("-source", "1.8", "-target", "1.8"))
   )
 
 lazy val jqwik = (project in file("jqwik"))
@@ -70,7 +70,7 @@ lazy val jqwik = (project in file("jqwik"))
     libraryDependencies ++= Seq(
       "net.jqwik"   % "jqwik-api"         % "1.6.5"  % Provided,
       "net.jqwik"   % "jqwik-engine"      % "1.6.5"  % Test,
-      "net.aichler" % "jupiter-interface" % "0.10.0" % Test
+      "net.aichler" % "jupiter-interface" % "0.11.0" % Test
     ),
     crossScalaVersions := supportedScalaVersions,
     testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v"),
@@ -79,7 +79,7 @@ lazy val jqwik = (project in file("jqwik"))
        else Seq("-source", "1.8", "-target", "1.8")),
     Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8", "-html5")
-      else Seq("-source", "1.8", "-target", "1.8"))
+       else Seq("-source", "1.8", "-target", "1.8"))
   )
   .dependsOn(core)
 
@@ -103,7 +103,7 @@ lazy val junitQuickcheck = (project in file("junit-quickcheck"))
        else Seq("-source", "1.8", "-target", "1.8")),
     Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8", "-html5")
-      else Seq("-source", "1.8", "-target", "1.8"))
+       else Seq("-source", "1.8", "-target", "1.8"))
   )
   .dependsOn(core)
 
