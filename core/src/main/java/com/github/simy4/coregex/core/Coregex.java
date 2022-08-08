@@ -383,31 +383,35 @@ public abstract class Coregex implements Serializable {
     /** {@inheritDoc} */
     @Override
     protected Pair<RNG, String> apply(RNG rng, int remainder) {
-      if (remainder < minLength()) {
+      int minLength = minLength();
+      int quantifiedMinLength = quantified.minLength();
+      if (remainder < minLength) {
         throw new IllegalStateException(
-            "remainder: " + remainder + " has to be greater than " + minLength());
+            "remainder: " + remainder + " has to be greater than " + minLength);
       }
-      StringBuilder sb = new StringBuilder(minLength() + 16);
+      StringBuilder sb = new StringBuilder(minLength + 16);
       int quantifier = 0;
       for (; quantifier < min; quantifier++) {
-        Pair<RNG, String> rngAndCoregex = quantified.apply(rng, remainder);
+        Pair<RNG, String> rngAndCoregex =
+            quantified.apply(rng, remainder - minLength + quantifiedMinLength);
         rng = rngAndCoregex.getFirst();
         String value = rngAndCoregex.getSecond();
         sb.append(value);
-        remainder -= value.length();
+        remainder -= (value.length() - quantifiedMinLength);
       }
-      while (quantified.minLength() <= remainder && (-1 == max || quantifier++ < max)) {
+      while (quantifiedMinLength <= remainder && (-1 == max || quantifier++ < max)) {
         Pair<RNG, Boolean> rngAndNext = rng.genBoolean();
         rng = rngAndNext.getFirst();
         if (!rngAndNext.getSecond()) {
           break;
         }
 
-        Pair<RNG, String> rngAndCoregex = quantified.apply(rng, remainder);
+        Pair<RNG, String> rngAndCoregex =
+            quantified.apply(rng, remainder - minLength + quantifiedMinLength);
         rng = rngAndCoregex.getFirst();
         String value = rngAndCoregex.getSecond();
         sb.append(value);
-        remainder -= value.length();
+        remainder -= (value.length() - quantifiedMinLength);
       }
       return new Pair<>(rng, sb.toString());
     }

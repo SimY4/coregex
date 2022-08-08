@@ -18,7 +18,15 @@ package com.github.simy4.coregex.core
 
 import org.scalacheck.{ Arbitrary, Gen }
 
-case class SmallNat(value: Int) extends AnyVal
-object SmallNat {
-  implicit val arbitrarySmallInt: Arbitrary[SmallNat] = Arbitrary(Gen.choose(0, 20).map(SmallNat(_)))
+final case class QuantifyRange(min: Int, max: Int)
+object QuantifyRange {
+  implicit val arbitraryQuantifyRange: Arbitrary[QuantifyRange] = Arbitrary {
+    for {
+      min <- Gen.choose(0, 20)
+      max <- Gen.oneOf(
+        Gen.const(-1),
+        Gen.choose(min, min + 20)
+      )
+    } yield QuantifyRange(min, max)
+  }
 }
