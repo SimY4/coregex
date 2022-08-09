@@ -100,6 +100,7 @@ public abstract class Coregex implements Serializable {
    * @see Quantified
    * @throws IllegalArgumentException if min is greater than max or if min is negative or if called
    *     on already quantified regex
+   * @see Quantified.Type
    */
   public final Coregex quantify(int min, int max, Quantified.Type type) {
     return 1 == min && 1 == max ? this : new Quantified(this, min, max, type);
@@ -365,6 +366,7 @@ public abstract class Coregex implements Serializable {
      * @throws IllegalArgumentException if min is greater than max or if min is negative or if
      *     called on already quantified regex
      * @see Quantified(Coregex, int, int)
+     * @see Type
      */
     public Quantified(Coregex quantified, int min, int max, Type type) {
       if (quantified instanceof Quantified) {
@@ -451,6 +453,10 @@ public abstract class Coregex implements Serializable {
       return max;
     }
 
+    /**
+     * @return quantifier type. Currently doesn't affect the generation flow - only display.
+     * @see Type
+     */
     public Type type() {
       return type;
     }
