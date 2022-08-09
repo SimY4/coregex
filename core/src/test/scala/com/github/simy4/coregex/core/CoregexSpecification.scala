@@ -43,7 +43,7 @@ object CoregexSpecification extends Properties("Coregex") with CoregexArbitrarie
       val quantifiedMinLengthCheck = (0 < quantified.minLength()) ==>
         (coregex.minLength() <= quantified
           .minLength()) :| s"$coregex.minLength(${coregex.minLength()}) <= $quantified.minLength(${quantified.minLength()})"
-      val quantifiedMaxLengthCheck = (-1 < quantified.maxLength()) ==>
+      val quantifiedMaxLengthCheck = (0 < quantified.maxLength()) ==>
         (coregex.maxLength() <= quantified
           .maxLength()) :| s"$coregex.maxLength(${coregex.minLength()}) <= $quantified.maxLength(${quantified.minLength()})"
       val generatedLength = (quantified.minLength() <= generated
