@@ -19,6 +19,8 @@ package com.github.simy4.coregex.core
 import org.scalacheck.Prop._
 import org.scalacheck.Properties
 
+import java.util.regex.Pattern
+
 object CoregexSpecification extends Properties("Coregex") with CoregexArbitraries {
   include(ConcatSpecification)
   include(LiteralSpecification)
@@ -73,6 +75,15 @@ object CoregexSpecification extends Properties("Coregex") with CoregexArbitrarie
       val concat2 = new Coregex.Concat(Coregex.empty(), coregex).simplify()
       (coregex.generate(rng) ?= concat1.generate(rng)) && (coregex.generate(rng) ?= concat2.generate(rng))
     }
+
+    property("concat two should be associative") = forAll { (coregex1: Coregex, coregex2: Coregex, rng: RNG) =>
+      val concat = new Coregex.Concat(coregex1, coregex2).simplify()
+
+      concat.generate(rng) ?= {
+        val pairAndRes1 = coregex1.apply(rng, coregex1.maxLength())
+        pairAndRes1.getSecond + coregex2.generate(pairAndRes1.getFirst)
+      }
+    }
   }
 
   object LiteralSpecification extends Properties("Literal") {
@@ -93,6 +104,14 @@ object CoregexSpecification extends Properties("Coregex") with CoregexArbitrarie
       val concat   = new Coregex.Concat(l1, l2).simplify()
       str ?= concat.generate(rng)
     }
+
+    property("quantified generated should be repeated literal") = forAll {
+      (literal: String, range: QuantifyRange, `type`: Coregex.Quantified.Type, rng: RNG) =>
+        val literalCoregex = new Coregex.Literal(literal).quantify(range.min, range.max, `type`)
+        val generated      = literalCoregex.generate(rng)
+
+        s"(${Pattern.quote(literal)})*".r.matches(generated)
+    }
   }
 
   object SetSpecification extends Properties("Set") {
@@ -103,6 +122,13 @@ object CoregexSpecification extends Properties("Coregex") with CoregexArbitrarie
       val lengthCheck = (generated.length ?= 1) :| s"$generated.length == 1"
 
       inSetCheck && lengthCheck
+    }
+
+    property("quantified generated should be in set") = forAll {
+      (set: Coregex.Set, range: QuantifyRange, `type`: Coregex.Quantified.Type, rng: RNG) =>
+        val generated = set.quantify(range.min, range.max, `type`).generate(rng)
+
+        generated.chars().allMatch(ch => set.set().stream().anyMatch(_ == ch)) :| s"$generated in $set"
     }
   }
 
