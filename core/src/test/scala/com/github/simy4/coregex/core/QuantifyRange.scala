@@ -16,7 +16,7 @@
 
 package com.github.simy4.coregex.core
 
-import org.scalacheck.{ Arbitrary, Gen }
+import org.scalacheck.{ Arbitrary, Gen, Shrink }
 
 final case class QuantifyRange(min: Int, max: Int)
 object QuantifyRange {
@@ -29,4 +29,9 @@ object QuantifyRange {
       )
     } yield QuantifyRange(min, max)
   }
+  implicit def shrinkQuantifyRange(implicit shrinkInt: Shrink[Int]): Shrink[QuantifyRange] =
+    Shrink { case QuantifyRange(min, max) =>
+      shrinkInt.shrink(min).map(QuantifyRange(_, max)) ++
+        shrinkInt.shrink(max).map(QuantifyRange(min, _))
+    }
 }

@@ -399,6 +399,7 @@ public abstract class Coregex implements Serializable {
         sb.append(value);
         remainder -= (value.length() - quantifiedMinLength);
       }
+      remainder -= sb.length();
       while (quantifiedMinLength <= remainder && (-1 == max || quantifier++ < max)) {
         Pair<RNG, Boolean> rngAndNext = rng.genBoolean();
         rng = rngAndNext.getFirst();
@@ -406,12 +407,11 @@ public abstract class Coregex implements Serializable {
           break;
         }
 
-        Pair<RNG, String> rngAndCoregex =
-            quantified.apply(rng, remainder - minLength + quantifiedMinLength);
+        Pair<RNG, String> rngAndCoregex = quantified.apply(rng, remainder);
         rng = rngAndCoregex.getFirst();
         String value = rngAndCoregex.getSecond();
         sb.append(value);
-        remainder -= (value.length() - quantifiedMinLength);
+        remainder -= value.length();
       }
       return new Pair<>(rng, sb.toString());
     }
