@@ -558,7 +558,7 @@ public abstract class Coregex implements Serializable {
       }
       Pair<RNG, Long> rngAndSeed = rng.genLong();
       rng = rngAndSeed.getFirst();
-      String sample = String.valueOf(set.generate(rngAndSeed.getSecond()));
+      String sample = String.valueOf(set.sample(rngAndSeed.getSecond()));
       return new Pair<>(rng, sample);
     }
 

@@ -19,7 +19,9 @@ package com.github.simy4.coregex.core;
 import java.io.Serializable;
 import java.util.BitSet;
 import java.util.Objects;
+import java.util.function.IntPredicate;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 
@@ -30,7 +32,7 @@ import static java.util.Objects.requireNonNull;
  * @author Alex Simkin
  * @since 0.1.0
  */
-public final class Set implements Serializable {
+public final class Set implements IntPredicate, Serializable {
   private static final long serialVersionUID = 1L;
 
   static final Set ALL =
@@ -57,22 +59,44 @@ public final class Set implements Serializable {
   }
 
   /**
+   * Checks if given character is included in this set.
+   *
+   * @param value character to check
+   * @return {@code true} if given character is included in this set, {@code false} otherwise
+   */
+  @Override
+  public boolean test(int value) {
+    return chars.get(value);
+  }
+
+  /**
    * Randomly selects one character in this set based on provided seed.
    *
    * @param seed seed to use for random selection
    * @return selected character
    */
-  public char generate(long seed) {
+  public char sample(long seed) {
     return (char)
-        stream()
+        chars.stream()
             .skip(Math.abs(seed % chars.cardinality()))
             .findFirst()
             .orElseThrow(() -> new IllegalStateException("empty set: " + description));
   }
 
-  /** @return all characters in this set as a stream. */
-  public IntStream stream() {
-    return chars.stream();
+  /** @return partitions this set into chunks. */
+  public Stream<Set> shrink() {
+    int partitionSize = 32;
+    if (chars.cardinality() < partitionSize) {
+      return Stream.empty();
+    }
+    int partition = chars.size() / partitionSize;
+    return IntStream.range(0, partition)
+        .mapToObj(
+            i ->
+                new Set(
+                    chars.get(i * partitionSize, (i * partitionSize) + partitionSize),
+                    "*" + description + "*"))
+        .filter(set -> !set.chars.isEmpty());
   }
 
   @Override

@@ -118,7 +118,7 @@ object CoregexSpecification extends Properties("Coregex") with CoregexArbitrarie
     property("generated should be in set") = forAll { (set: Coregex.Set, rng: RNG) =>
       val generated = set.generate(rng)
 
-      val inSetCheck  = generated.chars().allMatch(ch => set.set().stream().anyMatch(_ == ch)) :| s"$generated in $set"
+      val inSetCheck  = generated.chars().allMatch(ch => set.set().test(ch)) :| s"$generated in $set"
       val lengthCheck = (generated.length ?= 1) :| s"$generated.length == 1"
 
       inSetCheck && lengthCheck
@@ -128,7 +128,7 @@ object CoregexSpecification extends Properties("Coregex") with CoregexArbitrarie
       (set: Coregex.Set, range: QuantifyRange, `type`: Coregex.Quantified.Type, rng: RNG) =>
         val generated = set.quantify(range.min, range.max, `type`).generate(rng)
 
-        generated.chars().allMatch(ch => set.set().stream().anyMatch(_ == ch)) :| s"$generated in $set"
+        generated.chars().allMatch(ch => set.set().test(ch)) :| s"$generated in $set"
     }
   }
 
