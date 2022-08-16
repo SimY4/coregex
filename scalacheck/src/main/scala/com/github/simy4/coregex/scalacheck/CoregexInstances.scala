@@ -34,13 +34,14 @@ trait CoregexInstances {
   implicit def shrinkInputStringMatchingRegexStringWithSingleton[
     A >: Null <: String,
     Regex >: Null <: String with Singleton
-  ](implicit regex: ValueOf[Regex]): Shrink[Matching[A, Regex]] =
+  ](implicit regex: ValueOf[Regex]): Shrink[Matching[A, Regex]] = {
+    val coregex = CoregexParser.getInstance().parse(Pattern.compile(regex.value))
     Shrink.withLazyList { larger =>
-      val coregex = CoregexParser.getInstance().parse(Pattern.compile(regex.value))
-      val rng     = new RandomRNG()
+      val rng = new RandomRNG()
       LazyList
         .iterate(coregex.minLength())(remainder => (remainder * 2) + 1)
         .takeWhile(remainder => remainder < larger.length)
         .map(remainder => coregex.sized(remainder).generate(rng).asInstanceOf[Matching[A, Regex]])
     }
+  }
 }

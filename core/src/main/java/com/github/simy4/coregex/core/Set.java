@@ -20,7 +20,6 @@ import java.io.Serializable;
 import java.util.BitSet;
 import java.util.Objects;
 import java.util.function.IntPredicate;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
@@ -85,17 +84,13 @@ public final class Set implements IntPredicate, Serializable {
 
   /** @return partitions this set into chunks. */
   public Stream<Set> shrink() {
-    int partitionSize = 32;
-    if (chars.cardinality() < partitionSize) {
+    int partitionSize = chars.size() / 2;
+    if (partitionSize < 64) {
       return Stream.empty();
     }
-    int partition = chars.size() / partitionSize;
-    return IntStream.range(0, partition)
-        .mapToObj(
-            i ->
-                new Set(
-                    chars.get(i * partitionSize, (i * partitionSize) + partitionSize),
-                    "*" + description + "*"))
+    return Stream.of(
+            new Set(chars.get(0, partitionSize), description + "~"),
+            new Set(chars.get(partitionSize, chars.size()), "~" + description))
         .filter(set -> !set.chars.isEmpty());
   }
 
