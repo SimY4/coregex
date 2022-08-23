@@ -16,6 +16,7 @@
 
 package com.github.simy4.coregex.core
 
+import com.github.simy4.coregex.core.rng.RandomRNG
 import org.scalacheck.{ Gen, Properties }
 import org.scalacheck.Prop._
 
@@ -104,6 +105,10 @@ object CoregexParserSpecification extends Properties("CoregexParser") {
         Pattern.compile("\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d([+-][0-2]\\d:[0-5]\\d|Z)"),
       new Coregex.Literal("whatever")           -> Pattern.compile(Pattern.quote("whatever")),
       new Coregex.Literal("double\\Q\\Equoted") -> Pattern.compile(Pattern.quote("double\\Q\\Equoted"))
-    )
-  ) { case (coregex, regex) => coregex == Coregex.from(regex) }
+    ),
+    Gen.long
+  ) { case ((expected, regex), seed) =>
+    val actual = Coregex.from(regex)
+    (expected ?= actual) && regex.matcher(actual.generate(new RandomRNG(seed))).matches()
+  }
 }
