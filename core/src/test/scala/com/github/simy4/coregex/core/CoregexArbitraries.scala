@@ -16,8 +16,8 @@
 
 package com.github.simy4.coregex.core
 
-import com.github.simy4.coregex.core.rng.RandomRNG
 import org.scalacheck.{ Arbitrary, Gen, Shrink }
+import rng.RandomRNG
 
 trait CoregexArbitraries {
   import scala.jdk.StreamConverters._

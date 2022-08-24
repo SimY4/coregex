@@ -16,9 +16,9 @@
 
 package com.github.simy4.coregex.core
 
-import com.github.simy4.coregex.core.rng.RandomRNG
 import org.scalacheck.{ Gen, Properties }
 import org.scalacheck.Prop._
+import rng.RandomRNG
 
 import java.util.regex.Pattern
 
