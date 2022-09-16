@@ -44,7 +44,7 @@ lazy val core = (project in file("core"))
     moduleName       := "coregex-core",
     crossPaths       := false,
     autoScalaLibrary := false,
-    libraryDependencies ++= Seq("org.scalacheck" %% "scalacheck" % "1.16.0" % Test),
+    libraryDependencies ++= Seq("org.scalacheck" %% "scalacheck" % "1.17.0" % Test),
     crossScalaVersions := supportedScalaVersions,
     Compile / compile / javacOptions ++= Seq("-Xlint:all", "-Werror") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8")
@@ -105,7 +105,7 @@ lazy val scalacheck = (project in file("scalacheck"))
     name       := "scalacheck",
     moduleName := "coregex-scalacheck",
     libraryDependencies ++= Seq(
-      "org.scalacheck" %% "scalacheck" % "1.16.0" % Provided
+      "org.scalacheck" %% "scalacheck" % "1.17.0" % Provided
     ),
     crossScalaVersions := supportedScalaVersions
   )
