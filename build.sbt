@@ -63,7 +63,7 @@ lazy val jqwik = (project in file("jqwik"))
     libraryDependencies ++= Seq(
       "net.jqwik"   % "jqwik-api"         % "1.7.0"  % Provided,
       "net.jqwik"   % "jqwik-engine"      % "1.7.0"  % Test,
-      "net.aichler" % "jupiter-interface" % "0.11.0" % Test
+      "net.aichler" % "jupiter-interface" % "0.11.1" % Test
     ),
     crossScalaVersions := supportedScalaVersions,
     testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v"),
