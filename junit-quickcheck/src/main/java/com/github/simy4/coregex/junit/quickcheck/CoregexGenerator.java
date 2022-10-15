@@ -21,6 +21,7 @@ import com.github.simy4.coregex.core.RNG;
 import com.github.simy4.coregex.core.rng.RandomRNG;
 import com.pholser.junit.quickcheck.generator.GenerationStatus;
 import com.pholser.junit.quickcheck.generator.Generator;
+import com.pholser.junit.quickcheck.generator.Size;
 import com.pholser.junit.quickcheck.random.SourceOfRandomness;
 
 import java.math.BigDecimal;
@@ -33,6 +34,7 @@ public class CoregexGenerator extends Generator<String> {
 
   private Pattern regex;
   private Coregex coregex;
+  private Size sized;
 
   public CoregexGenerator() {
     this(ANY);
@@ -49,10 +51,15 @@ public class CoregexGenerator extends Generator<String> {
     this.coregex = Coregex.from(this.regex);
   }
 
+  public void configure(Size sized) {
+    this.sized = sized;
+  }
+
   @Override
   public String generate(SourceOfRandomness random, GenerationStatus status) {
+    int size = null == sized ? status.size() : sized.max();
     return coregex
-        .sized(Math.max(coregex.minLength(), status.size()))
+        .sized(Math.max(coregex.minLength(), size))
         .generate(new RandomRNG(random.nextLong()));
   }
 
