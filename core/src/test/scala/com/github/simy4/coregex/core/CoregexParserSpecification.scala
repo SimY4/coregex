@@ -103,6 +103,11 @@ object CoregexParserSpecification extends Properties("CoregexParser") {
         )
       ) ->
         Pattern.compile("\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d([+-][0-2]\\d:[0-5]\\d|Z)"),
+      new Coregex.Quantified(
+        new Coregex.Set(Set.builder().range('a', 'z').range('A', 'Z').range('0', '9').set('_', '|', '-', ':').build()),
+        1,
+        128
+      )                                         -> Pattern.compile("[a-zA-Z0-9_\\|\\-\\:]{1,128}"),
       new Coregex.Literal("whatever")           -> Pattern.compile(Pattern.quote("whatever")),
       new Coregex.Literal("double\\Q\\Equoted") -> Pattern.compile(Pattern.quote("double\\Q\\Equoted"))
     ),
