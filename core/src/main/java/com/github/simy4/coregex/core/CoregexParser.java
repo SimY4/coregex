@@ -335,13 +335,21 @@ public final class CoregexParser {
         String posix = ctx.takeWhile(pos -> '}' != pos);
         switch (posix) {
           case "Lower":
+          case "javaLowerCase":
             metachar.range('a', 'z');
             break;
           case "Upper":
+          case "javaUpperCase":
             metachar.range('A', 'Z');
+            break;
+          case "ASCII":
+            metachar.range(Character.MIN_VALUE, (char) 0x7F);
             break;
           case "Digit":
             metachar.range('0', '9');
+            break;
+          case "XDigit":
+            metachar.range('0', '9').range('a', 'f').range('A', 'F');
             break;
           case "Alpha":
             metachar.range('a', 'z').range('A', 'Z');
@@ -349,8 +357,25 @@ public final class CoregexParser {
           case "Alnum":
             metachar.range('a', 'z').range('A', 'Z').range('0', '9');
             break;
-          case "Space":
+          case "Punct":
+            metachar.set(
+                '!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/', ':',
+                ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|', '}', '~');
+            break;
+          case "Graph":
+          case "Print":
+            metachar
+                .range('a', 'z')
+                .range('A', 'Z')
+                .range('0', '9')
+                .set(
+                    '!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/', ':',
+                    ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|', '}',
+                    '~');
+            break;
           case "Blank":
+          case "Space":
+          case "javaWhitespace":
             metachar.set(' ', '\t');
             break;
           default:
@@ -359,8 +384,24 @@ public final class CoregexParser {
         }
         ctx.match('}');
         break;
-      default:
+      case 'S':
+      case 'b':
+      case 'B':
+      case 'A':
+      case 'G':
+      case 'Z':
+      case 'z':
+      case 'k':
         ctx.unsupported("metacharacter \\" + ch + " is not supported");
+        break;
+      default:
+        if (isDigit(ch)) {
+          ctx.unsupported("metacharacter \\" + ch + " is not supported");
+        } else {
+          // potentially unnecessarily escaped character
+          ctx.match(ch);
+          metachar.single(ch);
+        }
         break;
     }
     return metachar.build();
