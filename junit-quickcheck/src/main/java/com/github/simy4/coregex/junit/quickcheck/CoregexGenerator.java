@@ -53,7 +53,7 @@ public class CoregexGenerator extends Generator<String> {
   public String generate(SourceOfRandomness random, GenerationStatus status) {
     return coregex
         .sized(Math.max(coregex.minLength(), status.size()))
-        .generate(new RandomRNG(random.seed()));
+        .generate(new RandomRNG(random.nextLong()));
   }
 
   @Override
@@ -64,7 +64,7 @@ public class CoregexGenerator extends Generator<String> {
   @Override
   public List<String> doShrink(SourceOfRandomness random, String larger) {
     List<String> shrinks = new ArrayList<>();
-    RNG rng = new RandomRNG(random.seed());
+    RNG rng = new RandomRNG(random.nextLong());
     for (int remainder = coregex.minLength();
         remainder < larger.length();
         remainder = (remainder * 2) + 1) {
