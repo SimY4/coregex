@@ -29,7 +29,7 @@ trait CoregexInstances {
     A >: Null <: String,
     Regex >: Null <: String with Singleton
   ](implicit regex: ValueOf[Regex]): Arbitrary[Matching[A, Regex]] =
-    Arbitrary(CoregexGen(Pattern.compile(regex.value)).asInstanceOf[Gen[Matching[A, Regex]]])
+    Arbitrary(CoregexGen.fromPattern(Pattern.compile(regex.value)).asInstanceOf[Gen[Matching[A, Regex]]])
 
   implicit def shrinkInputStringMatchingRegexStringWithSingleton[
     A >: Null <: String,

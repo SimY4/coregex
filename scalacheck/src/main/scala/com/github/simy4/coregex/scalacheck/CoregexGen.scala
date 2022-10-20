@@ -25,13 +25,13 @@ import java.util.regex.Pattern
 import scala.util.matching.Regex
 
 object CoregexGen {
-  def apply(regex: Regex): Gen[String] = apply(regex.pattern)
+  def fromRegex(regex: Regex, size: Option[Int] = None): Gen[String] = fromPattern(regex.pattern, size)
 
-  def apply(regex: Pattern): Gen[String] = apply(Coregex.from(regex))
+  def fromPattern(regex: Pattern, size: Option[Int] = None): Gen[String] = apply(Coregex.from(regex), size)
 
-  def apply(coregex: Coregex): Gen[String] =
+  def apply(coregex: Coregex, size: Option[Int] = None): Gen[String] =
     for {
       seed <- Gen.long
-      size <- Gen.size
+      size <- size.fold(Gen.size)(Gen.const)
     } yield coregex.sized(coregex.minLength() max size).generate(new RandomRNG(seed))
 }
