@@ -50,10 +50,7 @@ public class CoregexGeneratorTest {
   public void shouldGenerateUniqueStrings(List<@Regex("[a-zA-Z0-9]{32,}") String> strings) {
     assertTrue(
         strings.stream()
-            .allMatch(
-                s ->
-                    s.length() >= 32
-                        && s.chars().allMatch(c -> Character.isLetter(c) || Character.isDigit(c))));
+            .allMatch(s -> s.length() >= 32 && s.chars().allMatch(Character::isLetterOrDigit)));
     assertEquals(strings.size(), new HashSet<>(strings).size());
   }
 
