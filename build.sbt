@@ -63,6 +63,7 @@ lazy val jqwik = (project in file("jqwik"))
     libraryDependencies ++= Seq(
       "net.jqwik"   % "jqwik-api"         % "1.7.0"  % Provided,
       "net.jqwik"   % "jqwik-engine"      % "1.7.0"  % Test,
+      "net.jqwik"   % "jqwik-testing"     % "1.7.0"  % Test,
       "net.aichler" % "jupiter-interface" % "0.11.1" % Test
     ),
     crossScalaVersions := supportedScalaVersions,
@@ -112,3 +113,4 @@ lazy val scalacheck = (project in file("scalacheck"))
   .dependsOn(core)
 
 addCommandAlias("build", ";javafmtCheckAll;scalafmtCheckAll;headerCheck;test")
+addCommandAlias("fmt", ";javafmtAll;scalafmtAll;headerCreate")

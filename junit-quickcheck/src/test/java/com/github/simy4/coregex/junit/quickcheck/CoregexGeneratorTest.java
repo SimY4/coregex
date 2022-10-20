@@ -21,9 +21,12 @@ import com.pholser.junit.quickcheck.runner.JUnitQuickcheck;
 import org.junit.runner.RunWith;
 
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(JUnitQuickcheck.class)
 public class CoregexGeneratorTest {
@@ -41,6 +44,17 @@ public class CoregexGeneratorTest {
           String iso8601Date) {
     DateTimeFormatter formatter = DateTimeFormatter.ISO_INSTANT;
     assertEquals(iso8601Date, formatter.format(formatter.parse(iso8601Date)));
+  }
+
+  @Property
+  public void shouldGenerateUniqueStrings(List<@Regex("[a-zA-Z0-9]{32,}") String> strings) {
+    assertTrue(
+        strings.stream()
+            .allMatch(
+                s ->
+                    s.length() >= 32
+                        && s.chars().allMatch(c -> Character.isLetter(c) || Character.isDigit(c))));
+    assertEquals(strings.size(), new HashSet<>(strings).size());
   }
 
   @Property
