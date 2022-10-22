@@ -36,7 +36,7 @@ lazy val root = (project in file("."))
     crossScalaVersions := Nil,
     publish / skip     := true
   )
-  .aggregate(core, jqwik, junitQuickcheck, scalacheck)
+  .aggregate(core, jqwik, junitQuickcheck, scalacheck, vavrTest)
 
 lazy val core = (project in file("core"))
   .settings(
@@ -109,6 +109,27 @@ lazy val scalacheck = (project in file("scalacheck"))
       "org.scalacheck" %% "scalacheck" % "1.17.0" % Provided
     ),
     crossScalaVersions := supportedScalaVersions
+  )
+  .dependsOn(core)
+
+lazy val vavrTest = (project in file("vavr-test"))
+  .settings(
+    name := "vavr-test",
+    moduleName := "coregex-vavr-test",
+    crossPaths := false,
+    autoScalaLibrary := false,
+    libraryDependencies ++= Seq(
+      "io.vavr" % "vavr-test" % "0.10.4" % Provided,
+      "net.aichler" % "jupiter-interface" % "0.11.1" % Test
+    ),
+    crossScalaVersions := supportedScalaVersions,
+    testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v"),
+    Compile / compile / javacOptions ++= Seq("-Xlint:all", "-Werror") ++
+      (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8")
+      else Seq("-source", "1.8", "-target", "1.8")),
+    Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing") ++
+      (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8", "-html5")
+      else Seq("-source", "1.8", "-target", "1.8"))
   )
   .dependsOn(core)
 

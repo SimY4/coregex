@@ -30,10 +30,6 @@ public class CoregexGenerator implements RandomGenerator<String> {
   private final Coregex coregex;
   private final int size;
 
-  public CoregexGenerator(Pattern regex) {
-    this(regex, Integer.MAX_VALUE);
-  }
-
   public CoregexGenerator(Pattern regex, int size) {
     this.coregex = Coregex.from(regex);
     this.size = Math.max(size, coregex.minLength());

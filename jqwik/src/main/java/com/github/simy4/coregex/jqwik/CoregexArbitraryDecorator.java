@@ -29,13 +29,15 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static java.util.Objects.requireNonNull;
+
 public class CoregexArbitraryDecorator extends ArbitraryDecorator<String> {
   private final Pattern pattern;
   private final Set<String> edgeCases = new HashSet<>();
   private int sized = -1;
 
   public CoregexArbitraryDecorator(Pattern pattern) {
-    this.pattern = pattern;
+    this.pattern = requireNonNull(pattern, "pattern");
   }
 
   @Override
@@ -71,7 +73,7 @@ final class SizedArbitrary implements Arbitrary<String> {
   @Override
   public RandomGenerator<String> generator(int genSize) {
     int size = this.size;
-    size = -1 != size ? genSize : size;
+    size = -1 == size ? genSize : size;
     return new CoregexGenerator(pattern, size);
   }
 

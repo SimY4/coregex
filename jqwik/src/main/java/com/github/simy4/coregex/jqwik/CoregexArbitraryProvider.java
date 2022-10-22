@@ -41,7 +41,7 @@ public class CoregexArbitraryProvider implements ArbitraryProvider {
         .map(regex -> new CoregexArbitraryDecorator(Pattern.compile(regex.value())))
         .map(
             decorator -> optionalSize.map(size -> decorator.withSize(size.max())).orElse(decorator))
-        .map(Collections::<Arbitrary<?>>singleton)
+        .map(decorator -> Collections.<Arbitrary<?>>singleton(decorator.arbitrary()))
         .orElse(Collections.emptySet());
   }
 
