@@ -16,6 +16,8 @@
 
 package com.github.simy4.coregex.core;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,8 +27,6 @@ import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-
-import static java.util.Objects.requireNonNull;
 
 /**
  * Data representation of regex language.

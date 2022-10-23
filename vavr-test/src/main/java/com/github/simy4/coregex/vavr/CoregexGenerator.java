@@ -19,7 +19,6 @@ package com.github.simy4.coregex.vavr;
 import com.github.simy4.coregex.core.Coregex;
 import com.github.simy4.coregex.core.rng.RandomRNG;
 import io.vavr.test.Gen;
-
 import java.util.Random;
 import java.util.regex.Pattern;
 

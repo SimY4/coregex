@@ -18,7 +18,6 @@ package com.github.simy4.coregex.core.rng;
 
 import com.github.simy4.coregex.core.Pair;
 import com.github.simy4.coregex.core.RNG;
-
 import java.io.Serializable;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;

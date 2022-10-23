@@ -16,16 +16,15 @@
 
 package com.github.simy4.coregex.jqwik;
 
-import net.jqwik.api.ForAll;
-import net.jqwik.api.Property;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import net.jqwik.api.ForAll;
+import net.jqwik.api.Property;
 
 class CoregexArbitraryProviderTest {
   @Property

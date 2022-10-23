@@ -16,13 +16,13 @@
 
 package com.github.simy4.coregex.core;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.Serializable;
 import java.util.BitSet;
 import java.util.Objects;
 import java.util.function.IntPredicate;
 import java.util.stream.Stream;
-
-import static java.util.Objects.requireNonNull;
 
 /**
  * Data representation of a set of characters AKA regular expression's char classes.
