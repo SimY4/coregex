@@ -1,5 +1,5 @@
 addSbtPlugin("ch.epfl.scala"             % "sbt-bloop"             % "1.5.4")
-addSbtPlugin("com.github.sbt"            % "sbt-ci-release"        % "1.5.10")
+addSbtPlugin("com.github.sbt"            % "sbt-ci-release"        % "1.5.11")
 addSbtPlugin("com.github.sbt"            % "sbt-release"           % "1.1.0")
 addSbtPlugin("com.lightbend.sbt"         % "sbt-java-formatter"    % "0.7.0")
 addSbtPlugin("de.heikoseeberger"         % "sbt-header"            % "5.7.0")
