@@ -32,6 +32,10 @@ import java.util.stream.Collectors;
 import static java.util.Objects.requireNonNull;
 
 public class CoregexArbitraryDecorator extends ArbitraryDecorator<String> {
+  public static CoregexArbitraryDecorator of(String regex) {
+    return new CoregexArbitraryDecorator(Pattern.compile(regex));
+  }
+
   private final Pattern pattern;
   private final Set<String> edgeCases = new HashSet<>();
   private int sized = -1;
