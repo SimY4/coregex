@@ -28,7 +28,9 @@ class CoregexArbitraryTest {
   @Test
   void shouldGenerateMatchingUUIDString() {
     Property.def("should generate matching UUID string")
-        .forAll(CoregexArbitrary.of("[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}"))
+        .forAll(
+            CoregexArbitrary.of(
+                "[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}"))
         .suchThat(uuid -> uuid.equals(UUID.fromString(uuid).toString()))
         .check();
   }
@@ -37,7 +39,9 @@ class CoregexArbitraryTest {
   void shouldGenerateMatchingIsoDateString() {
     DateTimeFormatter formatter = DateTimeFormatter.ISO_INSTANT;
     Property.def("should generate matching ISO date string")
-        .forAll(CoregexArbitrary.of("[12]\\d{3}-(?:0[1-9]|1[012])-(?:0[1-9]|1\\d|2[0-8])T(?:1\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d{2}[1-9])?Z"))
+        .forAll(
+            CoregexArbitrary.of(
+                "[12]\\d{3}-(?:0[1-9]|1[012])-(?:0[1-9]|1\\d|2[0-8])T(?:1\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d{2}[1-9])?Z"))
         .suchThat(iso8601Date -> iso8601Date.equals(formatter.format(formatter.parse(iso8601Date))))
         .check();
   }
