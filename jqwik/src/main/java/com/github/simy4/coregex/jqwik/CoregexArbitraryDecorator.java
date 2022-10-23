@@ -16,11 +16,7 @@
 
 package com.github.simy4.coregex.jqwik;
 
-import net.jqwik.api.Arbitrary;
-import net.jqwik.api.EdgeCases;
-import net.jqwik.api.RandomGenerator;
-import net.jqwik.api.Shrinkable;
-import net.jqwik.api.arbitraries.ArbitraryDecorator;
+import static java.util.Objects.requireNonNull;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -28,8 +24,11 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import static java.util.Objects.requireNonNull;
+import net.jqwik.api.Arbitrary;
+import net.jqwik.api.EdgeCases;
+import net.jqwik.api.RandomGenerator;
+import net.jqwik.api.Shrinkable;
+import net.jqwik.api.arbitraries.ArbitraryDecorator;
 
 public class CoregexArbitraryDecorator extends ArbitraryDecorator<String> {
   public static CoregexArbitraryDecorator of(String regex) {

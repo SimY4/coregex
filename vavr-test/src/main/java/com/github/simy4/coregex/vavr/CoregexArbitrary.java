@@ -16,12 +16,11 @@
 
 package com.github.simy4.coregex.vavr;
 
+import static java.util.Objects.requireNonNull;
+
 import io.vavr.test.Arbitrary;
 import io.vavr.test.Gen;
-
 import java.util.regex.Pattern;
-
-import static java.util.Objects.requireNonNull;
 
 public class CoregexArbitrary implements Arbitrary<String> {
   public static CoregexArbitrary of(String regex) {

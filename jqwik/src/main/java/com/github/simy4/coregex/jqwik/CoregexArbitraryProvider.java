@@ -16,14 +16,13 @@
 
 package com.github.simy4.coregex.jqwik;
 
+import java.util.Collections;
+import java.util.Optional;
+import java.util.Set;
 import net.jqwik.api.Arbitrary;
 import net.jqwik.api.constraints.Size;
 import net.jqwik.api.providers.ArbitraryProvider;
 import net.jqwik.api.providers.TypeUsage;
-
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
 
 public class CoregexArbitraryProvider implements ArbitraryProvider {
   @Override

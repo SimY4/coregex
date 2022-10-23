@@ -18,11 +18,9 @@ package com.github.simy4.coregex.vavr;
 
 import io.vavr.test.Arbitrary;
 import io.vavr.test.Property;
-import org.junit.jupiter.api.Test;
-
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
-import java.util.regex.Pattern;
+import org.junit.jupiter.api.Test;
 
 class CoregexArbitraryTest {
   @Test
