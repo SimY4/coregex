@@ -73,15 +73,16 @@ object CoregexSpecification extends Properties("Coregex") with CoregexArbitrarie
     property("concat with empty should be identity") = forAll { (coregex: Coregex, rng: RNG) =>
       val concat1 = new Coregex.Concat(coregex, Coregex.empty()).simplify()
       val concat2 = new Coregex.Concat(Coregex.empty(), coregex).simplify()
-      (coregex.generate(rng) ?= concat1.generate(rng)) && (coregex.generate(rng) ?= concat2.generate(rng))
+      (coregex.simplify().generate(rng) ?= concat1.generate(rng)) && (coregex.simplify().generate(rng) ?= concat2
+        .generate(rng))
     }
 
     property("concat two should be associative") = forAll { (coregex1: Coregex, coregex2: Coregex, rng: RNG) =>
       val concat = new Coregex.Concat(coregex1, coregex2).simplify()
 
       concat.generate(rng) ?= {
-        val pairAndRes1 = coregex1.apply(rng, coregex1.maxLength())
-        pairAndRes1.getSecond + coregex2.generate(pairAndRes1.getFirst)
+        val pairAndRes1 = coregex1.simplify().apply(rng, coregex1.maxLength())
+        pairAndRes1.getSecond + coregex2.simplify().generate(pairAndRes1.getFirst)
       }
     }
   }

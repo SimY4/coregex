@@ -764,8 +764,10 @@ public abstract class Coregex implements Serializable {
 
     @Override
     public Coregex simplify() {
-      return new Union(
-          first.simplify(), Arrays.stream(rest).map(Coregex::simplify).toArray(Coregex[]::new));
+      return 0 == rest.length
+          ? first.simplify()
+          : new Union(
+              first.simplify(), Arrays.stream(rest).map(Coregex::simplify).toArray(Coregex[]::new));
     }
 
     /** @return underlying regexes forming this unification. */
