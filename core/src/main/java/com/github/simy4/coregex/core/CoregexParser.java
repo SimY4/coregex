@@ -53,7 +53,7 @@ public final class CoregexParser {
     if (ctx.hasMoreElements()) {
       coregex = ctx.error("EOL");
     }
-    return coregex;
+    return coregex.simplify();
   }
 
   private Coregex RE(Context ctx) {
@@ -66,7 +66,7 @@ public final class CoregexParser {
       }
       re = new Coregex.Union(re, union.toArray(new Coregex[0]));
     }
-    return re.simplify();
+    return re;
   }
 
   private Coregex simpleRE(Context ctx) {
