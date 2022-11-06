@@ -61,9 +61,9 @@ lazy val jqwik = (project in file("jqwik"))
     crossPaths       := false,
     autoScalaLibrary := false,
     libraryDependencies ++= Seq(
-      "net.jqwik"   % "jqwik-api"         % "1.7.0"  % Provided,
-      "net.jqwik"   % "jqwik-engine"      % "1.7.0"  % Test,
-      "net.jqwik"   % "jqwik-testing"     % "1.7.0"  % Test,
+      "net.jqwik"   % "jqwik-api"         % "1.7.1"  % Provided,
+      "net.jqwik"   % "jqwik-engine"      % "1.7.1"  % Test,
+      "net.jqwik"   % "jqwik-testing"     % "1.7.1"  % Test,
       "net.aichler" % "jupiter-interface" % "0.11.1" % Test
     ),
     crossScalaVersions := supportedScalaVersions,
@@ -114,22 +114,22 @@ lazy val scalacheck = (project in file("scalacheck"))
 
 lazy val vavrTest = (project in file("vavr-test"))
   .settings(
-    name := "vavr-test",
-    moduleName := "coregex-vavr-test",
-    crossPaths := false,
+    name             := "vavr-test",
+    moduleName       := "coregex-vavr-test",
+    crossPaths       := false,
     autoScalaLibrary := false,
     libraryDependencies ++= Seq(
-      "io.vavr" % "vavr-test" % "0.10.4" % Provided,
+      "io.vavr"     % "vavr-test"         % "0.10.4" % Provided,
       "net.aichler" % "jupiter-interface" % "0.11.1" % Test
     ),
     crossScalaVersions := supportedScalaVersions,
     testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v"),
     Compile / compile / javacOptions ++= Seq("-Xlint:all", "-Werror") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8")
-      else Seq("-source", "1.8", "-target", "1.8")),
+       else Seq("-source", "1.8", "-target", "1.8")),
     Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8", "-html5")
-      else Seq("-source", "1.8", "-target", "1.8"))
+       else Seq("-source", "1.8", "-target", "1.8"))
   )
   .dependsOn(core)
 
