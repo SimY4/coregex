@@ -63,7 +63,7 @@ Use the provided `CoregexInstances` trait to constrain string arbitraries:
 
 ```scala
 object MySpecification extends Properties("MySpecification") with CoregexInstances {
-  property("myProperty") = forAll { (str: String Matching "[a-zA-Z]{3}") =>
+  property("my property") = forAll { (str: String Matching "[a-zA-Z]{3}") =>
     3 == str.length  
   }
 }
@@ -82,7 +82,7 @@ Use the provided `CoregexArbirary` class to generate a string that would match t
 class MyTest {
   @Test
   void myProperty() {
-    Property.def("should generate matching UUID string")
+    Property.def("my property")
         .forAll(CoregexArbitrary.of("[a-zA-Z]{3}"))
         .suchThat(str -> 3 == str.length())
         .check();
