@@ -12,6 +12,7 @@ A handy utility for generating strings that match given regular expression crite
 - [Jqwik](https://jqwik.net/) 
 - [JUnit Quickcheck](https://pholser.github.io/junit-quickcheck)
 - [scalacheck](https://scalacheck.org/)
+- [vavr-test](https://github.com/vavr-io/vavr-test)
 
 # Usage
 ## Jqwik
