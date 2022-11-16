@@ -30,16 +30,16 @@ import net.jqwik.api.RandomGenerator;
 import net.jqwik.api.Shrinkable;
 import net.jqwik.api.arbitraries.ArbitraryDecorator;
 
-public class CoregexArbitraryDecorator extends ArbitraryDecorator<String> {
-  public static CoregexArbitraryDecorator of(String regex) {
-    return new CoregexArbitraryDecorator(Pattern.compile(regex));
+public class CoregexArbitrary extends ArbitraryDecorator<String> {
+  public static CoregexArbitrary of(String regex) {
+    return new CoregexArbitrary(Pattern.compile(regex));
   }
 
   private final Pattern pattern;
   private final Set<String> edgeCases = new HashSet<>();
   private int sized = -1;
 
-  public CoregexArbitraryDecorator(Pattern pattern) {
+  public CoregexArbitrary(Pattern pattern) {
     this.pattern = requireNonNull(pattern, "pattern");
   }
 
@@ -48,7 +48,7 @@ public class CoregexArbitraryDecorator extends ArbitraryDecorator<String> {
     return new SizedArbitrary(pattern, edgeCases, sized);
   }
 
-  public CoregexArbitraryDecorator withSize(int size) {
+  public CoregexArbitrary withSize(int size) {
     if (size < 0) {
       throw new IllegalArgumentException("Size must be positive");
     }
@@ -56,7 +56,7 @@ public class CoregexArbitraryDecorator extends ArbitraryDecorator<String> {
     return this;
   }
 
-  public CoregexArbitraryDecorator withEdgeCases(String... edgeCases) {
+  public CoregexArbitrary withEdgeCases(String... edgeCases) {
     this.edgeCases.addAll(Arrays.asList(edgeCases));
     return this;
   }

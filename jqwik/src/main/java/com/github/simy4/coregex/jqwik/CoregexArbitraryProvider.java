@@ -36,7 +36,7 @@ public class CoregexArbitraryProvider implements ArbitraryProvider {
     Optional<Regex> optionalRegex = targetType.findAnnotation(Regex.class);
     Optional<Size> optionalSize = targetType.findAnnotation(Size.class);
     return optionalRegex
-        .map(regex -> CoregexArbitraryDecorator.of(regex.value()))
+        .map(regex -> CoregexArbitrary.of(regex.value()))
         .map(
             decorator -> optionalSize.map(size -> decorator.withSize(size.max())).orElse(decorator))
         .map(decorator -> Collections.<Arbitrary<?>>singleton(decorator.arbitrary()))
