@@ -21,3 +21,8 @@ jobs:
         cache: sbt
     - name: Build with sbt
       run: sbt ++${{ matrix.scala }} build
+    - name: Create test summary
+      uses: test-summary/action@v2
+      with:
+        paths: '**/target/test-reports/*.xml'
+      if: always()
