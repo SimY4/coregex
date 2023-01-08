@@ -51,7 +51,10 @@ lazy val core = (project in file("core"))
        else Seq("-source", "1.8", "-target", "1.8")),
     Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8", "-html5")
-       else Seq("-source", "1.8", "-target", "1.8"))
+       else Seq("-source", "1.8", "-target", "1.8")),
+    tpolecatDevModeOptions ~= { opts =>
+      opts.filterNot(Set(ScalacOptions.warnNonUnitStatement)) // FIXME: workaround to remove this exclusion
+    }
   )
 
 lazy val jqwik = (project in file("jqwik"))
@@ -108,7 +111,10 @@ lazy val scalacheck = (project in file("scalacheck"))
     libraryDependencies ++= Seq(
       "org.scalacheck" %% "scalacheck" % "1.17.0" % Provided
     ),
-    crossScalaVersions := supportedScalaVersions
+    crossScalaVersions := supportedScalaVersions,
+    tpolecatDevModeOptions ~= { opts =>
+      opts.filterNot(Set(ScalacOptions.warnNonUnitStatement)) // FIXME: workaround to remove this exclusion
+    }
   )
   .dependsOn(core)
 
