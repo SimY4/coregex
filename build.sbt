@@ -16,6 +16,10 @@ ThisBuild / developers := List(
   )
 )
 
+projectID ~= { id =>
+  id.withExtraAttributes(id.extraAttributes.updated("info.releaseNotesUrl", "https://github.com/SimY4/coregex/releases"))
+}
+
 lazy val scala213               = "2.13.10"
 lazy val scala3                 = "3.2.1"
 lazy val supportedScalaVersions = List(scala213, scala3)
