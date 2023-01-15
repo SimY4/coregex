@@ -51,7 +51,7 @@ lazy val core = (project in file("core"))
        else Seq("-source", "1.8", "-target", "1.8")),
     Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8", "-html5")
-       else Seq("-source", "1.8", "-target", "1.8"))
+      else Seq("-source", "1.8", "-target", "1.8"))
   )
 
 lazy val jqwik = (project in file("jqwik"))
@@ -72,7 +72,7 @@ lazy val jqwik = (project in file("jqwik"))
        else Seq("-source", "1.8", "-target", "1.8")),
     Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8", "-html5")
-       else Seq("-source", "1.8", "-target", "1.8"))
+      else Seq("-source", "1.8", "-target", "1.8"))
   )
   .dependsOn(core)
 
@@ -86,7 +86,7 @@ lazy val junitQuickcheck = (project in file("junit-quickcheck"))
       "com.pholser"    % "junit-quickcheck-core"       % "1.0"    % Provided,
       "com.pholser"    % "junit-quickcheck-generators" % "1.0"    % Test,
       "junit"          % "junit"                       % "4.13.2" % Test,
-      "org.slf4j"      % "slf4j-simple"                % "1.7.36" % Test,
+      "org.slf4j"      % "slf4j-simple"                % "1.7.25" % Test,
       "com.github.sbt" % "junit-interface"             % "0.13.3" % Test
     ),
     crossScalaVersions := supportedScalaVersions,
@@ -96,7 +96,7 @@ lazy val junitQuickcheck = (project in file("junit-quickcheck"))
        else Seq("-source", "1.8", "-target", "1.8")),
     Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8", "-html5")
-       else Seq("-source", "1.8", "-target", "1.8"))
+      else Seq("-source", "1.8", "-target", "1.8"))
   )
   .dependsOn(core)
 
