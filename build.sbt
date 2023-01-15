@@ -17,7 +17,9 @@ ThisBuild / developers := List(
 )
 
 projectID ~= { id =>
-  id.withExtraAttributes(id.extraAttributes.updated("info.releaseNotesUrl", "https://github.com/SimY4/coregex/releases"))
+  id.withExtraAttributes(
+    id.extraAttributes.updated("info.releaseNotesUrl", "https://github.com/SimY4/coregex/releases")
+  )
 }
 
 lazy val scala213               = "2.13.10"
@@ -68,9 +70,9 @@ lazy val jqwik = (project in file("jqwik"))
     crossPaths       := false,
     autoScalaLibrary := false,
     libraryDependencies ++= Seq(
-      "net.jqwik"   % "jqwik-api"         % "1.7.1"  % Provided,
-      "net.jqwik"   % "jqwik-engine"      % "1.7.1"  % Test,
-      "net.jqwik"   % "jqwik-testing"     % "1.7.1"  % Test,
+      "net.jqwik"   % "jqwik-api"         % "1.7.2"  % Provided,
+      "net.jqwik"   % "jqwik-engine"      % "1.7.2"  % Test,
+      "net.jqwik"   % "jqwik-testing"     % "1.7.2"  % Test,
       "net.aichler" % "jupiter-interface" % "0.11.1" % Test
     ),
     crossScalaVersions := supportedScalaVersions,
