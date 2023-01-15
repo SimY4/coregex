@@ -18,15 +18,13 @@ package com.github.simy4.coregex.core;
 
 import java.util.Objects;
 
-import static java.util.Objects.requireNonNull;
-
 public final class Pair<A, B> {
   private final A first;
   private final B second;
 
   public Pair(A first, B second) {
-    this.first = requireNonNull(first, "first");
-    this.second = requireNonNull(second, "second");
+    this.first = first;
+    this.second = second;
   }
 
   public A getFirst() {
@@ -46,7 +44,7 @@ public final class Pair<A, B> {
       return false;
     }
     Pair<?, ?> pair = (Pair<?, ?>) o;
-    return first.equals(pair.first) && second.equals(pair.second);
+    return Objects.equals(first, pair.first) && Objects.equals(second, pair.second);
   }
 
   @Override

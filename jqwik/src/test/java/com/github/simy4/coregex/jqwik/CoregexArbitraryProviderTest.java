@@ -16,15 +16,17 @@
 
 package com.github.simy4.coregex.jqwik;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
+import java.util.List;
+import java.util.UUID;
 import net.jqwik.api.ForAll;
 import net.jqwik.api.Property;
 
-import java.time.format.DateTimeFormatter;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-class CoregexArbitraryConfiguratorTest {
+class CoregexArbitraryProviderTest {
   @Property
   void shouldGenerateMatchingUUIDString(
       @ForAll @Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}")
@@ -40,6 +42,14 @@ class CoregexArbitraryConfiguratorTest {
           String iso8601Date) {
     DateTimeFormatter formatter = DateTimeFormatter.ISO_INSTANT;
     assertEquals(iso8601Date, formatter.format(formatter.parse(iso8601Date)));
+  }
+
+  @Property
+  void shouldGenerateUniqueStrings(@ForAll List<@Regex("[a-zA-Z0-9]{32,}") String> strings) {
+    assertTrue(
+        strings.stream()
+            .allMatch(s -> s.length() >= 32 && s.chars().allMatch(Character::isLetterOrDigit)));
+    assertEquals(strings.size(), new HashSet<>(strings).size());
   }
 
   @Property

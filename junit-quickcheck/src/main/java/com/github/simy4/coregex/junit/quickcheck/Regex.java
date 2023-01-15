@@ -17,7 +17,6 @@
 package com.github.simy4.coregex.junit.quickcheck;
 
 import com.pholser.junit.quickcheck.generator.GeneratorConfiguration;
-
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;

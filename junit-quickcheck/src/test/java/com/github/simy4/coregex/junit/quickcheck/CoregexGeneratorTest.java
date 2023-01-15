@@ -16,14 +16,16 @@
 
 package com.github.simy4.coregex.junit.quickcheck;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import com.pholser.junit.quickcheck.Property;
 import com.pholser.junit.quickcheck.runner.JUnitQuickcheck;
-import org.junit.runner.RunWith;
-
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
+import java.util.List;
 import java.util.UUID;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.runner.RunWith;
 
 @RunWith(JUnitQuickcheck.class)
 public class CoregexGeneratorTest {
@@ -41,6 +43,14 @@ public class CoregexGeneratorTest {
           String iso8601Date) {
     DateTimeFormatter formatter = DateTimeFormatter.ISO_INSTANT;
     assertEquals(iso8601Date, formatter.format(formatter.parse(iso8601Date)));
+  }
+
+  @Property
+  public void shouldGenerateUniqueStrings(List<@Regex("[a-zA-Z0-9]{32,}") String> strings) {
+    assertTrue(
+        strings.stream()
+            .allMatch(s -> s.length() >= 32 && s.chars().allMatch(Character::isLetterOrDigit)));
+    assertEquals(strings.size(), new HashSet<>(strings).size());
   }
 
   @Property

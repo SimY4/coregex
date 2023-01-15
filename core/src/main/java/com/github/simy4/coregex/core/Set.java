@@ -16,12 +16,13 @@
 
 package com.github.simy4.coregex.core;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.Serializable;
 import java.util.BitSet;
 import java.util.Objects;
-import java.util.stream.IntStream;
-
-import static java.util.Objects.requireNonNull;
+import java.util.function.IntPredicate;
+import java.util.stream.Stream;
 
 /**
  * Data representation of a set of characters AKA regular expression's char classes.
@@ -30,7 +31,7 @@ import static java.util.Objects.requireNonNull;
  * @author Alex Simkin
  * @since 0.1.0
  */
-public final class Set implements Serializable {
+public final class Set implements IntPredicate, Serializable {
   private static final long serialVersionUID = 1L;
 
   static final Set ALL =
@@ -57,22 +58,40 @@ public final class Set implements Serializable {
   }
 
   /**
+   * Checks if given character is included in this set.
+   *
+   * @param value character to check
+   * @return {@code true} if given character is included in this set, {@code false} otherwise
+   */
+  @Override
+  public boolean test(int value) {
+    return chars.get(value);
+  }
+
+  /**
    * Randomly selects one character in this set based on provided seed.
    *
    * @param seed seed to use for random selection
    * @return selected character
    */
-  public char generate(long seed) {
+  public char sample(long seed) {
     return (char)
-        stream()
+        chars.stream()
             .skip(Math.abs(seed % chars.cardinality()))
             .findFirst()
             .orElseThrow(() -> new IllegalStateException("empty set: " + description));
   }
 
-  /** @return all characters in this set as a stream. */
-  public IntStream stream() {
-    return chars.stream();
+  /** @return partitions this set into chunks. */
+  public Stream<Set> shrink() {
+    int partitionSize = chars.size() / 2;
+    if (partitionSize < 64) {
+      return Stream.empty();
+    }
+    return Stream.of(
+            new Set(chars.get(0, partitionSize), description + "~"),
+            new Set(chars.get(partitionSize, chars.size()), "~" + description))
+        .filter(set -> !set.chars.isEmpty());
   }
 
   @Override

@@ -21,8 +21,8 @@ import com.github.simy4.coregex.core.RNG;
 import com.github.simy4.coregex.core.rng.RandomRNG;
 import com.pholser.junit.quickcheck.generator.GenerationStatus;
 import com.pholser.junit.quickcheck.generator.Generator;
+import com.pholser.junit.quickcheck.generator.Size;
 import com.pholser.junit.quickcheck.random.SourceOfRandomness;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +33,7 @@ public class CoregexGenerator extends Generator<String> {
 
   private Pattern regex;
   private Coregex coregex;
+  private Size sized;
 
   public CoregexGenerator() {
     this(ANY);
@@ -49,11 +50,16 @@ public class CoregexGenerator extends Generator<String> {
     this.coregex = Coregex.from(this.regex);
   }
 
+  public void configure(Size sized) {
+    this.sized = sized;
+  }
+
   @Override
   public String generate(SourceOfRandomness random, GenerationStatus status) {
+    int size = null == sized ? status.size() : sized.max();
     return coregex
-        .sized(Math.max(coregex.minLength(), status.size()))
-        .generate(new RandomRNG(random.seed()));
+        .sized(Math.max(coregex.minLength(), size))
+        .generate(new RandomRNG(random.nextLong()));
   }
 
   @Override
@@ -64,7 +70,7 @@ public class CoregexGenerator extends Generator<String> {
   @Override
   public List<String> doShrink(SourceOfRandomness random, String larger) {
     List<String> shrinks = new ArrayList<>();
-    RNG rng = new RandomRNG(random.seed());
+    RNG rng = new RandomRNG(random.nextLong());
     for (int remainder = coregex.minLength();
         remainder < larger.length();
         remainder = (remainder * 2) + 1) {

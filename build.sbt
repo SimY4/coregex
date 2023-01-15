@@ -16,8 +16,12 @@ ThisBuild / developers := List(
   )
 )
 
-lazy val scala213               = "2.13.8"
-lazy val scala3                 = "3.1.3"
+projectID ~= { id =>
+  id.withExtraAttributes(id.extraAttributes.updated("info.releaseNotesUrl", "https://github.com/SimY4/coregex/releases"))
+}
+
+lazy val scala213               = "2.13.10"
+lazy val scala3                 = "3.2.1"
 lazy val supportedScalaVersions = List(scala213, scala3)
 
 ThisBuild / scalaVersion := scala213
@@ -36,7 +40,7 @@ lazy val root = (project in file("."))
     crossScalaVersions := Nil,
     publish / skip     := true
   )
-  .aggregate(core, jqwik, junitQuickcheck, scalacheck)
+  .aggregate(core, jqwik, junitQuickcheck, scalacheck, vavrTest)
 
 lazy val core = (project in file("core"))
   .settings(
@@ -44,14 +48,17 @@ lazy val core = (project in file("core"))
     moduleName       := "coregex-core",
     crossPaths       := false,
     autoScalaLibrary := false,
-    libraryDependencies ++= Seq("org.scalacheck" %% "scalacheck" % "1.16.0" % Test),
+    libraryDependencies ++= Seq("org.scalacheck" %% "scalacheck" % "1.17.0" % Test),
     crossScalaVersions := supportedScalaVersions,
     Compile / compile / javacOptions ++= Seq("-Xlint:all", "-Werror") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8")
        else Seq("-source", "1.8", "-target", "1.8")),
     Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8", "-html5")
-      else Seq("-source", "1.8", "-target", "1.8"))
+       else Seq("-source", "1.8", "-target", "1.8")),
+    tpolecatDevModeOptions ~= { opts =>
+      opts.filterNot(Set(ScalacOptions.warnNonUnitStatement)) // FIXME: workaround to remove this exclusion
+    }
   )
 
 lazy val jqwik = (project in file("jqwik"))
@@ -61,9 +68,10 @@ lazy val jqwik = (project in file("jqwik"))
     crossPaths       := false,
     autoScalaLibrary := false,
     libraryDependencies ++= Seq(
-      "net.jqwik"   % "jqwik-api"         % "1.6.5"  % Provided,
-      "net.jqwik"   % "jqwik-engine"      % "1.6.5"  % Test,
-      "net.aichler" % "jupiter-interface" % "0.10.0" % Test
+      "net.jqwik"   % "jqwik-api"         % "1.7.1"  % Provided,
+      "net.jqwik"   % "jqwik-engine"      % "1.7.1"  % Test,
+      "net.jqwik"   % "jqwik-testing"     % "1.7.1"  % Test,
+      "net.aichler" % "jupiter-interface" % "0.11.1" % Test
     ),
     crossScalaVersions := supportedScalaVersions,
     testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v"),
@@ -72,7 +80,7 @@ lazy val jqwik = (project in file("jqwik"))
        else Seq("-source", "1.8", "-target", "1.8")),
     Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8", "-html5")
-      else Seq("-source", "1.8", "-target", "1.8"))
+       else Seq("-source", "1.8", "-target", "1.8"))
   )
   .dependsOn(core)
 
@@ -96,7 +104,7 @@ lazy val junitQuickcheck = (project in file("junit-quickcheck"))
        else Seq("-source", "1.8", "-target", "1.8")),
     Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8", "-html5")
-      else Seq("-source", "1.8", "-target", "1.8"))
+       else Seq("-source", "1.8", "-target", "1.8"))
   )
   .dependsOn(core)
 
@@ -105,10 +113,35 @@ lazy val scalacheck = (project in file("scalacheck"))
     name       := "scalacheck",
     moduleName := "coregex-scalacheck",
     libraryDependencies ++= Seq(
-      "org.scalacheck" %% "scalacheck" % "1.16.0" % Provided
+      "org.scalacheck" %% "scalacheck" % "1.17.0" % Provided
     ),
-    crossScalaVersions := supportedScalaVersions
+    crossScalaVersions := supportedScalaVersions,
+    tpolecatDevModeOptions ~= { opts =>
+      opts.filterNot(Set(ScalacOptions.warnNonUnitStatement)) // FIXME: workaround to remove this exclusion
+    }
+  )
+  .dependsOn(core)
+
+lazy val vavrTest = (project in file("vavr-test"))
+  .settings(
+    name             := "vavr-test",
+    moduleName       := "coregex-vavr-test",
+    crossPaths       := false,
+    autoScalaLibrary := false,
+    libraryDependencies ++= Seq(
+      "io.vavr"     % "vavr-test"         % "0.10.4" % Provided,
+      "net.aichler" % "jupiter-interface" % "0.11.1" % Test
+    ),
+    crossScalaVersions := supportedScalaVersions,
+    testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v"),
+    Compile / compile / javacOptions ++= Seq("-Xlint:all", "-Werror") ++
+      (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8")
+       else Seq("-source", "1.8", "-target", "1.8")),
+    Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing") ++
+      (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8", "-html5")
+       else Seq("-source", "1.8", "-target", "1.8"))
   )
   .dependsOn(core)
 
 addCommandAlias("build", ";javafmtCheckAll;scalafmtCheckAll;headerCheck;test")
+addCommandAlias("fmt", ";javafmtAll;scalafmtAll;headerCreate")

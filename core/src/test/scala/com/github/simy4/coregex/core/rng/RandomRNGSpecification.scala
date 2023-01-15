@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.github.simy4.coregex.core.rng
+package com.github.simy4.coregex.core
+package rng
 
-import com.github.simy4.coregex.core.RNG
 import org.scalacheck.Properties
 
 object RandomRNGSpecification extends Properties("RandomRNG") with RNGContract {

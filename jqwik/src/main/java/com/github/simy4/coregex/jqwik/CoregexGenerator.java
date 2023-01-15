@@ -18,21 +18,16 @@ package com.github.simy4.coregex.jqwik;
 
 import com.github.simy4.coregex.core.Coregex;
 import com.github.simy4.coregex.core.rng.RandomRNG;
+import java.util.Random;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import net.jqwik.api.RandomGenerator;
 import net.jqwik.api.Shrinkable;
 import net.jqwik.api.ShrinkingDistance;
 
-import java.util.Random;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
-
 public class CoregexGenerator implements RandomGenerator<String> {
   private final Coregex coregex;
   private final int size;
-
-  public CoregexGenerator(Pattern regex) {
-    this(regex, Integer.MAX_VALUE);
-  }
 
   public CoregexGenerator(Pattern regex, int size) {
     this.coregex = Coregex.from(regex);

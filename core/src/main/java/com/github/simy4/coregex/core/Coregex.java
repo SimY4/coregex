@@ -16,6 +16,8 @@
 
 package com.github.simy4.coregex.core;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,8 +27,6 @@ import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-
-import static java.util.Objects.requireNonNull;
 
 /**
  * Data representation of regex language.
@@ -100,6 +100,7 @@ public abstract class Coregex implements Serializable {
    * @see Quantified
    * @throws IllegalArgumentException if min is greater than max or if min is negative or if called
    *     on already quantified regex
+   * @see Quantified.Type
    */
   public final Coregex quantify(int min, int max, Quantified.Type type) {
     return 1 == min && 1 == max ? this : new Quantified(this, min, max, type);
@@ -149,20 +150,21 @@ public abstract class Coregex implements Serializable {
     /** {@inheritDoc} */
     @Override
     protected Pair<RNG, String> apply(RNG rng, int remainder) {
-      if (remainder < minLength()) {
+      int minLength = minLength();
+      if (remainder < minLength) {
         throw new IllegalStateException(
-            "remainder: " + remainder + " has to be greater than " + minLength());
+            "remainder: " + remainder + " has to be greater than " + minLength);
       }
-      StringBuilder sb = new StringBuilder(minLength() + 16);
+      StringBuilder sb = new StringBuilder(minLength + 16);
       Coregex chunk = first;
       int i = 0;
       do {
-        Pair<RNG, String> rngAndCoregex =
-            chunk.apply(rng, remainder - minLength() + chunk.minLength());
+        int chunkMinLength = chunk.minLength();
+        Pair<RNG, String> rngAndCoregex = chunk.apply(rng, remainder - minLength + chunkMinLength);
         rng = rngAndCoregex.getFirst();
         String value = rngAndCoregex.getSecond();
         sb.append(value);
-        remainder -= (value.length() - chunk.minLength());
+        remainder -= (value.length() - chunkMinLength);
       } while (i < rest.length && (chunk = rest[i++]) != null);
       return new Pair<>(rng, sb.toString());
     }
@@ -364,6 +366,7 @@ public abstract class Coregex implements Serializable {
      * @throws IllegalArgumentException if min is greater than max or if min is negative or if
      *     called on already quantified regex
      * @see Quantified(Coregex, int, int)
+     * @see Type
      */
     public Quantified(Coregex quantified, int min, int max, Type type) {
       if (quantified instanceof Quantified) {
@@ -382,20 +385,24 @@ public abstract class Coregex implements Serializable {
     /** {@inheritDoc} */
     @Override
     protected Pair<RNG, String> apply(RNG rng, int remainder) {
-      if (remainder < minLength()) {
+      int minLength = minLength();
+      int quantifiedMinLength = quantified.minLength();
+      if (remainder < minLength) {
         throw new IllegalStateException(
-            "remainder: " + remainder + " has to be greater than " + minLength());
+            "remainder: " + remainder + " has to be greater than " + minLength);
       }
-      StringBuilder sb = new StringBuilder(minLength() + 16);
+      StringBuilder sb = new StringBuilder(minLength + 16);
       int quantifier = 0;
       for (; quantifier < min; quantifier++) {
-        Pair<RNG, String> rngAndCoregex = quantified.apply(rng, remainder);
+        Pair<RNG, String> rngAndCoregex =
+            quantified.apply(rng, remainder - minLength + quantifiedMinLength);
         rng = rngAndCoregex.getFirst();
         String value = rngAndCoregex.getSecond();
         sb.append(value);
-        remainder -= value.length();
+        remainder -= (value.length() - quantifiedMinLength);
       }
-      while (quantified.minLength() <= remainder && (-1 == max || quantifier++ < max)) {
+      remainder -= sb.length();
+      while (quantifiedMinLength <= remainder && (-1 == max || quantifier++ < max)) {
         Pair<RNG, Boolean> rngAndNext = rng.genBoolean();
         rng = rngAndNext.getFirst();
         if (!rngAndNext.getSecond()) {
@@ -446,6 +453,10 @@ public abstract class Coregex implements Serializable {
       return max;
     }
 
+    /**
+     * @return quantifier type. Currently doesn't affect the generation flow - only display.
+     * @see Type
+     */
     public Type type() {
       return type;
     }
@@ -546,7 +557,9 @@ public abstract class Coregex implements Serializable {
             "remainder: " + remainder + " has to be greater than " + minLength());
       }
       Pair<RNG, Long> rngAndSeed = rng.genLong();
-      return new Pair<>(rng, String.valueOf(set.generate(rngAndSeed.getSecond())));
+      rng = rngAndSeed.getFirst();
+      String sample = String.valueOf(set.sample(rngAndSeed.getSecond()));
+      return new Pair<>(rng, sample);
     }
 
     /** {@inheritDoc} */
@@ -751,8 +764,10 @@ public abstract class Coregex implements Serializable {
 
     @Override
     public Coregex simplify() {
-      return new Union(
-          first.simplify(), Arrays.stream(rest).map(Coregex::simplify).toArray(Coregex[]::new));
+      return 0 == rest.length
+          ? first.simplify()
+          : new Union(
+              first.simplify(), Arrays.stream(rest).map(Coregex::simplify).toArray(Coregex[]::new));
     }
 
     /** @return underlying regexes forming this unification. */
