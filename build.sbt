@@ -17,7 +17,9 @@ ThisBuild / developers := List(
 )
 
 projectID ~= { id =>
-  id.withExtraAttributes(id.extraAttributes.updated("info.releaseNotesUrl", "https://github.com/SimY4/coregex/releases"))
+  id.withExtraAttributes(
+    id.extraAttributes.updated("info.releaseNotesUrl", "https://github.com/SimY4/coregex/releases")
+  )
 }
 
 lazy val scala213               = "2.13.10"
@@ -94,7 +96,7 @@ lazy val junitQuickcheck = (project in file("junit-quickcheck"))
       "com.pholser"    % "junit-quickcheck-core"       % "1.0"    % Provided,
       "com.pholser"    % "junit-quickcheck-generators" % "1.0"    % Test,
       "junit"          % "junit"                       % "4.13.2" % Test,
-      "org.slf4j"      % "slf4j-simple"                % "1.7.25" % Test,
+      "org.slf4j"      % "slf4j-simple"                % "1.7.36" % Test,
       "com.github.sbt" % "junit-interface"             % "0.13.3" % Test
     ),
     crossScalaVersions := supportedScalaVersions,
