@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Alex Simkin
+ * Copyright 2021-2023 Alex Simkin
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,13 @@ import io.kotest.property.Classifier;
 import io.kotest.property.GenKt;
 import io.kotest.property.RandomSource;
 import io.kotest.property.Sample;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.regex.Pattern;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CoregexArbitrary extends Arb<String> {
   public static CoregexArbitrary of(String pattern) {
@@ -49,7 +48,7 @@ public class CoregexArbitrary extends Arb<String> {
   @NotNull
   @Override
   public Classifier<? extends java.lang.String> getClassifier() {
-    return string -> "'" + string +"' matching '" + coregex + '\'';
+    return string -> "'" + string + "' matching '" + coregex + '\'';
   }
 
   @Nullable

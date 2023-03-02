@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Alex Simkin
+ * Copyright 2021-2023 Alex Simkin
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,14 @@
 
 package com.github.simy4.coregex.kotest;
 
+import static java.util.Objects.requireNonNull;
+
 import com.github.simy4.coregex.core.Coregex;
 import com.github.simy4.coregex.core.RNG;
 import io.kotest.property.Shrinker;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
 import java.util.List;
-
-import static java.util.Objects.requireNonNull;
+import org.jetbrains.annotations.NotNull;
 
 public class CoregexShrinker implements Shrinker<String> {
   private final Coregex coregex;
@@ -40,8 +39,8 @@ public class CoregexShrinker implements Shrinker<String> {
   public List<String> shrink(String s) {
     List<String> shinks = new ArrayList<>();
     for (int remainder = coregex.minLength();
-         remainder < s.length();
-         remainder = (remainder * 2) + 1) {
+        remainder < s.length();
+        remainder = (remainder * 2) + 1) {
       shinks.add(coregex.sized(remainder).generate(rng));
     }
     return shinks;

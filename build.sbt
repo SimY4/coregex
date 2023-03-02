@@ -38,8 +38,8 @@ sonatypeProfileName      := "com.github.simy4"
 
 lazy val root = (project in file("."))
   .settings(
-    name               := "coregex-parent",
-    publish / skip     := true
+    name           := "coregex-parent",
+    publish / skip := true
   )
   .aggregate(core, jqwik, junitQuickcheck, kotest, scalacheck, vavrTest)
 
@@ -50,6 +50,7 @@ lazy val core = (project in file("core"))
     description      := "A handy utility for generating strings that match given regular expression criteria.",
     crossPaths       := false,
     autoScalaLibrary := false,
+    headerEndYear    := Some(2023),
     libraryDependencies ++= Seq("org.scalacheck" %% "scalacheck" % "1.17.0" % Test),
     Compile / compile / javacOptions ++= Seq("-Xlint:all", "-Werror") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8")
@@ -70,6 +71,7 @@ lazy val jqwik = (project in file("jqwik"))
     description      := "JQwik bindings for coregex library.",
     crossPaths       := false,
     autoScalaLibrary := false,
+    headerEndYear    := Some(2023),
     libraryDependencies ++= Seq(
       "net.jqwik"   % "jqwik-api"         % "1.7.2"  % Provided,
       "net.jqwik"   % "jqwik-engine"      % "1.7.2"  % Test,
@@ -94,6 +96,7 @@ lazy val junitQuickcheck = (project in file("junit-quickcheck"))
     description      := "JUnit Quickcheck bindings for coregex library.",
     crossPaths       := false,
     autoScalaLibrary := false,
+    headerEndYear    := Some(2023),
     libraryDependencies ++= Seq(
       "com.pholser"    % "junit-quickcheck-core"       % "1.0"    % Provided,
       "com.pholser"    % "junit-quickcheck-generators" % "1.0"    % Test,
@@ -119,6 +122,7 @@ lazy val kotest = (project in file("kotest"))
     description      := "Kotest bindings for coregex library.",
     crossPaths       := false,
     autoScalaLibrary := false,
+    headerEndYear    := Some(2023),
     libraryDependencies ++= Seq(
       "io.kotest"   % "kotest-property-jvm" % "5.5.5"  % Provided,
       "net.aichler" % "jupiter-interface"   % "0.11.1" % Test
@@ -126,18 +130,19 @@ lazy val kotest = (project in file("kotest"))
     testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v"),
     Compile / compile / javacOptions ++= Seq("-Xlint:all", "-Werror") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8")
-      else Seq("-source", "1.8", "-target", "1.8")),
+       else Seq("-source", "1.8", "-target", "1.8")),
     Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8", "-html5")
-      else Seq("-source", "1.8", "-target", "1.8"))
+       else Seq("-source", "1.8", "-target", "1.8"))
   )
   .dependsOn(core)
 
 lazy val scalacheck = (project in file("scalacheck"))
   .settings(
-    name        := "scalacheck",
-    moduleName  := "coregex-scalacheck",
-    description := "ScalaCheck bindings for coregex library.",
+    name          := "scalacheck",
+    moduleName    := "coregex-scalacheck",
+    description   := "ScalaCheck bindings for coregex library.",
+    headerEndYear := Some(2023),
     libraryDependencies ++= Seq(
       "org.scalacheck" %% "scalacheck" % "1.17.0" % Provided
     ),
@@ -156,6 +161,7 @@ lazy val vavrTest = (project in file("vavr-test"))
     description      := "VAVR Test bindings for coregex library.",
     crossPaths       := false,
     autoScalaLibrary := false,
+    headerEndYear    := Some(2023),
     libraryDependencies ++= Seq(
       "io.vavr"     % "vavr-test"         % "0.10.4" % Provided,
       "net.aichler" % "jupiter-interface" % "0.11.1" % Test
@@ -173,4 +179,4 @@ lazy val vavrTest = (project in file("vavr-test"))
   .dependsOn(core)
 
 addCommandAlias("build", ";javafmtCheckAll;scalafmtCheckAll;headerCheck;test")
-addCommandAlias("fmt", ";javafmtAll;scalafmtAll;headerCreate")
+addCommandAlias("fmt", ";javafmtAll;scalafmtAll;scalafmtSbt;headerCreate")
