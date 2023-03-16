@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Alex Simkin
+ * Copyright 2021-2023 Alex Simkin
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.github.simy4.coregex.jqwik;
 
 import com.github.simy4.coregex.core.Coregex;
+import com.github.simy4.coregex.core.RNG;
 import com.github.simy4.coregex.core.rng.RandomRNG;
 import java.util.Random;
 import java.util.regex.Pattern;
@@ -43,20 +44,24 @@ public class CoregexGenerator implements RandomGenerator<String> {
 final class ShrinkableString implements Shrinkable<String> {
   private final Coregex coregex;
   private final int size;
-  private final long seed;
+  private final RNG rng;
 
   private String value;
 
   ShrinkableString(Coregex coregex, int size, long seed) {
+    this(coregex, size, new RandomRNG(seed));
+  }
+
+  private ShrinkableString(Coregex coregex, int size, RNG rng) {
     this.coregex = coregex;
     this.size = size;
-    this.seed = seed;
+    this.rng = rng;
   }
 
   @Override
   public String value() {
     if (null == value) {
-      value = coregex.sized(size).generate(new RandomRNG(seed));
+      value = coregex.sized(size).generate(rng);
     }
     return value;
   }
@@ -67,7 +72,7 @@ final class ShrinkableString implements Shrinkable<String> {
     for (int remainder = coregex.minLength();
         remainder < value().length();
         remainder = (remainder * 2) + 1) {
-      shrinks.add(new ShrinkableString(coregex, remainder, seed));
+      shrinks.add(new ShrinkableString(coregex, remainder, rng));
     }
     return shrinks.build();
   }
