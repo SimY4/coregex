@@ -103,66 +103,70 @@ object CoregexParserSpecification extends Properties("CoregexParser") {
         )
       ) ->
         Pattern.compile("\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d([+-][0-2]\\d:[0-5]\\d|Z)"),
-      new Coregex.Quantified(
-        new Coregex.Set(Set.builder().range('a', 'z').range('A', 'Z').range('0', '9').set('_', '|', '-', ':').build()),
-        1,
-        128
-      ) -> Pattern.compile("[a-zA-Z0-9_\\|\\-\\:]{1,128}"),
       new Coregex.Concat(
-        new Coregex.Literal("stats:"),
-        new Coregex.Quantified(new Coregex.Set(Set.builder().range('0', '9').build()), 1, -1),
-        new Coregex.Literal("|c|#statistic:count,stack:jvm,filter:"),
-        new Coregex.Quantified(new Coregex.Set(Set.ALL), 1, -1),
-        new Coregex.Literal(",action:"),
-        new Coregex.Union(new Coregex.Literal("SHOW"), new Coregex.Literal("PARSE")),
-        new Coregex.Literal(",lib.version:"),
-        new Coregex.Union(
+        new Coregex.Quantified(
           new Coregex.Concat(
-            new Coregex.Quantified(new Coregex.Set(Set.builder().range('0', '9').build()), 1, -1),
-            new Coregex.Literal("."),
-            new Coregex.Quantified(new Coregex.Set(Set.builder().range('0', '9').build()), 1, -1),
-            new Coregex.Literal("."),
-            new Coregex.Quantified(new Coregex.Set(Set.builder().range('0', '9').build()), 1, -1),
-            new Coregex.Quantified(
+            new Coregex.Union(
               new Coregex.Concat(
-                new Coregex.Literal("-"),
-                new Coregex.Quantified(
-                  new Coregex.Set(Set.builder().range('0', '9').range('A', 'Z').set('-').build()),
-                  1,
-                  -1
-                )
+                new Coregex.Literal("25"),
+                new Coregex.Set(Set.builder().range('0', '5').build())
               ),
-              0,
-              1
-            )
-          ),
-          new Coregex.Literal("-")
-        ),
-        new Coregex.Literal(",java.version:"),
-        new Coregex.Union(
-          new Coregex.Concat(
-            new Coregex.Quantified(new Coregex.Set(Set.builder().range('0', '9').build()), 1, -1),
-            new Coregex.Quantified(
               new Coregex.Concat(
-                new Coregex.Literal("."),
-                new Coregex.Quantified(new Coregex.Set(Set.builder().range('0', '9').build()), 1, -1),
                 new Coregex.Quantified(
-                  new Coregex.Concat(
-                    new Coregex.Literal("."),
-                    new Coregex.Quantified(new Coregex.Set(Set.builder().range('0', '9').build()), 1, -1)
+                  new Coregex.Union(
+                    new Coregex.Concat(
+                      new Coregex.Literal("2"),
+                      new Coregex.Set(Set.builder().range('0', '4').build())
+                    ),
+                    new Coregex.Concat(
+                      new Coregex.Quantified(
+                        new Coregex.Literal("1"),
+                        0,
+                        1
+                      ),
+                      new Coregex.Set(Set.builder().range('0', '9').build())
+                    )
                   ),
                   0,
                   1
+                ),
+                new Coregex.Set(Set.builder().range('0', '9').build())
+              )
+            ),
+            new Coregex.Literal(".")
+          ),
+          3,
+          3
+        ),
+        new Coregex.Union(
+          new Coregex.Concat(
+            new Coregex.Literal("25"),
+            new Coregex.Set(Set.builder().range('0', '5').build())
+          ),
+          new Coregex.Concat(
+            new Coregex.Quantified(
+              new Coregex.Union(
+                new Coregex.Concat(
+                  new Coregex.Literal("2"),
+                  new Coregex.Set(Set.builder().range('0', '4').build())
+                ),
+                new Coregex.Concat(
+                  new Coregex.Quantified(
+                    new Coregex.Literal("1"),
+                    0,
+                    1
+                  ),
+                  new Coregex.Set(Set.builder().range('0', '9').build())
                 )
               ),
               0,
               1
-            )
-          ),
-          new Coregex.Literal("-")
+            ),
+            new Coregex.Set(Set.builder().range('0', '9').build())
+          )
         )
       ) -> Pattern.compile(
-        "stats:\\d+\\|c\\|#statistic:count,stack:jvm,filter:.+,action:(?:SHOW|PARSE),lib\\.version:(?:\\d+\\.\\d+\\.\\d+(-[\\dA-Z-]+)?|-),java\\.version:(?:\\d+(?:\\.\\d+(?:\\.\\d+)?)?|-)"
+        "((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])"
       ),
       new Coregex.Literal("whatever")           -> Pattern.compile(Pattern.quote("whatever")),
       new Coregex.Literal("double\\Q\\Equoted") -> Pattern.compile(Pattern.quote("double\\Q\\Equoted"))

@@ -19,6 +19,8 @@ package com.github.simy4.coregex.jqwik;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
@@ -32,6 +34,16 @@ class CoregexArbitraryProviderTest {
       @ForAll @Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}")
           String uuid) {
     assertEquals(uuid, UUID.fromString(uuid).toString());
+  }
+
+  @Property
+  void shouldGenerateMatchingIPv4String(
+      @ForAll @Regex("((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])")
+          String ipv4)
+      throws UnknownHostException {
+    assertEquals(
+        ipv4.replaceAll("(?:(?<=\\.)0|^0|00)([0-9])", "$1"),
+        InetAddress.getByName(ipv4).getHostAddress());
   }
 
   @Property

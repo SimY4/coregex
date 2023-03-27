@@ -16,15 +16,19 @@
 
 package com.github.simy4.coregex.kotest;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.kotest.property.Arb;
 import io.kotest.property.EdgeConfig;
 import io.kotest.property.RandomSource;
 import io.kotest.property.arbitrary.CollectionsKt;
+import java.net.InetAddress;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import kotlin.Unit;
 import kotlin.sequences.SequencesKt;
 import org.junit.jupiter.api.Test;
 
@@ -41,6 +45,24 @@ class CoregexArbitraryTest {
                     .generate(randomSource, new EdgeConfig()),
                 100),
             uuid -> uuid.getValue().equals(UUID.fromString(uuid.getValue()).toString())));
+  }
+
+  @Test
+  void shouldGenerateMatchingIPv4String() {
+    RandomSource randomSource =
+        RandomSource.Companion.seeded(ThreadLocalRandom.current().nextLong());
+    SequencesKt.forEach(
+        SequencesKt.take(
+            CoregexArbitrary.of(
+                    "((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])")
+                .generate(randomSource, new EdgeConfig()),
+            100),
+        ipv4 -> {
+          assertEquals(
+              ipv4.getValue().replaceAll("(?:(?<=\\.)0|^0|00)([0-9])", "$1"),
+              assertDoesNotThrow(() -> InetAddress.getByName(ipv4.getValue()).getHostAddress()));
+          return Unit.INSTANCE;
+        });
   }
 
   @Test

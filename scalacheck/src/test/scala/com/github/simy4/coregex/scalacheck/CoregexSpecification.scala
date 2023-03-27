@@ -19,6 +19,7 @@ package com.github.simy4.coregex.scalacheck
 import org.scalacheck.Prop._
 import org.scalacheck.Properties
 
+import java.net.InetAddress
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
@@ -26,6 +27,11 @@ object CoregexSpecification extends Properties("Coregex") with CoregexInstances 
   property("should generate matching UUID string") = forAll {
     (uuid: String Matching "[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}") =>
       uuid.toString ?= UUID.fromString(uuid).toString
+  }
+
+  property("should generate matching IPv4 string") = forAll {
+    (ipv4: String Matching "((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])") =>
+      ipv4.replaceAll("(?:(?<=\\.)0|^0|00)([0-9])", "$1") ?= InetAddress.getByName(ipv4).getHostAddress
   }
 
   property("should generate matching ISO-8601 date string") = forAll {
