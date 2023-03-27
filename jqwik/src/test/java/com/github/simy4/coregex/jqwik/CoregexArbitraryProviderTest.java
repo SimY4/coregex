@@ -41,9 +41,12 @@ class CoregexArbitraryProviderTest {
       @ForAll @Regex("((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])")
           String ipv4)
       throws UnknownHostException {
-    assertEquals(
-        ipv4.replaceAll("(?:(?<=\\.)0|^0|00)([0-9])", "$1"),
-        InetAddress.getByName(ipv4).getHostAddress());
+    String[] expected = ipv4.split("\\.");
+    String[] actual = InetAddress.getByName(ipv4).getHostAddress().split("\\.");
+    assertEquals(expected.length, actual.length);
+    for (int i = 0; i < expected.length; i++) {
+      assertEquals(Integer.parseInt(expected[i]), Integer.parseInt(actual[i]));
+    }
   }
 
   @Property

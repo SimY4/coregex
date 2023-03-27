@@ -58,9 +58,15 @@ class CoregexArbitraryTest {
                 .generate(randomSource, new EdgeConfig()),
             100),
         ipv4 -> {
-          assertEquals(
-              ipv4.getValue().replaceAll("(?:(?<=\\.)0|^0|00)([0-9])", "$1"),
-              assertDoesNotThrow(() -> InetAddress.getByName(ipv4.getValue()).getHostAddress()));
+          String[] expected = ipv4.getValue().split("\\.");
+          String[] actual =
+              assertDoesNotThrow(() -> InetAddress.getByName(ipv4.getValue()))
+                  .getHostAddress()
+                  .split("\\.");
+          assertEquals(expected.length, actual.length);
+          for (int i = 0; i < expected.length; i++) {
+            assertEquals(Integer.parseInt(expected[i]), Integer.parseInt(actual[i]));
+          }
           return Unit.INSTANCE;
         });
   }

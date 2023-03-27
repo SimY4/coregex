@@ -31,7 +31,11 @@ object CoregexSpecification extends Properties("Coregex") with CoregexInstances 
 
   property("should generate matching IPv4 string") = forAll {
     (ipv4: String Matching "((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])") =>
-      ipv4.replaceAll("(?:(?<=\\.)0|^0|00)([0-9])", "$1") ?= InetAddress.getByName(ipv4).getHostAddress
+      ipv4
+        .split('.')
+        .zip(InetAddress.getByName(ipv4).getHostAddress.split('.'))
+        .map { case (expected, actual) => expected.toInt ?= actual.toInt }
+        .reduce(_ && _)
   }
 
   property("should generate matching ISO-8601 date string") = forAll {
