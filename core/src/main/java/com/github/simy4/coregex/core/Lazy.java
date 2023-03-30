@@ -18,6 +18,8 @@ package com.github.simy4.coregex.core;
 
 import static java.util.Objects.requireNonNull;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.function.Supplier;
 
@@ -44,5 +46,10 @@ final class Lazy<T> implements Supplier<T>, Serializable {
       this.supplier = null;
     }
     return value;
+  }
+
+  private void writeObject(ObjectOutputStream oos) throws IOException {
+    get(); // resolve value
+    oos.defaultWriteObject();
   }
 }
