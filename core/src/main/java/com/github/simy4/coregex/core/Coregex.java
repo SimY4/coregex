@@ -56,9 +56,27 @@ public abstract class Coregex implements Serializable {
     return CoregexParser.getInstance().parse(pattern);
   }
 
-  /** @return predefined constructor for regex that matches any character. */
+  /**
+   * @return predefined constructor for regex that matches any character.
+   * @see #any(int)
+   */
   public static Coregex any() {
-    return new Set(com.github.simy4.coregex.core.Set.ALL);
+    return any(0);
+  }
+
+  /**
+   * @param flags regex flags
+   * @return predefined constructor for regex that matches any character.
+   * @see #any()
+   */
+  public static Coregex any(int flags) {
+    if (0 != (flags & Pattern.DOTALL)) {
+      return new Set(com.github.simy4.coregex.core.Set.DOTALL.get());
+    } else if (0 != (flags & Pattern.UNIX_LINES)) {
+      return new Set(com.github.simy4.coregex.core.Set.UNIX_LINES.get());
+    } else {
+      return new Set(com.github.simy4.coregex.core.Set.ALL.get());
+    }
   }
 
   /** @return predefined constructor for empty regex. */
@@ -604,7 +622,7 @@ public abstract class Coregex implements Serializable {
 
     @Override
     public String toString() {
-      return com.github.simy4.coregex.core.Set.ALL == set ? "." : "[" + set + ']';
+      return set.toString();
     }
   }
 

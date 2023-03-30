@@ -34,8 +34,30 @@ import java.util.stream.Stream;
 public final class Set implements IntPredicate, Serializable {
   private static final long serialVersionUID = 1L;
 
-  static final Set ALL =
-      builder().range(Character.MIN_VALUE, (char) (Character.MIN_SURROGATE - 1)).build();
+  static final Lazy<Set> ALL =
+      new Lazy<>(
+          () -> {
+            BitSet chars = new BitSet(Character.MIN_SURROGATE);
+            chars.set(Character.MIN_VALUE, Character.MIN_SURROGATE);
+            chars.clear('\r');
+            chars.clear('\n');
+            return new Set(chars, ".");
+          });
+  static final Lazy<Set> UNIX_LINES =
+      new Lazy<>(
+          () -> {
+            BitSet chars = new BitSet(Character.MIN_SURROGATE);
+            chars.set(Character.MIN_VALUE, Character.MIN_SURROGATE);
+            chars.clear('\n');
+            return new Set(chars, ".");
+          });
+  static final Lazy<Set> DOTALL =
+      new Lazy<>(
+          () -> {
+            BitSet chars = new BitSet(Character.MIN_SURROGATE);
+            chars.set(Character.MIN_VALUE, Character.MIN_SURROGATE);
+            return new Set(chars, ".");
+          });
 
   /**
    * Creates an instance of {@link Set} builder.
@@ -46,7 +68,7 @@ public final class Set implements IntPredicate, Serializable {
    * @return staged set builder instance
    */
   public static Builder builder() {
-    return new Builder(256);
+    return new Builder(128);
   }
 
   private final BitSet chars;
@@ -125,7 +147,7 @@ public final class Set implements IntPredicate, Serializable {
    */
   public static final class Builder {
     private final BitSet chars;
-    private final StringBuilder description = new StringBuilder();
+    private final StringBuilder description = new StringBuilder("[");
 
     private Builder(int size) {
       chars = new BitSet(size);
@@ -195,13 +217,13 @@ public final class Set implements IntPredicate, Serializable {
      */
     public Builder negate() {
       chars.flip(0, chars.size());
-      description.insert(0, '^');
+      description.insert(1, '^');
       return this;
     }
 
     /** @return compiled set */
     public Set build() {
-      return new Set(chars, description.toString());
+      return new Set(chars, description.append(']').toString());
     }
   }
 }

@@ -45,10 +45,13 @@ public final class CoregexParser {
    */
   public Coregex parse(Pattern pattern) {
     String regex = pattern.pattern();
+    int flags = pattern.flags();
     if (regex.isEmpty()) {
       return Coregex.empty();
+    } else if (0 != (Pattern.LITERAL & flags)) {
+      return new Coregex.Literal(regex);
     }
-    Context ctx = new Context(regex);
+    Context ctx = new Context(regex, flags);
     Coregex coregex = RE(ctx);
     if (ctx.hasMoreElements()) {
       coregex = ctx.error("EOL");
@@ -143,7 +146,7 @@ public final class CoregexParser {
     switch (ch) {
       case '.':
         ctx.match('.');
-        elementaryRE = Coregex.any();
+        elementaryRE = Coregex.any(ctx.flags);
         break;
       case '[':
         elementaryRE = new Coregex.Set(set(ctx));
@@ -282,8 +285,15 @@ public final class CoregexParser {
               break;
           }
           break;
+        case '-':
+          ctx.match('-');
+          int flags = flags(ctx);
+          ctx.flags &= ~flags;
+          group = Coregex.empty();
+          break;
         default:
-          group = ctx.unsupported("inline option is not supported");
+          ctx.flags |= flags(ctx);
+          group = Coregex.empty();
           break;
       }
     } else {
@@ -291,6 +301,46 @@ public final class CoregexParser {
     }
     ctx.match(')');
     return group;
+  }
+
+  private int flags(Context ctx) {
+    int flags = 0;
+    char ch = ctx.peek();
+    do {
+      switch (ch) {
+        case 'd':
+          ctx.match('d');
+          flags |= Pattern.UNIX_LINES;
+          break;
+        case 'i':
+          ctx.match('i');
+          flags |= Pattern.CASE_INSENSITIVE;
+          break;
+        case 'm':
+          ctx.match('m');
+          flags |= Pattern.MULTILINE;
+          break;
+        case 's':
+          ctx.match('s');
+          flags |= Pattern.DOTALL;
+          break;
+        case 'u':
+          ctx.match('u');
+          flags |= Pattern.UNICODE_CASE;
+          break;
+        case 'U':
+          ctx.match('U');
+          flags |= Pattern.UNICODE_CHARACTER_CLASS;
+          break;
+        case 'x':
+          ctx.match('x');
+          flags |= Pattern.COMMENTS;
+          break;
+        default:
+          return ctx.unsupported("unknown flag");
+      }
+    } while (')' != (ch = ctx.peek()));
+    return flags;
   }
 
   private Set metachar(Context ctx) {
@@ -458,10 +508,12 @@ public final class CoregexParser {
 
   private static final class Context {
     private final String regex;
+    private int flags;
     private int cursor;
 
-    private Context(String regex) {
+    private Context(String regex, int flags) {
       this.regex = regex;
+      this.flags = flags;
     }
 
     private boolean hasMoreElements() {
@@ -489,7 +541,7 @@ public final class CoregexParser {
     private String takeWhile(IntPredicate charPredicate) {
       if (charPredicate.test(peek())) {
         int start = cursor++;
-        while (charPredicate.test(peek())) {
+        while (hasMoreElements() && charPredicate.test(peek())) {
           cursor++;
         }
         return regex.substring(start, cursor);

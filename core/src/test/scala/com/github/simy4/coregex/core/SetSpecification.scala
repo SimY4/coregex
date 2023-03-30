@@ -52,4 +52,26 @@ object SetSpecification extends Properties("Set") with CoregexArbitraries {
   property("double negation") = forAll { (set: Set, seed: Long) =>
     set.sample(seed) ?= Set.builder().set(set).negate().negate().build().sample(seed)
   }
+
+  property("all generates all except line breaks") = forAll { (seed: Long) =>
+    val result = Set
+      .builder()
+      .set(Set.ALL.get())
+      .negate()
+      .build()
+      .sample(seed)
+
+    (result ?= '\r') || (result ?= '\n')
+  }
+
+  property("unix lines generates all except CR line break") = forAll { (seed: Long) =>
+    val result = Set
+      .builder()
+      .set(Set.UNIX_LINES.get())
+      .negate()
+      .build()
+      .sample(seed)
+
+    result ?= '\n'
+  }
 }
