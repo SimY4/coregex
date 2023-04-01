@@ -11,6 +11,7 @@ A handy utility for generating strings that match given regular expression crite
 
 - [Jqwik](https://jqwik.net/) 
 - [JUnit Quickcheck](https://pholser.github.io/junit-quickcheck)
+- [Kotest](https://kotest.io/)
 - [scalacheck](https://scalacheck.org/)
 - [vavr-test](https://github.com/vavr-io/vavr-test)
 
@@ -50,6 +51,27 @@ public class MyTest {
     assertThat(str).hasLength(3);
   }
 }
+```
+
+## Kotest
+Include the following dependency into your project:
+
+```groovy
+testImplementation "com.github.simy4.coregex:coregex-kotest"
+```
+
+Use the provided `CoregexArbirary` class to generate a string that would match the regular expression predicate:
+
+```kotlin
+class MyTest : DescribeSpec({
+  describe("my property") {
+    it("should hold") {
+      checkAll(CoregexArbitrary.of("[a-zA-Z]{3}")) { str ->
+        str.length shouldBe 3
+      }
+    }
+  }
+})
 ```
 
 ## scalacheck
