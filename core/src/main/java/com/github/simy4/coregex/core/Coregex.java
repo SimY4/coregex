@@ -283,10 +283,24 @@ public abstract class Coregex implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final String literal;
+    private final int flags;
 
-    /** @param literal literal */
+    /**
+     * @param literal literal
+     * @see Literal(String, int)
+     */
     public Literal(String literal) {
+      this(literal, 0);
+    }
+
+    /**
+     * @param literal literal
+     * @param flags regex flags
+     * @see Literal(String)
+     */
+    public Literal(String literal, int flags) {
       this.literal = requireNonNull(literal, "literal");
+      this.flags = flags;
     }
 
     /** {@inheritDoc} */
@@ -296,7 +310,22 @@ public abstract class Coregex implements Serializable {
         throw new IllegalStateException(
             "remainder: " + remainder + " has to be greater than " + minLength());
       }
-      return new Pair<>(rng, literal);
+      if (0 != (flags & Pattern.CASE_INSENSITIVE)) {
+        StringBuilder literal = new StringBuilder(this.literal);
+        for (int i = 0; i < literal.length(); i++) {
+          Pair<RNG, Boolean> rngAndBoolean = rng.genBoolean();
+          rng = rngAndBoolean.getFirst();
+          boolean upper = rngAndBoolean.getSecond();
+          if (upper) {
+            literal.setCharAt(i, Character.toUpperCase(literal.charAt(i)));
+          } else {
+            literal.setCharAt(i, Character.toLowerCase(literal.charAt(i)));
+          }
+        }
+        return new Pair<>(rng, literal.toString());
+      } else {
+        return new Pair<>(rng, literal);
+      }
     }
 
     /** {@inheritDoc} */

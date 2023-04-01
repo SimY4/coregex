@@ -49,7 +49,7 @@ public final class CoregexParser {
     if (regex.isEmpty()) {
       return Coregex.empty();
     } else if (0 != (Pattern.LITERAL & flags)) {
-      return new Coregex.Literal(regex);
+      return new Coregex.Literal(regex, flags);
     }
     Context ctx = new Context(regex, flags);
     Coregex coregex = RE(ctx);
@@ -187,7 +187,7 @@ public final class CoregexParser {
     ctx.match(ch);
     literal.append(ch);
     if (!ctx.hasMoreElements()) {
-      return new Coregex.Literal(literal.toString());
+      return new Coregex.Literal(literal.toString(), ctx.flags);
     }
     loop:
     do {
@@ -216,7 +216,7 @@ public final class CoregexParser {
       ctx.match(ch);
       literal.append(ch);
     } while (ctx.hasMoreElements());
-    return new Coregex.Literal(literal.toString());
+    return new Coregex.Literal(literal.toString(), ctx.flags);
   }
 
   private Coregex quoted(Context ctx) {
@@ -237,7 +237,7 @@ public final class CoregexParser {
       ctx.match('^');
       negated = true;
     }
-    Set.Builder set = Set.builder();
+    Set.Builder set = Set.builder(ctx.flags);
     setItem(set, ctx);
     if (']' != ctx.peek()) {
       while (']' != ctx.peek()) {

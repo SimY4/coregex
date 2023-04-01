@@ -22,6 +22,7 @@ import java.io.Serializable;
 import java.util.BitSet;
 import java.util.Objects;
 import java.util.function.IntPredicate;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
@@ -66,9 +67,24 @@ public final class Set implements IntPredicate, Serializable {
    * collection, but instead used immediately to create instances.</em>
    *
    * @return staged set builder instance
+   * @see #builder(int)
    */
   public static Builder builder() {
-    return new Builder(128);
+    return builder(0);
+  }
+
+  /**
+   * Creates an instance of {@link Set} builder.
+   *
+   * <p><em>This builder is not thread-safe and generally should not be stored in a field or
+   * collection, but instead used immediately to create instances.</em>
+   *
+   * @param flags regex flags
+   * @return staged set builder instance
+   * @see #builder()
+   */
+  public static Builder builder(int flags) {
+    return new Builder(flags, 128);
   }
 
   private final BitSet chars;
@@ -146,11 +162,13 @@ public final class Set implements IntPredicate, Serializable {
    * @since 0.1.0
    */
   public static final class Builder {
+    private final int flags;
     private final BitSet chars;
     private final StringBuilder description = new StringBuilder("[");
 
-    private Builder(int size) {
-      chars = new BitSet(size);
+    private Builder(int flags, int size) {
+      this.flags = flags;
+      this.chars = new BitSet(size);
     }
 
     /**
@@ -164,7 +182,12 @@ public final class Set implements IntPredicate, Serializable {
       if (start >= end) {
         throw new IllegalArgumentException("start: " + start + " should be < end: " + end);
       }
-      chars.set(start, end + 1);
+      if ((0 != (flags & Pattern.CASE_INSENSITIVE))) {
+        chars.set(Character.toLowerCase(start), Character.toLowerCase(end) + 1);
+        chars.set(Character.toUpperCase(start), Character.toUpperCase(end) + 1);
+      } else {
+        chars.set(start, end + 1);
+      }
       description.append(start).append('-').append(end);
       return this;
     }
@@ -180,8 +203,7 @@ public final class Set implements IntPredicate, Serializable {
       chars.set(first);
       description.append(first);
       for (char ch : rest) {
-        chars.set(ch);
-        description.append(ch);
+        single(ch);
       }
       return this;
     }
@@ -205,7 +227,13 @@ public final class Set implements IntPredicate, Serializable {
      * @return this builder instance
      */
     public Builder single(char ch) {
-      chars.set(ch);
+      if ((0 != (flags & Pattern.CASE_INSENSITIVE) && ch < 128)
+          || 0 != (flags & Pattern.UNICODE_CASE)) {
+        chars.set(Character.toLowerCase(ch));
+        chars.set(Character.toUpperCase(ch));
+      } else {
+        chars.set(ch);
+      }
       description.append(ch);
       return this;
     }

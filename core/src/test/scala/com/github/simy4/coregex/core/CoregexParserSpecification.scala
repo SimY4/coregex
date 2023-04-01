@@ -169,7 +169,7 @@ object CoregexParserSpecification extends Properties("CoregexParser") {
     new Coregex.Quantified(
       new Coregex.Concat(
         new Coregex.Quantified(
-          new Coregex.Set(Set.builder().range('a', 'z').build()),
+          new Coregex.Set(Set.builder(Pattern.CASE_INSENSITIVE).range('a', 'z').build()),
           1,
           -1
         ),
