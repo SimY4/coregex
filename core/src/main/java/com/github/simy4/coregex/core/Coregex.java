@@ -432,7 +432,8 @@ public abstract class Coregex implements Serializable {
     /** {@inheritDoc} */
     @Override
     public int maxLength() {
-      return -1 == max ? max : quantified.maxLength() * max;
+      int maxLength;
+      return -1 == max || -1 == (maxLength = quantified.maxLength()) ? -1 : maxLength * max;
     }
 
     /** {@inheritDoc} */

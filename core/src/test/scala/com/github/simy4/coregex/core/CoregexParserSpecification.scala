@@ -166,15 +166,19 @@ object CoregexParserSpecification extends Properties("CoregexParser") {
     ) -> Pattern.compile(
       "((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])"
     ),
-    new Coregex.Concat(
-      new Coregex.Quantified(
-        new Coregex.Set(Set.builder().range('a', 'z').build()),
-        1,
-        -1
+    new Coregex.Quantified(
+      new Coregex.Concat(
+        new Coregex.Quantified(
+          new Coregex.Set(Set.builder().range('a', 'z').build()),
+          1,
+          -1
+        ),
+        new Coregex.Literal("-"),
+        new Coregex.Set(Set.builder().range('A', 'Z').build())
       ),
-      new Coregex.Literal("-"),
-      new Coregex.Set(Set.builder().range('A', 'Z').build())
-    ) -> Pattern.compile("(?i)[a-z]+(?-i)-[A-Z]")
+      3,
+      6
+    ) -> Pattern.compile("((?i)[a-z]+(?-i)-[A-Z]){3,6}")
   )
 
   property("should parse example regex") = forAll(coregexWithPatterns, Gen.long) { case ((expected, regex), seed) =>
