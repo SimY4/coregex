@@ -360,8 +360,7 @@ public abstract class Coregex implements Serializable {
      * @param quantified quantified regex
      * @param min min number of times this regex should be repeated
      * @param max max number of times this regex should be repeated. {@code -1} means no limit.
-     * @throws IllegalArgumentException if min is greater than max or if min is negative or if
-     *     called on already quantified regex
+     * @throws IllegalArgumentException if min is greater than max or if min is negative
      * @see Quantified(Coregex, int, int, Type)
      */
     public Quantified(Coregex quantified, int min, int max) {
@@ -373,15 +372,11 @@ public abstract class Coregex implements Serializable {
      * @param min min number of times this regex should be repeated
      * @param max max number of times this regex should be repeated. {@code -1} means no limit.
      * @param type quantifier type.
-     * @throws IllegalArgumentException if min is greater than max or if min is negative or if
-     *     called on already quantified regex
+     * @throws IllegalArgumentException if min is greater than max or if min is negative
      * @see Quantified(Coregex, int, int)
      * @see Type
      */
     public Quantified(Coregex quantified, int min, int max, Type type) {
-      if (quantified instanceof Quantified) {
-        throw new IllegalArgumentException("already quantified regex: " + quantified);
-      }
       this.quantified = requireNonNull(quantified, "quantified");
       if (min < 0 || (-1 != max && min > max)) {
         throw new IllegalArgumentException(

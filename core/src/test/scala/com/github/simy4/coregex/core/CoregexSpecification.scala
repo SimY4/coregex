@@ -54,6 +54,13 @@ object CoregexSpecification extends Properties("Coregex") with CoregexArbitrarie
       quantifiedMinLengthCheck && quantifiedMaxLengthCheck && generatedLength
   }
 
+  property("double quantified should multiply quantification") = forAll {
+    (coregex: Coregex, first: QuantifyRange, second: QuantifyRange, `type`: Coregex.Quantified.Type, rng: RNG) =>
+      val quantified       = coregex.quantify(first.min * second.min, first.min * second.min, `type`)
+      val doubleQuantified = coregex.quantify(first.min, first.min, `type`).quantify(second.min, second.min, `type`)
+      quantified.generate(rng) ?= doubleQuantified.generate(rng)
+  }
+
   property("sized length should be withing limits") = forAll { (coregex: Coregex, length: Byte, rng: RNG) =>
     val size      = coregex.minLength() + length.toInt.abs
     val sized     = coregex.sized(size)
