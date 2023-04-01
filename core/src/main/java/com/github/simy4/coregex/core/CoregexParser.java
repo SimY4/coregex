@@ -174,11 +174,49 @@ public final class CoregexParser {
         }
         // fall through
       default:
-        ctx.match(ch);
-        elementaryRE = new Coregex.Literal(String.valueOf(ch));
+        elementaryRE = literal(ctx);
         break;
     }
     return elementaryRE;
+  }
+
+  @SuppressWarnings("fallthrough")
+  private Coregex literal(Context ctx) {
+    StringBuilder literal = new StringBuilder();
+    char ch = ctx.peek();
+    ctx.match(ch);
+    literal.append(ch);
+    if (!ctx.hasMoreElements()) {
+      return new Coregex.Literal(literal.toString());
+    }
+    loop:
+    do {
+      ch = ctx.peek();
+      char next = ctx.peek(1);
+      if ('\\' == ch) {
+        if ('Q' == next || !isREMetachar(next)) {
+          break;
+        } else {
+          ctx.match(ch);
+          ch = next;
+        }
+      } else {
+        switch (next) {
+          case '*':
+          case '+':
+          case '?':
+          case '{':
+            break loop;
+          default:
+            if (isREMetachar(ch)) {
+              break loop;
+            }
+        }
+      }
+      ctx.match(ch);
+      literal.append(ch);
+    } while (ctx.hasMoreElements());
+    return new Coregex.Literal(literal.toString());
   }
 
   private Coregex quoted(Context ctx) {

@@ -39,7 +39,6 @@ object CoregexParserSpecification extends Properties("CoregexParser") {
     ) ->
       Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}"),
     new Coregex.Concat(
-      new Coregex.Literal(""),
       new Coregex.Union(
         new Coregex.Concat(new Coregex.Literal("http"), new Coregex.Quantified(new Coregex.Literal("s"), 0, 1)),
         new Coregex.Literal("ftp"),
@@ -166,7 +165,16 @@ object CoregexParserSpecification extends Properties("CoregexParser") {
       )
     ) -> Pattern.compile(
       "((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])"
-    )
+    ),
+    new Coregex.Concat(
+      new Coregex.Quantified(
+        new Coregex.Set(Set.builder().range('a', 'z').build()),
+        1,
+        -1
+      ),
+      new Coregex.Literal("-"),
+      new Coregex.Set(Set.builder().range('A', 'Z').build())
+    ) -> Pattern.compile("(?i)[a-z]+(?-i)-[A-Z]")
   )
 
   property("should parse example regex") = forAll(coregexWithPatterns, Gen.long) { case ((expected, regex), seed) =>

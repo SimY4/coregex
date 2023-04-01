@@ -16,8 +16,10 @@
 
 package com.github.simy4.coregex.vavr;
 
+import io.vavr.collection.Array;
 import io.vavr.test.Arbitrary;
 import io.vavr.test.Property;
+import java.net.InetAddress;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -41,6 +43,26 @@ class CoregexArbitraryTest {
             CoregexArbitrary.of(
                 "[12]\\d{3}-(?:0[1-9]|1[012])-(?:0[1-9]|1\\d|2[0-8])T(?:1\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d{2}[1-9])?Z"))
         .suchThat(iso8601Date -> iso8601Date.equals(formatter.format(formatter.parse(iso8601Date))))
+        .check();
+  }
+
+  @Test
+  void shouldGenerateMatchingIPv4String() {
+    Property.def("should generate matching IPv4 string")
+        .forAll(
+            CoregexArbitrary.of(
+                "((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])"))
+        .suchThat(
+            ipv4 -> {
+              String[] expected = ipv4.split("\\.");
+              String[] actual = InetAddress.getByName(ipv4).getHostAddress().split("\\.");
+              return expected.length == actual.length
+                  && Array.of(expected)
+                      .zipWith(
+                          Array.of(actual),
+                          (ex, ac) -> Integer.parseInt(ex) == Integer.parseInt(ac))
+                      .forAll(b -> b);
+            })
         .check();
   }
 

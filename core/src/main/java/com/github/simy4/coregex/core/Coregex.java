@@ -21,11 +21,11 @@ import static java.util.Objects.requireNonNull;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -217,35 +217,27 @@ public abstract class Coregex implements Serializable {
     /** {@inheritDoc} */
     @Override
     public Coregex simplify() {
-      List<Coregex> concat = new ArrayList<>(rest.length + 1);
-      Iterator<Coregex> iterator =
+      List<Coregex> concat =
           concat().stream()
-              .map(Coregex::simplify)
               .flatMap(
-                  coregex ->
-                      coregex instanceof Concat
-                          ? ((Concat) coregex).concat().stream()
-                          : Stream.of(coregex))
-              .iterator();
-      while (iterator.hasNext()) {
-        Coregex next = iterator.next();
-        if (next instanceof Literal) {
-          StringBuilder sb = new StringBuilder();
-          sb.append(((Literal) next).literal());
-          while (iterator.hasNext() && (next = iterator.next()) instanceof Literal) {
-            sb.append(((Literal) next).literal());
-          }
-          concat.add(new Literal(sb.toString()));
-          if (!(next instanceof Literal)) {
-            concat.add(next);
-          }
-        } else {
-          concat.add(next);
-        }
+                  coregex -> {
+                    coregex = coregex.simplify();
+                    if (coregex instanceof Concat) {
+                      return ((Concat) coregex).concat().stream();
+                    } else if ((0 == coregex.minLength() && 0 == coregex.maxLength())) {
+                      return Stream.empty();
+                    } else {
+                      return Stream.of(coregex);
+                    }
+                  })
+              .collect(Collectors.toList());
+      if (concat.isEmpty()) {
+        return Coregex.empty();
+      } else if (1 == concat.size()) {
+        return concat.get(0);
+      } else {
+        return new Concat(concat.get(0), concat.subList(1, concat.size()).toArray(new Coregex[0]));
       }
-      return 1 == concat.size()
-          ? concat.get(0)
-          : new Concat(concat.get(0), concat.subList(1, concat.size()).toArray(new Coregex[0]));
     }
 
     /** @return underlying regexes in order of concatenation. */
@@ -451,9 +443,10 @@ public abstract class Coregex implements Serializable {
     /** {@inheritDoc} */
     @Override
     public Coregex simplify() {
-      return 1 == min && 1 == max
-          ? quantified.simplify()
-          : new Quantified(quantified.simplify(), min, max, type);
+      Coregex quantified = this.quantified.simplify();
+      return (0 == quantified.minLength() && 0 == quantified.maxLength()) || (1 == min && 1 == max)
+          ? quantified
+          : new Quantified(quantified, min, max, type);
     }
 
     /** @return quantified regex */
