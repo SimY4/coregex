@@ -19,6 +19,8 @@ package com.github.simy4.coregex.core
 import org.scalacheck.Prop._
 import org.scalacheck.Properties
 
+import java.util.regex.Pattern
+
 object SetSpecification extends Properties("Set") with CoregexArbitraries {
   property("sampled should be in range") = forAll { (ch1: Char, ch2: Char, seed: Long) =>
     val start = ch1 min ch2
@@ -51,6 +53,16 @@ object SetSpecification extends Properties("Set") with CoregexArbitraries {
 
   property("double negation") = forAll { (set: Set, seed: Long) =>
     set.sample(seed) ?= Set.builder().set(set).negate().negate().build().sample(seed)
+  }
+
+  property("case-insensitive set") = forAll { (set: Set, seed: Long) =>
+    val result = Set
+      .builder(Pattern.CASE_INSENSITIVE)
+      .set(set)
+      .build()
+      .sample(seed)
+
+    set.test(Character.toLowerCase(result.toInt)) || set.test(Character.toUpperCase(result.toInt))
   }
 
   property("all generates all except line breaks") = forAll { (seed: Long) =>

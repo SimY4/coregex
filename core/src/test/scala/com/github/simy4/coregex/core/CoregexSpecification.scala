@@ -105,6 +105,16 @@ object CoregexSpecification extends Properties("Coregex") with CoregexArbitrarie
       literalIsGenerated && literalLengthIsMinLength && literalLengthIsMaxLength
     }
 
+    property("generated should be case-insensitive literal") = forAll { (literal: String, rng: RNG) =>
+      val literalCoregex = new Coregex.Literal(literal, Pattern.CASE_INSENSITIVE)
+      val generated      = literalCoregex.generate(rng)
+
+      val literalIsGenerated       = literal equalsIgnoreCase generated
+      val literalLengthIsMinLength = literal.length ?= literalCoregex.minLength()
+      val literalLengthIsMaxLength = literal.length ?= literalCoregex.maxLength()
+      literalIsGenerated && literalLengthIsMinLength && literalLengthIsMaxLength
+    }
+
     property("concat literals should be literal of concat") = forAll { (str: String, rng: RNG) =>
       val (s1, s2) = str.splitAt(str.length / 2)
       val l1       = new Coregex.Literal(s1)
