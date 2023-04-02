@@ -16,8 +16,8 @@
 
 package com.github.simy4.coregex.scalacheck
 
+import org.scalacheck.{ Prop, Properties }
 import org.scalacheck.Prop._
-import org.scalacheck.Properties
 
 import java.net.InetAddress
 import java.time.format.DateTimeFormatter
@@ -31,11 +31,13 @@ object CoregexSpecification extends Properties("Coregex") with CoregexInstances 
 
   property("should generate matching IPv4 string") = forAll {
     (ipv4: String Matching "((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])") =>
-      ipv4
-        .split('.')
-        .zip(InetAddress.getByName(ipv4).getHostAddress.split('.'))
-        .map { case (expected, actual) => expected.toInt ?= actual.toInt }
-        .reduce(_ && _)
+      Prop.all(
+        ipv4
+          .split('.')
+          .zip(InetAddress.getByName(ipv4).getHostAddress.split('.'))
+          .map { case (expected, actual) => expected.toInt ?= actual.toInt }
+          .toIndexedSeq: _*
+      )
   }
 
   property("should generate matching ISO-8601 date string") = forAll {

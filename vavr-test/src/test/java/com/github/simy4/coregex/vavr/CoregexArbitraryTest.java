@@ -36,17 +36,6 @@ class CoregexArbitraryTest {
   }
 
   @Test
-  void shouldGenerateMatchingIsoDateString() {
-    DateTimeFormatter formatter = DateTimeFormatter.ISO_INSTANT;
-    Property.def("should generate matching ISO date string")
-        .forAll(
-            CoregexArbitrary.of(
-                "[12]\\d{3}-(?:0[1-9]|1[012])-(?:0[1-9]|1\\d|2[0-8])T(?:1\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d{2}[1-9])?Z"))
-        .suchThat(iso8601Date -> iso8601Date.equals(formatter.format(formatter.parse(iso8601Date))))
-        .check();
-  }
-
-  @Test
   void shouldGenerateMatchingIPv4String() {
     Property.def("should generate matching IPv4 string")
         .forAll(
@@ -58,11 +47,22 @@ class CoregexArbitraryTest {
               String[] actual = InetAddress.getByName(ipv4).getHostAddress().split("\\.");
               return expected.length == actual.length
                   && Array.of(expected)
-                      .zipWith(
-                          Array.of(actual),
-                          (ex, ac) -> Integer.parseInt(ex) == Integer.parseInt(ac))
-                      .forAll(b -> b);
+                      .zip(Array.of(actual))
+                      .forAll(
+                          pair ->
+                              pair.apply((ex, ac) -> Integer.parseInt(ex) == Integer.parseInt(ac)));
             })
+        .check();
+  }
+
+  @Test
+  void shouldGenerateMatchingIsoDateString() {
+    DateTimeFormatter formatter = DateTimeFormatter.ISO_INSTANT;
+    Property.def("should generate matching ISO date string")
+        .forAll(
+            CoregexArbitrary.of(
+                "[12]\\d{3}-(?:0[1-9]|1[012])-(?:0[1-9]|1\\d|2[0-8])T(?:1\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d{2}[1-9])?Z"))
+        .suchThat(iso8601Date -> iso8601Date.equals(formatter.format(formatter.parse(iso8601Date))))
         .check();
   }
 
