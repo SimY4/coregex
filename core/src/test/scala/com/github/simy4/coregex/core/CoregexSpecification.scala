@@ -95,32 +95,24 @@ object CoregexSpecification extends Properties("Coregex") with CoregexArbitrarie
   }
 
   object LiteralSpecification extends Properties("Literal") {
-    property("generated should be literal") = forAll { (literal: String, rng: RNG) =>
-      val literalCoregex = new Coregex.Literal(literal)
+    property("generated should be literal") = forAll { (literal: String, flags: Flags, rng: RNG) =>
+      val literalCoregex = new Coregex.Literal(literal, flags)
       val generated      = literalCoregex.generate(rng)
 
-      val literalIsGenerated       = literal ?= generated
+      val literalIsGenerated =
+        (0 != (Pattern.CASE_INSENSITIVE & flags)) ==> (literal equalsIgnoreCase generated) || (literal ?= generated)
       val literalLengthIsMinLength = literal.length ?= literalCoregex.minLength()
       val literalLengthIsMaxLength = literal.length ?= literalCoregex.maxLength()
       literalIsGenerated && literalLengthIsMinLength && literalLengthIsMaxLength
     }
 
-    property("generated should be case-insensitive literal") = forAll { (literal: String, rng: RNG) =>
-      val literalCoregex = new Coregex.Literal(literal, Pattern.CASE_INSENSITIVE)
-      val generated      = literalCoregex.generate(rng)
-
-      val literalIsGenerated       = literal equalsIgnoreCase generated
-      val literalLengthIsMinLength = literal.length ?= literalCoregex.minLength()
-      val literalLengthIsMaxLength = literal.length ?= literalCoregex.maxLength()
-      literalIsGenerated && literalLengthIsMinLength && literalLengthIsMaxLength
-    }
-
-    property("concat literals should be literal of concat") = forAll { (str: String, rng: RNG) =>
-      val (s1, s2) = str.splitAt(str.length / 2)
-      val l1       = new Coregex.Literal(s1)
-      val l2       = new Coregex.Literal(s2)
-      val concat   = new Coregex.Concat(l1, l2).simplify()
-      str ?= concat.generate(rng)
+    property("concat literals should be literal of concat") = forAll { (s1: String, s2: String, rng: RNG) =>
+      (s1.length + s2.length < Int.MaxValue - 2) ==> {
+        val l1     = new Coregex.Literal(s1)
+        val l2     = new Coregex.Literal(s2)
+        val concat = new Coregex.Concat(l1, l2).simplify()
+        (s1 + s2) ?= concat.generate(rng)
+      }
     }
 
     property("quantified generated should be repeated literal") = forAll {

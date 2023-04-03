@@ -19,8 +19,31 @@ package com.github.simy4.coregex.core
 import org.scalacheck.{ Arbitrary, Gen, Shrink }
 import rng.RandomRNG
 
+import java.util.regex.Pattern
+
 trait CoregexArbitraries {
   import scala.jdk.StreamConverters._
+
+  type Flags <: Int
+  implicit val arbitraryFlags: Arbitrary[Flags] = Arbitrary(genFlags)
+  def genFlags: Gen[Flags] =
+    for {
+      n <- Gen.choose(0, 9)
+      flags <- Gen.listOfN(
+        n,
+        Gen.oneOf(
+          Pattern.CANON_EQ,
+          Pattern.CASE_INSENSITIVE,
+          Pattern.COMMENTS,
+          Pattern.DOTALL,
+          Pattern.LITERAL,
+          Pattern.MULTILINE,
+          Pattern.UNICODE_CASE,
+          Pattern.UNICODE_CHARACTER_CLASS,
+          Pattern.UNIX_LINES
+        )
+      )
+    } yield flags.foldLeft(0)(_ | _).asInstanceOf[Flags]
 
   implicit val arbitraryCoregex: Arbitrary[Coregex] = Arbitrary(genCoregex())
   def genCoregex(level: Int = 10, charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex] =
@@ -46,7 +69,9 @@ trait CoregexArbitraries {
 
   implicit val arbitraryCoregexLiteral: Arbitrary[Coregex.Literal] = Arbitrary(genCoregexLiteral())
   def genCoregexLiteral(charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex.Literal] =
-    Gen.stringOf(charGen).map(new Coregex.Literal(_))
+    for (literal <- Gen.stringOf(charGen); flags <- genFlags) yield new Coregex.Literal(literal, flags)
+  implicit def shrinkCoregexLiteral(implicit shrinkLiteral: Shrink[String]): Shrink[Coregex.Literal] =
+    Shrink(literal => shrinkLiteral.shrink(literal.literal()).map(new Coregex.Literal(_)))
 
   implicit val arbitraryCoregexSet: Arbitrary[Coregex.Set]                   = Arbitrary(genCoregexSet())
   implicit val shrinkCoregexSet: Shrink[Coregex.Set]                         = Shrink.withLazyList(shrinkCoregexSet(_))
@@ -70,22 +95,22 @@ trait CoregexArbitraries {
     Gen.frequency(
       (
         2,
-        for (ch <- charGen; rest <- Gen.stringOf(charGen))
-          yield Set.builder().set(ch, rest.toCharArray: _*).build()
+        for (flags <- genFlags; ch <- charGen; rest <- Gen.stringOf(charGen))
+          yield Set.builder(flags).set(ch, rest.toCharArray: _*).build()
       ),
       (
         2,
-        for (ch1 <- charGen; ch2 <- charGen)
+        for (flags <- genFlags; ch1 <- charGen; ch2 <- charGen)
           yield {
             val start = ch1 min ch2
             val end = {
               val end = ch1 max ch2
-              if (start == end) (end + 1).asInstanceOf[Char] else end
+              if (start == end) (end + 1).toChar else end
             }
-            Set.builder().set(start, end).build()
+            Set.builder(flags).set(start, end).build()
           }
       ),
-      (1, fix.map(set => Set.builder().set(set).build()))
+      (1, for (flags <- genFlags; set <- fix.map(set => Set.builder(flags).set(set).build())) yield set)
     )
   }
   def shrinkSet(set: Set): LazyList[Set] = set.shrink().toScala(LazyList)
