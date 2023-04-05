@@ -52,4 +52,9 @@ public class RandomRNG implements RNG, Serializable {
     Random rng = new Random(seed);
     return new Pair<>(new RandomRNG(rng.nextLong()), rng.nextLong());
   }
+
+  @Override
+  public String toString() {
+    return "RandomRNG(seed=" + seed + ')';
+  }
 }

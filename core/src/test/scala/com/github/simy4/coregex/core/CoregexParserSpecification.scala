@@ -18,11 +18,10 @@ package com.github.simy4.coregex.core
 
 import org.scalacheck.{ Gen, Properties }
 import org.scalacheck.Prop._
-import rng.RandomRNG
 
 import java.util.regex.Pattern
 
-object CoregexParserSpecification extends Properties("CoregexParser") {
+object CoregexParserSpecification extends Properties("CoregexParser") with CoregexArbitraries {
   val coregexWithPatterns: Gen[(Coregex, Pattern)] = Gen.oneOf[(Coregex, Pattern)](
     new Coregex.Concat(
       new Coregex.Quantified(new Coregex.Set(Set.builder().range('0', '9').range('a', 'f').build()), 8, 8),
@@ -181,20 +180,25 @@ object CoregexParserSpecification extends Properties("CoregexParser") {
     ) -> Pattern.compile("((?i)[a-z]+(?-i)-[A-Z]){3,6}")
   )
 
-  property("should parse example regex") = forAll(coregexWithPatterns, Gen.long) { case ((expected, regex), seed) =>
-    val actual = Coregex.from(regex)
-    (expected ?= actual) && regex.matcher(actual.generate(new RandomRNG(seed))).matches()
+  property("should parse example regex") = forAll(coregexWithPatterns, genRNG) { case ((expected, regex), rng) =>
+    val actual    = Coregex.from(regex)
+    val generated = actual.generate(rng)
+    (expected ?= actual) && regex
+      .matcher(generated)
+      .matches() :| s"${regex.pattern()} isn't matching generated: $generated"
   }
 
-  property("should parse quoted regex") = forAll(coregexWithPatterns, Gen.long) { case ((_, regex), seed) =>
-    val expected = Pattern.compile(Pattern.quote(regex.pattern()))
-    val actual   = Coregex.from(expected)
-    expected.matcher(actual.generate(new RandomRNG(seed))).matches()
+  property("should parse quoted regex") = forAll(coregexWithPatterns, genRNG) { case ((_, regex), rng) =>
+    val expected  = Pattern.compile(Pattern.quote(regex.pattern()))
+    val actual    = Coregex.from(expected)
+    val generated = actual.generate(rng)
+    expected.matcher(generated).matches() :| s"${expected.pattern()} isn't matching generated: $generated"
   }
 
-  property("should parse literal regex") = forAll(coregexWithPatterns, Gen.long) { case ((_, regex), seed) =>
-    val expected = Pattern.compile(regex.pattern(), Pattern.LITERAL)
-    val actual   = Coregex.from(expected)
-    expected.matcher(actual.generate(new RandomRNG(seed))).matches()
+  property("should parse literal regex") = forAll(coregexWithPatterns, genRNG) { case ((_, regex), rng) =>
+    val expected  = Pattern.compile(regex.pattern(), Pattern.LITERAL)
+    val actual    = Coregex.from(expected)
+    val generated = actual.generate(rng)
+    expected.matcher(generated).matches() :| s"${expected.pattern()} isn't matching generated: $generated"
   }
 }
