@@ -92,25 +92,12 @@ trait CoregexArbitraries {
   implicit val arbitrarySet: Arbitrary[Set] = Arbitrary(genSet())
   implicit val shrinkSet: Shrink[Set]       = Shrink.withLazyList(shrinkSet(_))
   def genSet(charGen: Gen[Char] = Gen.asciiPrintableChar): Gen[Set] = Gen.recursive[Set] { fix =>
-    Gen.frequency(
-      (
-        2,
-        for (flags <- genFlags; ch <- charGen; rest <- Gen.stringOf(charGen))
-          yield Set.builder(flags).set(ch, rest.toCharArray: _*).build()
-      ),
-      (
-        2,
-        for (flags <- genFlags; ch1 <- charGen; ch2 <- charGen)
-          yield {
-            val start = ch1 min ch2
-            val end = {
-              val end = ch1 max ch2
-              if (start == end) (end + 1).toChar else end
-            }
-            Set.builder(flags).set(start, end).build()
-          }
-      ),
-      (1, for (flags <- genFlags; set <- fix.map(set => Set.builder(flags).set(set).build())) yield set)
+    Gen.oneOf(
+      for (flags <- genFlags; ch <- charGen; rest <- Gen.stringOf(charGen))
+        yield Set.builder(flags).set(ch, rest.toCharArray: _*).build(),
+      for (flags <- genFlags; ch1 <- charGen; ch2 <- charGen; if ch1 != ch2)
+        yield Set.builder(flags).range(ch1 min ch2, ch1 max ch2).build(),
+      for (flags <- genFlags; set <- fix.map(set => Set.builder(flags).set(set).build())) yield set
     )
   }
   def shrinkSet(set: Set): LazyList[Set] = set.shrink().toScala(LazyList)

@@ -182,11 +182,16 @@ public final class Set implements IntPredicate, Serializable {
       if (start >= end) {
         throw new IllegalArgumentException("start: " + start + " should be < end: " + end);
       }
-      if ((0 != (flags & Pattern.CASE_INSENSITIVE))) {
-        chars.set(Character.toLowerCase(start), Character.toLowerCase(end) + 1);
-        chars.set(Character.toUpperCase(start), Character.toUpperCase(end) + 1);
-      } else {
-        chars.set(start, end + 1);
+      chars.set(start, end + 1);
+      if (0 != (flags & Pattern.CASE_INSENSITIVE)) {
+        for (char ch = start; ch <= end; ch++) {
+          if (Character.isLowerCase(ch)) {
+            chars.set(Character.toUpperCase(ch));
+          }
+          if (Character.isUpperCase(ch)) {
+            chars.set(Character.toLowerCase(ch));
+          }
+        }
       }
       description.append(start).append('-').append(end);
       return this;
@@ -227,12 +232,14 @@ public final class Set implements IntPredicate, Serializable {
      * @return this builder instance
      */
     public Builder single(char ch) {
-      if ((0 != (flags & Pattern.CASE_INSENSITIVE) && ch < 128)
-          || 0 != (flags & Pattern.UNICODE_CASE)) {
-        chars.set(Character.toLowerCase(ch));
-        chars.set(Character.toUpperCase(ch));
-      } else {
-        chars.set(ch);
+      chars.set(ch);
+      if (0 != (flags & Pattern.CASE_INSENSITIVE)) {
+        if (Character.isLowerCase(ch)) {
+          chars.set(Character.toUpperCase(ch));
+        }
+        if (Character.isUpperCase(ch)) {
+          chars.set(Character.toLowerCase(ch));
+        }
       }
       description.append(ch);
       return this;
