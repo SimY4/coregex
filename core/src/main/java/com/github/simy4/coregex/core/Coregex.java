@@ -313,13 +313,20 @@ public abstract class Coregex implements Serializable {
       if (0 != (flags & Pattern.CASE_INSENSITIVE)) {
         StringBuilder literal = new StringBuilder(this.literal);
         for (int i = 0; i < literal.length(); i++) {
-          Pair<RNG, Boolean> rngAndBoolean = rng.genBoolean();
-          rng = rngAndBoolean.getFirst();
-          boolean upper = rngAndBoolean.getSecond();
-          if (upper) {
-            literal.setCharAt(i, Character.toUpperCase(literal.charAt(i)));
-          } else {
-            literal.setCharAt(i, Character.toLowerCase(literal.charAt(i)));
+          char ch = literal.charAt(i);
+          if (Character.isLowerCase(ch)) {
+            Pair<RNG, Boolean> rngAndBoolean = rng.genBoolean();
+            rng = rngAndBoolean.getFirst();
+            if (rngAndBoolean.getSecond()) {
+              literal.setCharAt(i, Character.toUpperCase(ch));
+            }
+          }
+          if (Character.isUpperCase(ch)) {
+            Pair<RNG, Boolean> rngAndBoolean = rng.genBoolean();
+            rng = rngAndBoolean.getFirst();
+            if (rngAndBoolean.getSecond()) {
+              literal.setCharAt(i, Character.toLowerCase(ch));
+            }
           }
         }
         return new Pair<>(rng, literal.toString());

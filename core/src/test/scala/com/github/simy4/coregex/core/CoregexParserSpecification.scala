@@ -185,20 +185,20 @@ object CoregexParserSpecification extends Properties("CoregexParser") with Coreg
     val generated = actual.generate(rng)
     (expected ?= actual) && regex
       .matcher(generated)
-      .matches() :| s"${regex.pattern()} isn't matching generated: $generated"
+      .matches() :| s"${regex.pattern()} should match generated: $generated"
   }
 
   property("should parse quoted regex") = forAll(coregexWithPatterns, genRNG) { case ((_, regex), rng) =>
     val expected  = Pattern.compile(Pattern.quote(regex.pattern()))
     val actual    = Coregex.from(expected)
     val generated = actual.generate(rng)
-    expected.matcher(generated).matches() :| s"${expected.pattern()} isn't matching generated: $generated"
+    expected.matcher(generated).matches() :| s"${expected.pattern()} should match generated: $generated"
   }
 
   property("should parse literal regex") = forAll(coregexWithPatterns, genRNG) { case ((_, regex), rng) =>
     val expected  = Pattern.compile(regex.pattern(), Pattern.LITERAL)
     val actual    = Coregex.from(expected)
     val generated = actual.generate(rng)
-    expected.matcher(generated).matches() :| s"${expected.pattern()} isn't matching generated: $generated"
+    expected.matcher(generated).matches() :| s"${expected.pattern()} should match generated: $generated"
   }
 }
