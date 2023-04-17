@@ -121,7 +121,7 @@ lazy val kotest = (project in file("kotest"))
     autoScalaLibrary := false,
     headerEndYear    := Some(2023),
     libraryDependencies ++= Seq(
-      "io.kotest"   % "kotest-property-jvm" % "5.5.5"  % Provided,
+      "io.kotest"   % "kotest-property-jvm" % "5.6.0"  % Provided,
       "net.aichler" % "jupiter-interface"   % "0.11.1" % Test
     ),
     testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v"),
