@@ -46,7 +46,7 @@ public class CoregexGenerator extends Generator<String> {
   }
 
   public void configure(Regex regex) {
-    this.regex = Pattern.compile(regex.value());
+    this.regex = Pattern.compile(regex.value(), regex.flags());
     this.coregex = Coregex.from(this.regex);
   }
 
