@@ -24,7 +24,11 @@ import java.util.regex.Pattern;
 
 public class CoregexArbitrary implements Arbitrary<String> {
   public static CoregexArbitrary of(String regex) {
-    return new CoregexArbitrary(Pattern.compile(regex));
+    return of(regex, 0);
+  }
+
+  public static CoregexArbitrary of(String regex, int flags) {
+    return new CoregexArbitrary(Pattern.compile(regex, flags));
   }
 
   private final Pattern pattern;

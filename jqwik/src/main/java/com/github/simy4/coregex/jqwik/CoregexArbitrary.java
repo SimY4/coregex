@@ -32,7 +32,11 @@ import net.jqwik.api.arbitraries.ArbitraryDecorator;
 
 public class CoregexArbitrary extends ArbitraryDecorator<String> {
   public static CoregexArbitrary of(String regex) {
-    return new CoregexArbitrary(Pattern.compile(regex));
+    return of(regex, 0);
+  }
+
+  public static CoregexArbitrary of(String regex, int flags) {
+    return new CoregexArbitrary(Pattern.compile(regex, flags));
   }
 
   private final Pattern pattern;

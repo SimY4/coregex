@@ -34,7 +34,11 @@ import org.jetbrains.annotations.Nullable;
 
 public class CoregexArbitrary extends Arb<String> {
   public static CoregexArbitrary of(String pattern) {
-    return new CoregexArbitrary(Pattern.compile(pattern));
+    return of(pattern, 0);
+  }
+
+  public static CoregexArbitrary of(String pattern, int flags) {
+    return new CoregexArbitrary(Pattern.compile(pattern, flags));
   }
 
   private final Coregex coregex;

@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
-
 import net.jqwik.api.Arbitrary;
 import net.jqwik.api.constraints.Size;
 import net.jqwik.api.providers.ArbitraryProvider;
