@@ -19,6 +19,10 @@ package com.github.simy4.coregex.core;
 import java.util.Objects;
 
 public final class Pair<A, B> {
+  public static <A, B> Pair<A, B> pair(A first, B second) {
+    return new Pair<>(first, second);
+  }
+
   private final A first;
   private final B second;
 

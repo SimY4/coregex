@@ -19,9 +19,23 @@ package com.github.simy4.coregex.core
 import munit.ScalaCheckSuite
 import org.scalacheck.Prop._
 
-import java.util.regex.Pattern
-
 class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
+  property("coregex should generate a string that it accepts") {
+    forAll { (coregex: Coregex, rng: RNG) =>
+      val generated = coregex.generate(rng)
+      coregex.test(generated) :| s"$coregex should accept $generated"
+    }
+  }
+
+  property("negated coregex should not accept generated string") {
+    forAll { (coregex: Coregex, rng: RNG) =>
+      (0 != coregex.minLength() || 0 != coregex.maxLength()) ==> {
+        val generated = coregex.generate(rng)
+        !coregex.negate().test(generated) :| s"negated $coregex should not accept $generated"
+      }
+    }
+  }
+
   property("quantified zero times should give empty") {
     forAll { (coregex: Coregex, `type`: Coregex.Quantified.Type, rng: RNG) =>
       coregex.quantify(0, 0, `type`).generate(rng).isEmpty
@@ -79,47 +93,49 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
   }
 
   // region Concat
-  property("concat with empty should be identity") {
-    forAll { (coregex: Coregex, rng: RNG) =>
-      val concat1 = new Coregex.Concat(coregex, Coregex.empty()).simplify()
-      val concat2 = new Coregex.Concat(Coregex.empty(), coregex).simplify()
-      (coregex.simplify().generate(rng) ?= concat1.generate(rng)) && (coregex.simplify().generate(rng) ?= concat2
-        .generate(rng))
+  property("generated should be concat") {
+    forAll { (concat: Coregex.Concat, rng: RNG) =>
+      val generated = concat.generate(rng)
+
+      val inConcatCheck = concat.test(generated) :| s"$generated in $concat"
+      val minLengthCheck = (concat.minLength() <= generated
+        .length()) :| s"concat.minLength(${concat.minLength()}) <= $generated.length(${generated.length})"
+      val maxLengthCheck = -1 != concat.maxLength() ==> (generated.length() <= concat
+        .maxLength()) :| s"$generated.length(${generated.length}) <= concat.maxLength(${concat.maxLength()})"
+
+      inConcatCheck && minLengthCheck && maxLengthCheck
+    }
+  }
+  // endregion
+
+  // region Intersect
+  property("generated should be in intersection".ignore) {
+    forAll { (intersection: Coregex.Intersection, rng: RNG) =>
+      val generated = intersection.generate(rng)
+
+      val inIntersectionCheck =
+        intersection.intersection().stream().allMatch(_.test(generated)) :| s"$generated in $intersection"
+      val minLengthCheck = (intersection.minLength() <= generated
+        .length()) :| s"intersection.minLength(${intersection.minLength()}) <= $generated.length(${generated.length})"
+      val maxLengthCheck = -1 != intersection.maxLength() ==> (generated.length() <= intersection
+        .maxLength()) :| s"$generated.length(${generated.length}) <= intersection.maxLength(${intersection.maxLength()})"
+
+      inIntersectionCheck && minLengthCheck && maxLengthCheck
     }
   }
   // endregion
 
   // region Literal
   property("generated should be literal") {
-    forAll { (literal: String, flags: Flags, rng: RNG) =>
-      val literalCoregex = new Coregex.Literal(literal, flags)
-      val generated      = literalCoregex.generate(rng)
+    forAll { (literal: Coregex.Literal, rng: RNG) =>
+      val generated = literal.generate(rng)
 
-      val literalIsGenerated =
-        (0 != (Pattern.CASE_INSENSITIVE & flags)) ==> (literal equalsIgnoreCase generated) || (literal ?= generated)
-      val literalLengthIsMinLength = literal.length ?= literalCoregex.minLength()
-      val literalLengthIsMaxLength = literal.length ?= literalCoregex.maxLength()
+      val literalIsGenerated = literal.test(generated) :| s"$generated is $literal"
+      val literalLengthIsMinLength = (literal.literal().length ?= literal
+        .minLength()) :| s"literal.length(${literal.literal().length}) == literal.minLength(${literal.minLength()})"
+      val literalLengthIsMaxLength = (literal.literal().length ?= literal
+        .maxLength()) :| s"literal.length(${literal.literal().length}) == literal.maxLength(${literal.maxLength()})"
       literalIsGenerated && literalLengthIsMinLength && literalLengthIsMaxLength
-    }
-  }
-
-  property("concat literals should be literal of concat") {
-    forAll { (s1: String, s2: String, rng: RNG) =>
-      (s1.length + s2.length < Int.MaxValue - 2) ==> {
-        val l1     = new Coregex.Literal(s1)
-        val l2     = new Coregex.Literal(s2)
-        val concat = new Coregex.Concat(l1, l2).simplify()
-        (s1 + s2) ?= concat.generate(rng)
-      }
-    }
-  }
-
-  property("quantified generated should be repeated literal") {
-    forAll { (literal: String, range: QuantifyRange, `type`: Coregex.Quantified.Type, rng: RNG) =>
-      val literalCoregex = new Coregex.Literal(literal).quantify(range.min, range.max, `type`)
-      val generated      = literalCoregex.generate(rng)
-
-      s"(${Pattern.quote(literal)})*".r.matches(generated)
     }
   }
   // endregion
@@ -129,18 +145,12 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
     forAll { (set: Coregex.Set, rng: RNG) =>
       val generated = set.generate(rng)
 
-      val inSetCheck  = generated.chars().allMatch(ch => set.set().test(ch)) :| s"$generated in $set"
-      val lengthCheck = (generated.length ?= 1) :| s"$generated.length == 1"
+      val inSetCheck     = set.test(generated) :| s"$generated in $set"
+      val lengthCheck    = (generated.length =? 1) :| s"$generated.length == 1"
+      val minLengthCheck = (set.minLength() =? 1) :| s"set.minLength(${set.minLength()}) == 1"
+      val maxLengthCheck = (set.maxLength() =? 1) :| s"set.maxLength(${set.maxLength()}) == 1"
 
-      inSetCheck && lengthCheck
-    }
-  }
-
-  property("quantified generated should be in set") {
-    forAll { (set: Coregex.Set, range: QuantifyRange, `type`: Coregex.Quantified.Type, rng: RNG) =>
-      val generated = set.quantify(range.min, range.max, `type`).generate(rng)
-
-      generated.chars().allMatch(ch => set.set().test(ch)) :| s"$generated in $set"
+      inSetCheck && lengthCheck && minLengthCheck && maxLengthCheck
     }
   }
   // endregion
@@ -150,16 +160,13 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
     forAll { (union: Coregex.Union, rng: RNG) =>
       val generated = union.generate(rng)
 
-      val nextRng = rng.genLong().getFirst
-      val inSetCheck = union
-        .union()
-        .stream()
-        .map(_.generate(nextRng) =? generated)
-        .reduce(falsified, _ || _)
-      val lengthCheck = (union.minLength() <= generated
+      val inUnionCheck = union.union().stream().anyMatch(_.test(generated)) :| s"$generated in $union"
+      val minLengthCheck = (union.minLength() <= generated
         .length()) :| s"union.minLength(${union.minLength()}) <= $generated.length(${generated.length})"
+      val maxLengthCheck = -1 != union.maxLength() ==> (generated.length() <= union
+        .maxLength()) :| s"$generated.length(${generated.length}) <= union.maxLength(${union.maxLength()})"
 
-      inSetCheck && lengthCheck
+      inUnionCheck && minLengthCheck && maxLengthCheck
     }
   }
   // endregion

@@ -74,6 +74,14 @@ trait CoregexArbitraries {
       rest  <- Gen.listOfN(size % 10, Gen.resize(size / 4, genCoregex(charGen)))
     } yield new Coregex.Concat(first, rest: _*)
 
+  implicit val arbitraryCoregexIntersection: Arbitrary[Coregex.Intersection] = Arbitrary(genCoregexIntersection())
+  def genCoregexIntersection(charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex.Intersection] =
+    for {
+      first <- Gen.sized(h => Gen.resize(h / 4, genCoregex(charGen)))
+      size  <- Gen.size
+      rest  <- Gen.listOfN(size min 10, Gen.resize(size / 4, genCoregex(charGen)))
+    } yield new Coregex.Intersection(first, rest: _*)
+
   implicit val arbitraryCoregexLiteral: Arbitrary[Coregex.Literal] = Arbitrary(genCoregexLiteral())
   def genCoregexLiteral(charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex.Literal] =
     for (literal <- Gen.stringOf(charGen); flags <- genFlags) yield new Coregex.Literal(literal, flags)

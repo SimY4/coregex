@@ -16,6 +16,8 @@
 
 package com.github.simy4.coregex.core.rng;
 
+import static com.github.simy4.coregex.core.Pair.pair;
+
 import com.github.simy4.coregex.core.Pair;
 import com.github.simy4.coregex.core.RNG;
 import java.io.Serializable;
@@ -38,19 +40,19 @@ public class RandomRNG implements RNG, Serializable {
   @Override
   public Pair<RNG, Boolean> genBoolean() {
     Random rng = new Random(seed);
-    return new Pair<>(new RandomRNG(rng.nextLong()), rng.nextBoolean());
+    return pair(new RandomRNG(rng.nextLong()), rng.nextBoolean());
   }
 
   @Override
   public Pair<RNG, Integer> genInteger(int bound) {
     Random rng = new Random(seed);
-    return new Pair<>(new RandomRNG(rng.nextLong()), rng.nextInt(bound));
+    return pair(new RandomRNG(rng.nextLong()), rng.nextInt(bound));
   }
 
   @Override
   public Pair<RNG, Long> genLong() {
     Random rng = new Random(seed);
-    return new Pair<>(new RandomRNG(rng.nextLong()), rng.nextLong());
+    return pair(new RandomRNG(rng.nextLong()), rng.nextLong());
   }
 
   @Override

@@ -16,17 +16,18 @@
 
 package com.github.simy4.coregex.core;
 
+import static com.github.simy4.coregex.core.Pair.pair;
 import static java.util.Objects.requireNonNull;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Data representation of regex language.
@@ -97,6 +98,60 @@ public abstract class Coregex implements Serializable {
   protected abstract Pair<RNG, String> apply(RNG rng, int remainder);
 
   /**
+   * @return maximal possible length of all generated strings of this coregex. {@code -1} means no
+   *     upper limit.
+   */
+  public abstract int maxLength();
+
+  /** @return minimal possible length of all generated strings of this coregex */
+  public abstract int minLength();
+
+  /**
+   * Creates a version of this coregex with {@link #test(CharSequence)} returning inverted result
+   * from the original.
+   *
+   * <pre>{@code
+   * ¬''       = ''
+   * ¬[abc]    = [^abc]
+   * ¬'abc'    = [^a][^b][^c]
+   * ¬(a|b)    = ¬a&¬b
+   * ¬(a&b)    = ¬a|¬b
+   * ¬(a*)     = ¬a{1}
+   * ¬(a+)     = ''
+   * ¬(a{0,3}) = a{4,}
+   * ¬(a{4,})  = a{0,3}
+   * ¬(a{2})   = a{0,1}|a{3,}
+   * ¬(a{2,3}) = a{0,1}|a{4,}
+   *
+   * ¬.        = ∅
+   * }</pre>
+   *
+   * @see #test(CharSequence)
+   * @return negated coregex instance
+   */
+  public abstract Coregex negate();
+
+  /** @return simplified and more memory efficient version of this coregex. */
+  public abstract Coregex simplify();
+
+  /**
+   * Tests that given input matches this coregex. In a way this method verifies that coregex in an
+   * inverse of a regular expression.
+   *
+   * <p>This should hold true for a supported subset of regular expressions:
+   *
+   * <pre>{@code
+   * Pattern pattern = ...
+   * pattern.matcher().matches(input) == Coregex.from(pattern).test(input)
+   * }</pre>
+   *
+   * @param input input to test
+   * @return {@code true} if input matches this regular expression or {@code false} otherwise
+   * @see #negate()
+   */
+  public abstract boolean test(CharSequence input);
+
+  /**
    * Samples one random string that matches this regex.
    *
    * @param rng random number generator to use
@@ -109,12 +164,12 @@ public abstract class Coregex implements Serializable {
   }
 
   /**
-   * Quantify this regex.
+   * Quantify this coregex.
    *
    * @param min min number of times this regex should be repeated
    * @param max max number of times this regex should be repeated. {@code -1} means no limit.
    * @param type quantifier type.
-   * @return quantified regex
+   * @return quantified coregex
    * @see Quantified
    * @throws IllegalArgumentException if min is greater than max or if min is negative or if called
    *     on already quantified regex
@@ -136,18 +191,6 @@ public abstract class Coregex implements Serializable {
     int maxLength = maxLength();
     return -1 != maxLength && maxLength <= size ? this : new Sized(this, size);
   }
-
-  /** @return minimal possible length of all generated strings of this regex */
-  public abstract int minLength();
-
-  /**
-   * @return maximal possible length of all generated strings of this regex. {@code -1} means no
-   *     upper limit.
-   */
-  public abstract int maxLength();
-
-  /** @return simplified and more memory efficient version of this regex. */
-  public abstract Coregex simplify();
 
   /** Sequential concatenation of regexes. */
   public static final class Concat extends Coregex {
@@ -185,17 +228,7 @@ public abstract class Coregex implements Serializable {
         sb.append(value);
         remainder -= value.length() - chunkMinLength;
       } while (i < rest.length && (chunk = rest[i++]) != null);
-      return new Pair<>(rng, sb.toString());
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public int minLength() {
-      int min = first.minLength();
-      for (Coregex coregex : rest) {
-        min += coregex.minLength();
-      }
-      return min;
+      return pair(rng, sb.toString());
     }
 
     /** {@inheritDoc} */
@@ -217,28 +250,93 @@ public abstract class Coregex implements Serializable {
 
     /** {@inheritDoc} */
     @Override
+    public int minLength() {
+      int min = first.minLength();
+      for (Coregex coregex : rest) {
+        min += coregex.minLength();
+      }
+      return min;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Coregex negate() {
+      List<Coregex> negated = new ArrayList<>(rest.length + 1);
+      if (0 != first.minLength() || 0 != first.maxLength()) {
+        negated.add(first.negate());
+      }
+      for (Coregex coregex : rest) {
+        if (0 != coregex.minLength() || 0 != coregex.maxLength()) {
+          negated.add(coregex.negate());
+        }
+      }
+      if (negated.isEmpty()) {
+        return empty();
+      } else if (1 == negated.size()) {
+        return negated.get(0);
+      } else {
+        return new Concat(
+            negated.get(0), negated.subList(1, negated.size()).toArray(new Coregex[0]));
+      }
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public Coregex simplify() {
-      List<Coregex> concat =
-          concat().stream()
-              .flatMap(
-                  coregex -> {
-                    coregex = coregex.simplify();
-                    if (coregex instanceof Concat) {
-                      return ((Concat) coregex).concat().stream();
-                    } else if ((0 == coregex.minLength() && 0 == coregex.maxLength())) {
-                      return Stream.empty();
-                    } else {
-                      return Stream.of(coregex);
-                    }
-                  })
-              .collect(Collectors.toList());
+      List<Coregex> concat = new ArrayList<>(rest.length + 1);
+      Coregex simplified = first.simplify();
+      if (0 != simplified.minLength() || 0 != simplified.maxLength()) {
+        concat.add(simplified);
+      }
+      for (Coregex coregex : rest) {
+        simplified = coregex.simplify();
+        if (0 != simplified.minLength() || 0 != simplified.maxLength()) {
+          concat.add(simplified);
+        }
+      }
       if (concat.isEmpty()) {
-        return Coregex.empty();
+        return empty();
       } else if (1 == concat.size()) {
         return concat.get(0);
       } else {
         return new Concat(concat.get(0), concat.subList(1, concat.size()).toArray(new Coregex[0]));
       }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean test(CharSequence input) {
+      java.util.Set<Integer> indices = new HashSet<>();
+      int minLength = first.minLength(), maxLength = first.maxLength();
+      maxLength = -1 == maxLength ? input.length() : Math.min(input.length(), maxLength);
+      for (int i = minLength; i <= maxLength; i++) {
+        if (first.test(input.subSequence(0, i))) {
+          indices.add(i);
+        }
+      }
+      if (indices.isEmpty()) {
+        return false;
+      }
+
+      for (Coregex coregex : rest) {
+        java.util.Set<Integer> newIndices = new HashSet<>();
+        for (int startAt : indices) {
+          minLength = startAt + coregex.minLength();
+          maxLength = coregex.maxLength();
+          maxLength =
+              -1 == maxLength ? input.length() : Math.min(input.length(), startAt + maxLength);
+          for (int i = minLength; i <= maxLength; i++) {
+            if (coregex.test(input.subSequence(startAt, i))) {
+              newIndices.add(i);
+            }
+          }
+        }
+        if (newIndices.isEmpty()) {
+          return false;
+        }
+        indices = newIndices;
+      }
+      return indices.contains(input.length());
     }
 
     /** @return underlying regexes in order of concatenation. */
@@ -276,6 +374,148 @@ public abstract class Coregex implements Serializable {
         sb.append(coregex.toString());
       }
       return sb.toString();
+    }
+  }
+
+  /** Intersection of regexes. */
+  public static final class Intersection extends Coregex {
+    private static final long serialVersionUID = 1L;
+
+    private final Coregex first;
+    private final Coregex[] rest;
+
+    /**
+     * @param first first regex
+     * @param rest rest of regexes
+     */
+    public Intersection(Coregex first, Coregex... rest) {
+      this.first = requireNonNull(first, "first");
+      this.rest = Arrays.copyOf(rest, rest.length);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    protected Pair<RNG, String> apply(RNG rng, int remainder) {
+      int attempt = 0;
+      String result;
+      boolean matches;
+      do {
+        matches = false;
+        Pair<RNG, String> rngAndResult = first.apply(rng, remainder);
+        rng = rngAndResult.getFirst();
+        result = rngAndResult.getSecond();
+        for (Coregex coregex : rest) {
+          matches = coregex.test(result);
+          if (matches) {
+            break;
+          }
+        }
+      } while (!matches && ++attempt < 100);
+      if (!matches) {
+        throw new IllegalStateException("Unable to generate intersection for: " + this);
+      }
+      return pair(rng, result);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public int maxLength() {
+      int agg = first.maxLength();
+      for (Coregex coregex : rest) {
+        int max = coregex.maxLength();
+        if (-1 == max) {
+          continue;
+        }
+        agg = -1 == agg ? max : Math.min(agg, max);
+      }
+      return agg;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public int minLength() {
+      int min = first.minLength();
+      for (Coregex coregex : rest) {
+        min = Math.max(min, coregex.minLength());
+      }
+      return min;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Coregex negate() {
+      if (0 == rest.length) {
+        return first.negate();
+      }
+      Coregex[] negatedRest = new Coregex[rest.length];
+      for (int i = 0; i < rest.length; i++) {
+        negatedRest[i] = rest[i].negate();
+      }
+      return new Intersection(first.simplify(), negatedRest);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Coregex simplify() {
+      if (0 == rest.length) {
+        return first.simplify();
+      }
+      Coregex[] simplifiedRest = new Coregex[rest.length];
+      for (int i = 0; i < rest.length; i++) {
+        simplifiedRest[i] = rest[i].simplify();
+      }
+      return new Intersection(first.simplify(), simplifiedRest);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean test(CharSequence input) {
+      if (!first.test(input)) {
+        return false;
+      }
+      for (Coregex coregex : rest) {
+        if (!coregex.test(input)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    /** @return underlying regexes forming this intersection. */
+    public List<Coregex> intersection() {
+      List<Coregex> union = new ArrayList<>(rest.length + 1);
+      union.add(first);
+      union.addAll(Arrays.asList(rest));
+      return union;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      Intersection intersect = (Intersection) o;
+      return first.equals(intersect.first) && Arrays.equals(rest, intersect.rest);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = Objects.hash(first);
+      result = 31 * result + Arrays.hashCode(rest);
+      return result;
+    }
+
+    @Override
+    public String toString() {
+      StringJoiner joiner = new StringJoiner("&", "(?:", ")");
+      joiner.add(first.toString());
+      for (Coregex coregex : rest) {
+        joiner.add(coregex.toString());
+      }
+      return joiner.toString();
     }
   }
 
@@ -331,18 +571,12 @@ public abstract class Coregex implements Serializable {
             }
           }
         }
-        return new Pair<>(rng, literal.toString());
+        return pair(rng, literal.toString());
       } else {
         rngAndBoolean =
             rng.genBoolean(); // need to burn one random number to make result deterministic
-        return new Pair<>(rngAndBoolean.getFirst(), literal);
+        return pair(rngAndBoolean.getFirst(), literal);
       }
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public int minLength() {
-      return literal.length();
     }
 
     /** {@inheritDoc} */
@@ -353,8 +587,45 @@ public abstract class Coregex implements Serializable {
 
     /** {@inheritDoc} */
     @Override
+    public int minLength() {
+      return literal.length();
+    }
+
+    @Override
+    public Coregex negate() {
+      if (literal.isEmpty()) {
+        return empty();
+      }
+      char[] chars = literal.toCharArray();
+      Coregex negatedFirst =
+          new Set(
+              com.github.simy4.coregex.core.Set.builder(flags).single(chars[0]).negate().build());
+      Coregex[] negatedRest = new Coregex[chars.length - 1];
+      for (int i = 0; i < negatedRest.length; i++) {
+        negatedRest[i] =
+            new Set(
+                com.github.simy4.coregex.core.Set.builder(flags)
+                    .single(chars[i + 1])
+                    .negate()
+                    .build());
+      }
+      return new Concat(negatedFirst, negatedRest);
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public Coregex simplify() {
       return this;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean test(CharSequence input) {
+      if (0 != (flags & Pattern.CASE_INSENSITIVE)) {
+        return literal.equalsIgnoreCase(input.toString());
+      } else {
+        return literal.equals(input.toString());
+      }
     }
 
     /** @return literal */
@@ -445,8 +716,7 @@ public abstract class Coregex implements Serializable {
     /** {@inheritDoc} */
     @Override
     protected Pair<RNG, String> apply(RNG rng, int remainder) {
-      int minLength = minLength();
-      int quantifiedMinLength = quantified.minLength();
+      int minLength = minLength(), quantifiedMinLength = quantified.minLength();
       if (remainder < minLength) {
         throw new IllegalStateException(
             "remainder: " + remainder + " has to be greater than " + minLength);
@@ -474,13 +744,7 @@ public abstract class Coregex implements Serializable {
         sb.append(value);
         remainder -= value.length();
       }
-      return new Pair<>(rng, sb.toString());
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public int minLength() {
-      return quantified.minLength() * min;
+      return pair(rng, sb.toString());
     }
 
     /** {@inheritDoc} */
@@ -492,11 +756,93 @@ public abstract class Coregex implements Serializable {
 
     /** {@inheritDoc} */
     @Override
+    public int minLength() {
+      return quantified.minLength() * min;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Coregex negate() {
+      if (0 == quantified.minLength() && 0 == quantified.maxLength()) {
+        return Coregex.empty();
+      } else if (0 == min && -1 == max) {
+        return quantified.negate();
+      } else if (1 == min && -1 == max) {
+        return new Quantified(quantified, 0, 0, type);
+      } else if (0 == min) {
+        return new Quantified(quantified, max + 1, -1, type);
+      } else if (-1 == max) {
+        return new Quantified(quantified, 0, min - 1, type);
+      } else {
+        return new Coregex.Union(
+            new Quantified(quantified, 0, min - 1, type),
+            new Quantified(quantified, max + 1, -1, type));
+      }
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public Coregex simplify() {
-      Coregex quantified = this.quantified.simplify();
-      return (0 == quantified.minLength() && 0 == quantified.maxLength()) || (1 == min && 1 == max)
-          ? quantified
-          : new Quantified(quantified, min, max, type);
+      Coregex simplified = this.quantified.simplify();
+      if (0 == simplified.minLength() && 0 == simplified.maxLength()) {
+        return Coregex.empty();
+      } else if (1 == min && 1 == max) {
+        return simplified;
+      } else {
+        return new Quantified(simplified, min, max, type);
+      }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean test(CharSequence input) {
+      java.util.Set<Integer> indices = new HashSet<>(Collections.singleton(0));
+      int quantifiedMinLength = quantified.minLength(),
+          quantifiedMaxLength = quantified.maxLength(),
+          quantifier = 0;
+      for (; quantifier < min; quantifier++) {
+        java.util.Set<Integer> newIndices = new HashSet<>();
+        for (int startAt : indices) {
+          int minLength = startAt + quantifiedMinLength;
+          int maxLength = quantifiedMaxLength;
+          maxLength =
+              -1 == maxLength ? input.length() : Math.min(input.length(), startAt + maxLength);
+          for (int i = minLength; i <= maxLength; i++) {
+            if (quantified.test(input.subSequence(startAt, i))) {
+              newIndices.add(i);
+            }
+          }
+        }
+        if (newIndices.isEmpty()) {
+          return false;
+        }
+        indices = newIndices;
+      }
+      if (indices.contains(input.length())) {
+        return true;
+      }
+
+      while (-1 == max || quantifier++ < max) {
+        java.util.Set<Integer> newIndices = new HashSet<>();
+        for (int startAt : indices) {
+          int minLength = startAt + quantifiedMinLength;
+          int maxLength = quantifiedMaxLength;
+          maxLength =
+              -1 == maxLength ? input.length() : Math.min(input.length(), startAt + maxLength);
+          for (int i = minLength; i <= maxLength; i++) {
+            if (quantified.test(input.subSequence(startAt, i))) {
+              if (i + 1 == input.length()) {
+                return true;
+              }
+              newIndices.add(i);
+            }
+          }
+        }
+        if (!indices.addAll(newIndices)) {
+          break;
+        }
+      }
+      return indices.contains(input.length());
     }
 
     /** @return quantified regex */
@@ -515,7 +861,7 @@ public abstract class Coregex implements Serializable {
     }
 
     /**
-     * @return quantifier type. Currently doesn't affect the generation flow - only display.
+     * @return quantifier type. Currently, doesn't affect the generation flow - only display.
      * @see Type
      */
     public Type type() {
@@ -548,9 +894,7 @@ public abstract class Coregex implements Serializable {
       StringBuilder string = new StringBuilder();
       boolean wrapInBraces = quantified instanceof Concat;
       if (wrapInBraces) {
-        string.append('(');
-        string.append(quantified);
-        string.append(')');
+        string.append('(').append(quantified).append(')');
       } else {
         string.append(quantified);
       }
@@ -628,13 +972,7 @@ public abstract class Coregex implements Serializable {
       Pair<RNG, Long> rngAndSeed = rng.genLong();
       rng = rngAndSeed.getFirst();
       String sample = String.valueOf(set.sample(rngAndSeed.getSecond()));
-      return new Pair<>(rng, sample);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public int minLength() {
-      return 1;
+      return pair(rng, sample);
     }
 
     /** {@inheritDoc} */
@@ -645,8 +983,25 @@ public abstract class Coregex implements Serializable {
 
     /** {@inheritDoc} */
     @Override
+    public int minLength() {
+      return 1;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Coregex negate() {
+      return new Set(com.github.simy4.coregex.core.Set.builder().set(set).negate().build());
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public Coregex simplify() {
       return this;
+    }
+
+    @Override
+    public boolean test(CharSequence input) {
+      return 1 == input.length() && set.test(input.charAt(0));
     }
 
     /** @return set of characters */
@@ -710,14 +1065,20 @@ public abstract class Coregex implements Serializable {
 
     /** {@inheritDoc} */
     @Override
+    public int maxLength() {
+      return -1 == sized.maxLength() ? size : Math.min(size, sized.maxLength());
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public int minLength() {
       return Math.min(size, sized.minLength());
     }
 
     /** {@inheritDoc} */
     @Override
-    public int maxLength() {
-      return -1 == sized.maxLength() ? size : Math.min(size, sized.maxLength());
+    public Coregex negate() {
+      return new Sized(sized.negate(), size);
     }
 
     /** {@inheritDoc} */
@@ -730,6 +1091,12 @@ public abstract class Coregex implements Serializable {
       } else {
         return new Sized(simplified, size);
       }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean test(CharSequence input) {
+      return sized.test(input);
     }
 
     /** @return sized regex */
@@ -806,16 +1173,6 @@ public abstract class Coregex implements Serializable {
 
     /** {@inheritDoc} */
     @Override
-    public int minLength() {
-      int min = first.minLength();
-      for (Coregex coregex : rest) {
-        min = Math.min(min, coregex.minLength());
-      }
-      return min;
-    }
-
-    /** {@inheritDoc} */
-    @Override
     public int maxLength() {
       int agg = first.maxLength();
       if (-1 == agg) {
@@ -831,12 +1188,54 @@ public abstract class Coregex implements Serializable {
       return agg;
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public int minLength() {
+      int min = first.minLength();
+      for (Coregex coregex : rest) {
+        min = Math.min(min, coregex.minLength());
+      }
+      return min;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Coregex negate() {
+      if (0 == rest.length) {
+        return first.negate();
+      }
+      Coregex[] negatedRest = new Coregex[rest.length];
+      for (int i = 0; i < rest.length; i++) {
+        negatedRest[i] = rest[i].negate();
+      }
+      return new Intersection(first.negate(), negatedRest);
+    }
+
+    /** {@inheritDoc} */
     @Override
     public Coregex simplify() {
-      return 0 == rest.length
-          ? first.simplify()
-          : new Union(
-              first.simplify(), Arrays.stream(rest).map(Coregex::simplify).toArray(Coregex[]::new));
+      if (0 == rest.length) {
+        return first.simplify();
+      }
+      Coregex[] simplifiedRest = new Coregex[rest.length];
+      for (int i = 0; i < rest.length; i++) {
+        simplifiedRest[i] = rest[i].simplify();
+      }
+      return new Union(first.simplify(), simplifiedRest);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean test(CharSequence input) {
+      if (first.test(input)) {
+        return true;
+      }
+      for (Coregex coregex : rest) {
+        if (coregex.test(input)) {
+          return true;
+        }
+      }
+      return false;
     }
 
     /** @return underlying regexes forming this unification. */
