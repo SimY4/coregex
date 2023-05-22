@@ -174,15 +174,27 @@ public final class CoregexParser {
   }
 
   @SuppressWarnings("fallthrough")
-  private Coregex.Literal literal(Context ctx) {
+  private Coregex literal(Context ctx) {
+    if (!ctx.hasMoreElements()) {
+      return Coregex.empty();
+    }
     StringBuilder literal = new StringBuilder();
+    char ch = ctx.peek();
+    ctx.match(ch);
+    if (!isWhitespace(ch) || 0 == (Pattern.COMMENTS & ctx.flags)) {
+      literal.append(ch);
+    }
     loop:
-    do {
-      char ch = ctx.peek();
+    while (ctx.hasMoreElements()) {
+      ch = ctx.peek();
       switch (ch) {
         case '\\':
         case '|':
+        case '*':
+        case '+':
+        case '?':
         case '.':
+        case '{':
         case '[':
         case '^':
         case '$':
@@ -202,10 +214,6 @@ public final class CoregexParser {
             case '+':
             case '?':
             case '{':
-              if (literal.length() == 0) {
-                ctx.match(ch);
-                literal.append(ch);
-              }
               break loop;
             default:
               ctx.match(ch);
@@ -214,7 +222,7 @@ public final class CoregexParser {
               }
           }
       }
-    } while (ctx.hasMoreElements());
+    }
     return new Coregex.Literal(literal.toString(), ctx.flags);
   }
 
