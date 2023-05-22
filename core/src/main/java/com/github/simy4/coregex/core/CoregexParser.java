@@ -139,7 +139,6 @@ public final class CoregexParser {
     return basicRE.quantify(quantifierMin, quantifierMax, type);
   }
 
-  @SuppressWarnings("fallthrough")
   private Coregex elementaryRE(Context ctx) {
     Coregex elementaryRE;
     char ch = ctx.peek();
@@ -162,25 +161,11 @@ public final class CoregexParser {
         ctx.match('$');
         elementaryRE = Coregex.empty();
         break;
-      case '#':
-        if (0 != (Pattern.COMMENTS & ctx.flags)) {
-          ctx.takeWhile(c -> '\n' != c && '\r' != c);
-          elementaryRE = Coregex.empty();
-        } else {
-          elementaryRE = literal(ctx);
-        }
-        break;
       case '\\':
         ctx.match('\\');
         ch = ctx.peek();
-        if ('Q' == ch) {
-          elementaryRE = quoted(ctx);
-          break;
-        } else if (!isREMetachar(ch)) {
-          elementaryRE = new Coregex.Set(metachar(ctx));
-          break;
-        }
-        // fall through
+        elementaryRE = 'Q' == ch ? quoted(ctx) : new Coregex.Set(metachar(ctx));
+        break;
       default:
         elementaryRE = literal(ctx);
         break;
@@ -189,29 +174,21 @@ public final class CoregexParser {
   }
 
   @SuppressWarnings("fallthrough")
-  private Coregex literal(Context ctx) {
+  private Coregex.Literal literal(Context ctx) {
     StringBuilder literal = new StringBuilder();
-    char ch = ctx.peek();
-    ctx.match(ch);
-    if (!isWhitespace(ch) || 0 == (Pattern.COMMENTS & ctx.flags)) {
-      literal.append(ch);
-    }
-    if (!ctx.hasMoreElements()) {
-      return new Coregex.Literal(literal.toString(), ctx.flags);
-    }
     loop:
     do {
-      ch = ctx.peek();
-      char next = ctx.peek(1);
+      char ch = ctx.peek();
       switch (ch) {
         case '\\':
-          if ('Q' == next || !isREMetachar(next)) {
-            break loop;
-          } else {
-            ctx.match(ch);
-            ch = next;
-          }
-          break;
+        case '|':
+        case '.':
+        case '[':
+        case '^':
+        case '$':
+        case '(':
+        case ')':
+          break loop;
         case '#':
           if (0 != (Pattern.COMMENTS & ctx.flags)) {
             ctx.takeWhile(c -> '\n' != c && '\r' != c);
@@ -219,27 +196,29 @@ public final class CoregexParser {
           }
           // fall through
         default:
+          char next = ctx.peek(1);
           switch (next) {
             case '*':
             case '+':
             case '?':
             case '{':
+              if (literal.length() == 0) {
+                ctx.match(ch);
+                literal.append(ch);
+              }
               break loop;
             default:
-              if (isREMetachar(ch)) {
-                break loop;
+              ctx.match(ch);
+              if (!isWhitespace(ch) || 0 == (Pattern.COMMENTS & ctx.flags)) {
+                literal.append(ch);
               }
           }
-      }
-      ctx.match(ch);
-      if (!isWhitespace(ch) || 0 == (Pattern.COMMENTS & ctx.flags)) {
-        literal.append(ch);
       }
     } while (ctx.hasMoreElements());
     return new Coregex.Literal(literal.toString(), ctx.flags);
   }
 
-  private Coregex quoted(Context ctx) {
+  private Coregex.Literal quoted(Context ctx) {
     ctx.match('Q');
     StringBuilder literal = new StringBuilder();
     do {
@@ -281,12 +260,8 @@ public final class CoregexParser {
         break;
       case '\\':
         ctx.match('\\');
-        ch = ctx.peek();
-        if (!isSetMetachar(ch)) {
-          set.set(metachar(ctx));
-          break;
-        }
-        // fall through
+        set.set(metachar(ctx));
+        break;
       default:
         ctx.match(ch);
         if ('-' == ctx.peek()) {
@@ -492,6 +467,11 @@ public final class CoregexParser {
         }
         ctx.match('}');
         break;
+      case 'Q':
+        for (char quoted : quoted(ctx).literal().toCharArray()) {
+          metachar.single(quoted);
+        }
+        break;
       case 'S':
       case 'b':
       case 'B':
@@ -506,44 +486,13 @@ public final class CoregexParser {
         if (isDigit(ch)) {
           ctx.unsupported("metacharacter \\" + ch + " is not supported");
         } else {
-          // potentially unnecessarily escaped character
+          // escaped metacharacter
           ctx.match(ch);
           metachar.single(ch);
         }
         break;
     }
     return metachar.build();
-  }
-
-  private boolean isREMetachar(int ch) {
-    switch (ch) {
-      case '\\':
-      case '|':
-      case '*':
-      case '+':
-      case '?':
-      case '.':
-      case '{':
-      case '[':
-      case '^':
-      case '$':
-      case '(':
-      case ')':
-        return true;
-      default:
-        return false;
-    }
-  }
-
-  private boolean isSetMetachar(int ch) {
-    switch (ch) {
-      case '\\':
-      case ']':
-      case '-':
-        return true;
-      default:
-        return false;
-    }
   }
 
   private boolean isDigit(int ch) {
