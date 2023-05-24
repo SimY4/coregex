@@ -395,7 +395,7 @@ public abstract class Coregex implements Serializable {
      *
      * @param quantified quantified regex
      * @param min min number of times this regex should be repeated
-     * @throws IllegalArgumentException if min is greater than max or if min is negative
+     * @throws IllegalArgumentException if min is negative
      * @see Quantified(Coregex, int, int)
      * @see Quantified(Coregex, int, int, Type)
      */
