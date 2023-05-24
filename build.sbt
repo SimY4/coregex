@@ -51,7 +51,10 @@ lazy val core = (project in file("core"))
     crossPaths       := false,
     autoScalaLibrary := false,
     headerEndYear    := Some(2023),
-    libraryDependencies ++= Seq("org.scalacheck" %% "scalacheck" % "1.17.0" % Test),
+    libraryDependencies ++= Seq(
+      "org.scalameta" %% "munit"            % "0.7.29" % Test,
+      "org.scalameta" %% "munit-scalacheck" % "0.7.29" % Test
+    ),
     Compile / compile / javacOptions ++= Seq("-Xlint:all", "-Werror") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8")
        else Seq("-source", "1.8", "-target", "1.8")),

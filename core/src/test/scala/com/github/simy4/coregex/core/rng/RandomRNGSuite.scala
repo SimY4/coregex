@@ -17,8 +17,8 @@
 package com.github.simy4.coregex.core
 package rng
 
-import org.scalacheck.Properties
+import munit.ScalaCheckSuite
 
-object RandomRNGSpecification extends Properties("RandomRNG") with RNGContract {
+class RandomRNGSuite extends ScalaCheckSuite with RNGContract {
   def rng(seed: Long): RNG = new RandomRNG(seed)
 }
