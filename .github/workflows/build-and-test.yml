@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        scala: [2.13.x, 3.2.x]
+        scala: [2.13.x, 3.3.x]
         java: [8, 11, 17]
 
     steps:

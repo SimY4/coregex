@@ -23,7 +23,7 @@ projectID ~= { id =>
 }
 
 lazy val scala213               = "2.13.10"
-lazy val scala3                 = "3.2.2"
+lazy val scala3                 = "3.3.0"
 lazy val supportedScalaVersions = List(scala213, scala3)
 
 ThisBuild / scalaVersion := scala213
