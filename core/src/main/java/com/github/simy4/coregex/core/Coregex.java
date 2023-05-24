@@ -391,12 +391,26 @@ public abstract class Coregex implements Serializable {
     private final Type type;
 
     /**
+     * Greedily quantified regex with no upper limit.
+     *
+     * @param quantified quantified regex
+     * @param min min number of times this regex should be repeated
+     * @throws IllegalArgumentException if min is greater than max or if min is negative
+     * @see Quantified(Coregex, int, int)
+     * @see Quantified(Coregex, int, int, Type)
+     */
+    public Quantified(Coregex quantified, int min) {
+      this(quantified, min, -1, Type.GREEDY);
+    }
+
+    /**
      * Greedily quantified regex.
      *
      * @param quantified quantified regex
      * @param min min number of times this regex should be repeated
      * @param max max number of times this regex should be repeated. {@code -1} means no limit.
      * @throws IllegalArgumentException if min is greater than max or if min is negative
+     * @see Quantified(Coregex, int)
      * @see Quantified(Coregex, int, int, Type)
      */
     public Quantified(Coregex quantified, int min, int max) {
@@ -409,6 +423,7 @@ public abstract class Coregex implements Serializable {
      * @param max max number of times this regex should be repeated. {@code -1} means no limit.
      * @param type quantifier type.
      * @throws IllegalArgumentException if min is greater than max or if min is negative
+     * @see Quantified(Coregex, int)
      * @see Quantified(Coregex, int, int)
      * @see Type
      */
@@ -527,7 +542,15 @@ public abstract class Coregex implements Serializable {
     @Override
     @SuppressWarnings("fallthrough")
     public String toString() {
-      StringBuilder string = new StringBuilder(quantified.toString());
+      StringBuilder string = new StringBuilder();
+      boolean wrapInBraces = quantified instanceof Concat;
+      if (wrapInBraces) {
+        string.append('(');
+        string.append(quantified);
+        string.append(')');
+      } else {
+        string.append(quantified);
+      }
       switch (max) {
         case -1:
           switch (min) {

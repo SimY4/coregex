@@ -55,8 +55,7 @@ object CoregexParserSpecification extends Properties("CoregexParser") with Coreg
             .set('+', '&', '@', '#', '/', '%', '?', '=', '~', '_', '|', '!', ':', ',', '.', ';')
             .build()
         ),
-        0,
-        -1
+        0
       ),
       new Coregex.Set(
         Set
@@ -379,8 +378,7 @@ object CoregexParserSpecification extends Properties("CoregexParser") with Coreg
         new Coregex.Literal("%"),
         new Coregex.Quantified(
           new Coregex.Set(Set.builder().range('0', '9').range('a', 'z').range('A', 'Z').build()),
-          1,
-          -1
+          1
         )
       ),
       new Coregex.Concat(
@@ -564,12 +562,70 @@ object CoregexParserSpecification extends Properties("CoregexParser") with Coreg
         ")",
       Pattern.COMMENTS
     ),
+    new Coregex.Concat(
+      new Coregex.Literal("arn:"),
+      new Coregex.Quantified(
+        new Coregex.Set(Set.builder().range('0', '9').range('a', 'z').range('A', 'Z').single('_').build()),
+        1
+      ),
+      new Coregex.Literal(":"),
+      new Coregex.Quantified(
+        new Coregex.Set(Set.builder().range('0', '9').range('a', 'z').range('A', 'Z').single('_').build()),
+        1
+      ),
+      new Coregex.Literal(":"),
+      new Coregex.Quantified(
+        new Coregex.Set(
+          Set
+            .builder()
+            .set(Set.builder().range('0', '9').range('a', 'z').range('A', 'Z').single('_').build())
+            .single('-')
+            .build()
+        ),
+        1
+      ),
+      new Coregex.Literal(":"),
+      new Coregex.Quantified(
+        new Coregex.Set(Set.builder().range('0', '9').build()),
+        12,
+        12
+      ),
+      new Coregex.Literal(":"),
+      new Coregex.Quantified(
+        new Coregex.Concat(
+          new Coregex.Quantified(
+            new Coregex.Set(
+              Set
+                .builder()
+                .set(Set.builder().range('0', '9').range('a', 'z').range('A', 'Z').single('_').build())
+                .single('-')
+                .build()
+            ),
+            1
+          ),
+          new Coregex.Set(Set.builder().single(':').set(Set.builder().single('/').build()).build())
+        ),
+        0,
+        1
+      ),
+      new Coregex.Quantified(
+        new Coregex.Set(
+          Set
+            .builder()
+            .set(Set.builder().range('0', '9').range('a', 'z').range('A', 'Z').single('_').build())
+            .set('.', '-')
+            .build()
+        ),
+        1
+      )
+    ) -> Pattern.compile(
+      "^arn:(?<partition>\\w+):(?<service>\\w+):(?<region>[\\w-]+):(?<accountID>\\d{12}):(?<ignore>(?<resourceType>[\\w-]+)[:\\/])?(?<resource>[\\w.-]+)$"
+    ),
     new Coregex.Quantified(
       new Coregex.Concat(
         new Coregex.Quantified(
           new Coregex.Set(Set.builder(Pattern.CASE_INSENSITIVE).range('a', 'z').build()),
-          1,
-          -1
+          1
         ),
         new Coregex.Literal("-"),
         new Coregex.Set(Set.builder().range('A', 'Z').build())
@@ -582,7 +638,7 @@ object CoregexParserSpecification extends Properties("CoregexParser") with Coreg
   property("should parse example regex") = forAll(coregexWithPatterns, genRNG) { case ((expected, regex), rng) =>
     val actual    = Coregex.from(regex)
     val generated = actual.generate(rng)
-    (expected ?= actual) && regex
+    (expected =? actual) && regex
       .matcher(generated)
       .matches() :| s"${regex.pattern()} should match generated: $generated"
   }
@@ -600,4 +656,7 @@ object CoregexParserSpecification extends Properties("CoregexParser") with Coreg
     val generated = actual.generate(rng)
     expected.matcher(generated).matches() :| s"${expected.pattern()} should match generated: $generated"
   }
+
+  // arn:[0-9a-zA-Z_]+:[0-9a-zA-Z_]+:[[0-9a-zA-Z_]-]+:[0-9]{12}:([[0-9a-zA-Z_]-]+[:/])?[[0-9a-zA-Z_].-]+
+  // arn:[0-9a-zA-Z_]+:[0-9a-zA-Z_]+:[[0-9a-zA-Z_]-]+:[0-9]{12}:([[0-9a-zA-Z_]-]+[:[/]])?[[0-9a-zA-Z_].-]+
 }
