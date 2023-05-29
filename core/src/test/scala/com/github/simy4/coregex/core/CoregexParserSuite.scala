@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Alex Simkin
+ * Copyright 2021-2023 Alex Simkin
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -659,7 +659,8 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
           ),
           3,
           6
-        ) -> Pattern.compile("((?i)[a-z]+(?-i)-[A-Z]){3,6}")
+        )               -> Pattern.compile("((?i)[a-z]+(?-i)-[A-Z]){3,6}"),
+        Coregex.empty() -> Pattern.compile("^(?:||)$")
       )
     rng <- List(new RandomRNG())
   } {

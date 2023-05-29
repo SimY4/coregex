@@ -173,57 +173,40 @@ public final class CoregexParser {
     return elementaryRE;
   }
 
-  @SuppressWarnings("fallthrough")
   private Coregex literal(Context ctx) {
-    if (!ctx.hasMoreElements()) {
+    char ch;
+    if (ctx.hasMoreElements() && !isREMetachar(ch = ctx.peek())) {
+      StringBuilder literal = new StringBuilder();
+      ctx.match(ch);
+      if ('#' == ch && 0 != (Pattern.COMMENTS & ctx.flags)) {
+        ctx.takeWhile(c -> '\n' != c && '\r' != c);
+      } else if (!isWhitespace(ch) || 0 == (Pattern.COMMENTS & ctx.flags)) {
+        literal.append(ch);
+      }
+      loop:
+      while (ctx.hasMoreElements() && !isREMetachar(ch = ctx.peek())) {
+        if ('#' == ch && 0 != (Pattern.COMMENTS & ctx.flags)) {
+          ctx.takeWhile(c -> '\n' != c && '\r' != c);
+          continue;
+        }
+        char next = ctx.peek(1);
+        switch (next) {
+          case '*':
+          case '+':
+          case '?':
+          case '{':
+            break loop;
+          default:
+            ctx.match(ch);
+            if (!isWhitespace(ch) || 0 == (Pattern.COMMENTS & ctx.flags)) {
+              literal.append(ch);
+            }
+        }
+      }
+      return new Coregex.Literal(literal.toString(), ctx.flags);
+    } else {
       return Coregex.empty();
     }
-    StringBuilder literal = new StringBuilder();
-    char ch = ctx.peek();
-    ctx.match(ch);
-    if (!isWhitespace(ch) || 0 == (Pattern.COMMENTS & ctx.flags)) {
-      literal.append(ch);
-    }
-    loop:
-    while (ctx.hasMoreElements()) {
-      ch = ctx.peek();
-      switch (ch) {
-        case '\\':
-        case '|':
-        case '*':
-        case '+':
-        case '?':
-        case '.':
-        case '{':
-        case '[':
-        case '^':
-        case '$':
-        case '(':
-        case ')':
-          break loop;
-        case '#':
-          if (0 != (Pattern.COMMENTS & ctx.flags)) {
-            ctx.takeWhile(c -> '\n' != c && '\r' != c);
-            continue;
-          }
-          // fall through
-        default:
-          char next = ctx.peek(1);
-          switch (next) {
-            case '*':
-            case '+':
-            case '?':
-            case '{':
-              break loop;
-            default:
-              ctx.match(ch);
-              if (!isWhitespace(ch) || 0 == (Pattern.COMMENTS & ctx.flags)) {
-                literal.append(ch);
-              }
-          }
-      }
-    }
-    return new Coregex.Literal(literal.toString(), ctx.flags);
   }
 
   private Coregex.Literal quoted(Context ctx) {
@@ -501,6 +484,26 @@ public final class CoregexParser {
         break;
     }
     return metachar.build();
+  }
+
+  private boolean isREMetachar(int ch) {
+    switch (ch) {
+      case '\\':
+      case '|':
+      case '*':
+      case '+':
+      case '?':
+      case '.':
+      case '{':
+      case '[':
+      case '^':
+      case '$':
+      case '(':
+      case ')':
+        return true;
+      default:
+        return false;
+    }
   }
 
   private boolean isDigit(int ch) {
