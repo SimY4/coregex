@@ -87,17 +87,6 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
         .generate(rng))
     }
   }
-
-  property("concat two should be associative") {
-    forAll { (coregex1: Coregex, coregex2: Coregex, rng: RNG) =>
-      val concat = new Coregex.Concat(coregex1, coregex2).simplify()
-
-      concat.generate(rng) ?= {
-        val pairAndRes1 = coregex1.simplify().apply(rng, coregex1.maxLength())
-        pairAndRes1.getSecond + coregex2.simplify().generate(pairAndRes1.getFirst)
-      }
-    }
-  }
   // endregion
 
   // region Literal

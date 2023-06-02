@@ -17,6 +17,7 @@
 package com.github.simy4.coregex.core
 
 import org.scalacheck.{ Arbitrary, Gen, Shrink }
+import org.scalacheck.Arbitrary.arbitrary
 import rng.RandomRNG
 
 import java.util.regex.Pattern
@@ -46,24 +47,31 @@ trait CoregexArbitraries {
     } yield flags.foldLeft(0)(_ | _).asInstanceOf[Flags]
 
   implicit val arbitraryCoregex: Arbitrary[Coregex] = Arbitrary(genCoregex())
-  def genCoregex(charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex] = Gen.sized { height =>
-    if (height > 0)
-      Gen.oneOf(
-        genCoregexConcat(charGen),
-        genCoregexLiteral(charGen),
-        genCoregexSet(charGen),
-        genCoregexUnion(charGen)
+  def genCoregex(charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex] =
+    for {
+      single <- Gen.sized { height =>
+        if (height > 0)
+          Gen.oneOf(
+            genCoregexConcat(charGen),
+            genCoregexLiteral(charGen),
+            genCoregexSet(charGen),
+            genCoregexUnion(charGen)
+          )
+        else
+          Gen.oneOf(genCoregexLiteral(charGen), genCoregexSet(charGen))
+      }
+      coregex <- Gen.frequency(
+        9 -> Gen.const(single),
+        1 -> arbitrary[QuantifyRange].map(r => single.quantify(r.min, r.max, r.`type`))
       )
-    else
-      Gen.oneOf(genCoregexLiteral(charGen), genCoregexSet(charGen))
-  }
+    } yield coregex
 
   implicit val arbitraryCoregexConcat: Arbitrary[Coregex.Concat] = Arbitrary(genCoregexConcat())
   def genCoregexConcat(charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex.Concat] =
     for {
       first <- Gen.sized(h => Gen.resize(h / 4, genCoregex(charGen)))
       size  <- Gen.size
-      rest  <- Gen.listOfN(size min 10, Gen.resize(size / 4, genCoregex(charGen)))
+      rest  <- Gen.listOfN(size % 10, Gen.resize(size / 4, genCoregex(charGen)))
     } yield new Coregex.Concat(first, rest: _*)
 
   implicit val arbitraryCoregexLiteral: Arbitrary[Coregex.Literal] = Arbitrary(genCoregexLiteral())
@@ -82,7 +90,7 @@ trait CoregexArbitraries {
     for {
       first <- Gen.sized(h => Gen.resize(h / 4, genCoregex(charGen)))
       size  <- Gen.size
-      rest  <- Gen.listOfN(size min 10, Gen.resize(size / 4, genCoregex(charGen)))
+      rest  <- Gen.listOfN(size % 10, Gen.resize(size / 4, genCoregex(charGen)))
     } yield new Coregex.Union(first, rest: _*)
 
   implicit val arbitraryRNG: Arbitrary[RNG] = Arbitrary(genRNG)

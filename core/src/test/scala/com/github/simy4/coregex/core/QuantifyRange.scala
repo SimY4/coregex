@@ -20,22 +20,25 @@ import org.scalacheck.{ Arbitrary, Gen, Shrink }
 
 import scala.annotation.nowarn
 
-final case class QuantifyRange(min: Int, max: Int)
+final case class QuantifyRange(min: Int, max: Int, `type`: Coregex.Quantified.Type)
 
-@nowarn("cat=deprecation")
 object QuantifyRange {
   implicit val arbitraryQuantifyRange: Arbitrary[QuantifyRange] = Arbitrary {
     for {
       min <- Gen.choose(0, 20)
+      add <- Gen.choose(0, 20)
       max <- Gen.oneOf(
         Gen.const(-1),
-        Gen.choose(min, min + 20)
+        Gen.choose(min, min + add)
       )
-    } yield QuantifyRange(min, max)
+      tpe <- Gen.oneOf(Coregex.Quantified.Type.values.toIndexedSeq)
+    } yield QuantifyRange(min, max, tpe)
   }
+
+  @nowarn("cat=deprecation")
   implicit def shrinkQuantifyRange(implicit shrinkInt: Shrink[Int]): Shrink[QuantifyRange] =
-    Shrink { case QuantifyRange(min, max) =>
-      shrinkInt.shrink(min).map(QuantifyRange(_, max)) #:::
-        shrinkInt.shrink(max).map(QuantifyRange(min, _))
+    Shrink { case QuantifyRange(min, max, tpe) =>
+      shrinkInt.shrink(min).map(QuantifyRange(_, max, tpe)) #:::
+        shrinkInt.shrink(max).map(QuantifyRange(min, _, tpe))
     }
 }
