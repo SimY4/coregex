@@ -59,6 +59,11 @@ public final class CoregexParser {
     return coregex.simplify();
   }
 
+  /**
+   * <pre>{@code
+   * re ::= simpleRE, {'|', simpleRE}
+   * }</pre>
+   */
   private Coregex RE(Context ctx) {
     Coregex re = simpleRE(ctx);
     if ('|' == ctx.peek()) {
@@ -72,6 +77,11 @@ public final class CoregexParser {
     return re;
   }
 
+  /**
+   * <pre>{@code
+   * simpleRE ::= basicRE, {basicRE}
+   * }</pre>
+   */
   private Coregex simpleRE(Context ctx) {
     Coregex simpleRE = basicRE(ctx);
     if (ctx.hasMoreElements() && '|' != ctx.peek() && ')' != ctx.peek()) {
@@ -84,6 +94,12 @@ public final class CoregexParser {
     return simpleRE;
   }
 
+  /**
+   * <pre>{@code
+   * basicRE ::= elementaryRE, ['+' | '*' | '?' | '+', '+' | '?', '?' | '{', times, '}' | '{', times, ',', '}' | '{', times, ',', times, '}']
+   * times ::= digit {digit}
+   * }</pre>
+   */
   private Coregex basicRE(Context ctx) {
     Coregex basicRE = elementaryRE(ctx);
     int quantifierMin;
@@ -139,6 +155,11 @@ public final class CoregexParser {
     return basicRE.quantify(quantifierMin, quantifierMax, type);
   }
 
+  /**
+   * <pre>{@code
+   * elementaryRE ::= '.' | set | group | '^' | '$' | quoted | '\', metachar | literal
+   * }</pre>
+   */
   private Coregex elementaryRE(Context ctx) {
     Coregex elementaryRE;
     char ch = ctx.peek();
@@ -173,6 +194,27 @@ public final class CoregexParser {
     return elementaryRE;
   }
 
+  /**
+   * <pre>{@code
+   * quoted ::= '\', 'Q', ? quoted ?, '\', 'E'
+   * }</pre>
+   */
+  private Coregex.Literal quoted(Context ctx) {
+    ctx.match('Q');
+    StringBuilder literal = new StringBuilder();
+    do {
+      literal.append(ctx.takeWhile(ch -> '\\' != ch));
+      ctx.match('\\');
+    } while ('E' != ctx.peek() && (literal.append('\\') != null));
+    ctx.match('E');
+    return new Coregex.Literal(literal.toString());
+  }
+
+  /**
+   * <pre>{@code
+   * literal ::= {? not metachar not followed by quantifier ?}
+   * }</pre>
+   */
   private Coregex literal(Context ctx) {
     char ch;
     if (ctx.hasMoreElements() && !isREMetachar(ch = ctx.peek())) {
@@ -209,17 +251,11 @@ public final class CoregexParser {
     }
   }
 
-  private Coregex.Literal quoted(Context ctx) {
-    ctx.match('Q');
-    StringBuilder literal = new StringBuilder();
-    do {
-      literal.append(ctx.takeWhile(ch -> '\\' != ch));
-      ctx.match('\\');
-    } while ('E' != ctx.peek() && (literal.append('\\') != null));
-    ctx.match('E');
-    return new Coregex.Literal(literal.toString());
-  }
-
+  /**
+   * <pre>{@code
+   * set ::= '[', [ '^' ], { set-item }, ']'
+   * }</pre>
+   */
   private Set set(Context ctx) {
     ctx.match('[');
     boolean negated = false;
@@ -238,6 +274,13 @@ public final class CoregexParser {
     return (negated ? set.negate() : set).build();
   }
 
+  /**
+   * <pre>{@code
+   * set-item ::= set | range | '\', metachar | single
+   * range    ::= single, '-', single
+   * single   ::= ? a character ?
+   * }</pre>
+   */
   @SuppressWarnings("fallthrough")
   private void setItem(Set.Builder set, Context ctx) {
     char ch = ctx.peek();
@@ -277,6 +320,11 @@ public final class CoregexParser {
     }
   }
 
+  /**
+   * <pre>{@code
+   * group ::= '(', [ '?', ( ':' | '>' | '=' | '!' | '<', [ '=' | '!' | literal, '>' ] | flags ) ], re, ')'
+   * }</pre>
+   */
   private Coregex group(Context ctx) {
     ctx.match('(');
     Coregex group;
@@ -327,6 +375,11 @@ public final class CoregexParser {
     return group;
   }
 
+  /**
+   * <pre>{@code
+   * falgs ::= 'd' | 'i' | 'm' | 's' | 'u' | 'U' | 'x'
+   * }</pre>
+   */
   private int flags(Context ctx) {
     int flags = 0;
     char ch = ctx.peek();
@@ -367,6 +420,11 @@ public final class CoregexParser {
     return flags;
   }
 
+  /**
+   * <pre>{@code
+   * metachar ::= 't' | 'r' | 'n' | 'd' | 'D' | 'w' | 'W' | 's' | 'p', '{', ? posix ?, '}' | 'S' | 'b' | 'B' | 'A' | 'G' | 'z' | 'k' | digit | single
+   * }</pre>
+   */
   private Set metachar(Context ctx) {
     char ch = ctx.peek();
     Set.Builder metachar = Set.builder();
@@ -506,6 +564,11 @@ public final class CoregexParser {
     }
   }
 
+  /**
+   * <pre>{@code
+   * digit ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+   * }</pre>
+   */
   private boolean isDigit(int ch) {
     switch (ch) {
       case '0':
