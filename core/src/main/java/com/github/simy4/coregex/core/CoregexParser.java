@@ -59,7 +59,7 @@ public final class CoregexParser {
     return coregex.simplify();
   }
 
-  /**
+  /*
    * <pre>{@code
    * re ::= simpleRE, {'|', simpleRE}
    * }</pre>
@@ -77,7 +77,7 @@ public final class CoregexParser {
     return re;
   }
 
-  /**
+  /*
    * <pre>{@code
    * simpleRE ::= basicRE, {basicRE}
    * }</pre>
@@ -94,10 +94,10 @@ public final class CoregexParser {
     return simpleRE;
   }
 
-  /**
+  /*
    * <pre>{@code
    * basicRE ::= elementaryRE, ['+' | '*' | '?' | '+', '+' | '?', '?' | '{', times, '}' | '{', times, ',', '}' | '{', times, ',', times, '}']
-   * times ::= digit {digit}
+   * times ::= digit, {digit}
    * }</pre>
    */
   private Coregex basicRE(Context ctx) {
@@ -155,7 +155,7 @@ public final class CoregexParser {
     return basicRE.quantify(quantifierMin, quantifierMax, type);
   }
 
-  /**
+  /*
    * <pre>{@code
    * elementaryRE ::= '.' | set | group | '^' | '$' | quoted | '\', metachar | literal
    * }</pre>
@@ -194,7 +194,7 @@ public final class CoregexParser {
     return elementaryRE;
   }
 
-  /**
+  /*
    * <pre>{@code
    * quoted ::= '\', 'Q', ? quoted ?, '\', 'E'
    * }</pre>
@@ -210,7 +210,7 @@ public final class CoregexParser {
     return new Coregex.Literal(literal.toString());
   }
 
-  /**
+  /*
    * <pre>{@code
    * literal ::= {? not metachar not followed by quantifier ?}
    * }</pre>
@@ -251,7 +251,7 @@ public final class CoregexParser {
     }
   }
 
-  /**
+  /*
    * <pre>{@code
    * set ::= '[', [ '^' ], { set-item }, ']'
    * }</pre>
@@ -274,7 +274,7 @@ public final class CoregexParser {
     return (negated ? set.negate() : set).build();
   }
 
-  /**
+  /*
    * <pre>{@code
    * set-item ::= set | range | '\', metachar | single
    * range    ::= single, '-', single
@@ -320,7 +320,7 @@ public final class CoregexParser {
     }
   }
 
-  /**
+  /*
    * <pre>{@code
    * group ::= '(', [ '?', ( ':' | '>' | '=' | '!' | '<', [ '=' | '!' | literal, '>' ] | flags ) ], re, ')'
    * }</pre>
@@ -375,7 +375,7 @@ public final class CoregexParser {
     return group;
   }
 
-  /**
+  /*
    * <pre>{@code
    * falgs ::= 'd' | 'i' | 'm' | 's' | 'u' | 'U' | 'x'
    * }</pre>
@@ -420,7 +420,7 @@ public final class CoregexParser {
     return flags;
   }
 
-  /**
+  /*
    * <pre>{@code
    * metachar ::= 't' | 'r' | 'n' | 'd' | 'D' | 'w' | 'W' | 's' | 'p', '{', ? posix ?, '}' | 'S' | 'b' | 'B' | 'A' | 'G' | 'z' | 'k' | digit | single
    * }</pre>
@@ -565,6 +565,8 @@ public final class CoregexParser {
   }
 
   /**
+   *
+   *
    * <pre>{@code
    * digit ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
    * }</pre>
