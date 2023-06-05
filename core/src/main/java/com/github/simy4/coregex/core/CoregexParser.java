@@ -79,17 +79,20 @@ public final class CoregexParser {
 
   /*
    * <pre>{@code
-   * simpleRE ::= basicRE, {basicRE}
+   * simpleRE ::= {basicRE}
    * }</pre>
    */
   private Coregex simpleRE(Context ctx) {
-    Coregex simpleRE = basicRE(ctx);
+    Coregex simpleRE = Coregex.empty();
     if (ctx.hasMoreElements() && '|' != ctx.peek() && ')' != ctx.peek()) {
-      List<Coregex> concatenation = new ArrayList<>();
-      while (ctx.hasMoreElements() && '|' != ctx.peek() && ')' != ctx.peek()) {
-        concatenation.add(basicRE(ctx));
+      simpleRE = basicRE(ctx);
+      if (ctx.hasMoreElements() && '|' != ctx.peek() && ')' != ctx.peek()) {
+        List<Coregex> concatenation = new ArrayList<>();
+        while (ctx.hasMoreElements() && '|' != ctx.peek() && ')' != ctx.peek()) {
+          concatenation.add(basicRE(ctx));
+        }
+        simpleRE = new Coregex.Concat(simpleRE, concatenation.toArray(new Coregex[0]));
       }
-      simpleRE = new Coregex.Concat(simpleRE, concatenation.toArray(new Coregex[0]));
     }
     return simpleRE;
   }
@@ -212,43 +215,40 @@ public final class CoregexParser {
 
   /*
    * <pre>{@code
-   * literal ::= {? not metachar not followed by quantifier ?}
+   * literal ::= literal-char, {literal-char}
+   * literal-char ::= ? not metachar not followed by quantifier ?
    * }</pre>
    */
   private Coregex literal(Context ctx) {
-    char ch;
-    if (ctx.hasMoreElements() && !isREMetachar(ch = ctx.peek())) {
-      StringBuilder literal = new StringBuilder();
-      ctx.match(ch);
+    StringBuilder literal = new StringBuilder();
+    char ch = ctx.peek();
+    ctx.match(ch);
+    if ('#' == ch && 0 != (Pattern.COMMENTS & ctx.flags)) {
+      ctx.takeWhile(c -> '\n' != c && '\r' != c);
+    } else if (!isWhitespace(ch) || 0 == (Pattern.COMMENTS & ctx.flags)) {
+      literal.append(ch);
+    }
+    loop:
+    while (ctx.hasMoreElements() && !isREMetachar(ch = ctx.peek())) {
       if ('#' == ch && 0 != (Pattern.COMMENTS & ctx.flags)) {
         ctx.takeWhile(c -> '\n' != c && '\r' != c);
-      } else if (!isWhitespace(ch) || 0 == (Pattern.COMMENTS & ctx.flags)) {
-        literal.append(ch);
+        continue;
       }
-      loop:
-      while (ctx.hasMoreElements() && !isREMetachar(ch = ctx.peek())) {
-        if ('#' == ch && 0 != (Pattern.COMMENTS & ctx.flags)) {
-          ctx.takeWhile(c -> '\n' != c && '\r' != c);
-          continue;
-        }
-        char next = ctx.peek(1);
-        switch (next) {
-          case '*':
-          case '+':
-          case '?':
-          case '{':
-            break loop;
-          default:
-            ctx.match(ch);
-            if (!isWhitespace(ch) || 0 == (Pattern.COMMENTS & ctx.flags)) {
-              literal.append(ch);
-            }
-        }
+      char next = ctx.peek(1);
+      switch (next) {
+        case '*':
+        case '+':
+        case '?':
+        case '{':
+          break loop;
+        default:
+          ctx.match(ch);
+          if (!isWhitespace(ch) || 0 == (Pattern.COMMENTS & ctx.flags)) {
+            literal.append(ch);
+          }
       }
-      return new Coregex.Literal(literal.toString(), ctx.flags);
-    } else {
-      return Coregex.empty();
     }
+    return new Coregex.Literal(literal.toString(), ctx.flags);
   }
 
   /*
