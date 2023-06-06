@@ -332,7 +332,8 @@ public abstract class Coregex implements Serializable {
         }
         return new Pair<>(rng, literal.toString());
       } else {
-        rngAndBoolean = rng.genBoolean(); // need to burn one random number to make result deterministic
+        rngAndBoolean =
+            rng.genBoolean(); // need to burn one random number to make result deterministic
         return new Pair<>(rngAndBoolean.getFirst(), literal);
       }
     }
