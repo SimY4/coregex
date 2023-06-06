@@ -146,7 +146,7 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
   // endregion
 
   // region Union
-  property("generated should be in set") {
+  property("generated should be in union") {
     forAll { (union: Coregex.Union, rng: RNG) =>
       val generated = union.generate(rng)
 
@@ -154,8 +154,8 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
       val inSetCheck = union
         .union()
         .stream()
-        .map(_.generate(nextRng))
-        .anyMatch(_ == generated) :| s"$generated in $union"
+        .map(_.generate(nextRng) =? generated)
+        .reduce(falsified, _ || _)
       val lengthCheck = (union.minLength() <= generated
         .length()) :| s"union.minLength(${union.minLength()}) <= $generated.length(${generated.length})"
 

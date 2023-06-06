@@ -310,19 +310,20 @@ public abstract class Coregex implements Serializable {
         throw new IllegalStateException(
             "remainder: " + remainder + " has to be greater than " + minLength());
       }
+      Pair<RNG, Boolean> rngAndBoolean;
       if (0 != (flags & Pattern.CASE_INSENSITIVE)) {
         StringBuilder literal = new StringBuilder(this.literal);
         for (int i = 0; i < literal.length(); i++) {
           char ch = literal.charAt(i);
           if (Character.isLowerCase(ch)) {
-            Pair<RNG, Boolean> rngAndBoolean = rng.genBoolean();
+            rngAndBoolean = rng.genBoolean();
             rng = rngAndBoolean.getFirst();
             if (rngAndBoolean.getSecond()) {
               literal.setCharAt(i, Character.toUpperCase(ch));
             }
           }
           if (Character.isUpperCase(ch)) {
-            Pair<RNG, Boolean> rngAndBoolean = rng.genBoolean();
+            rngAndBoolean = rng.genBoolean();
             rng = rngAndBoolean.getFirst();
             if (rngAndBoolean.getSecond()) {
               literal.setCharAt(i, Character.toLowerCase(ch));
@@ -331,7 +332,8 @@ public abstract class Coregex implements Serializable {
         }
         return new Pair<>(rng, literal.toString());
       } else {
-        return new Pair<>(rng, literal);
+        rngAndBoolean = rng.genBoolean(); // need to burn one random number to make result deterministic
+        return new Pair<>(rngAndBoolean.getFirst(), literal);
       }
     }
 
