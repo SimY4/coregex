@@ -39,7 +39,7 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
     forAll { (first: Char, rest: String, seed: Long) =>
       val set       = Set.builder().set(first, rest.toCharArray: _*).build()
       val generated = set.sample(seed)
-      (first == generated || rest.chars().anyMatch(_ == generated)) :| s"$generated in [$set]"
+      rest.map(_ =? generated).foldLeft(first =? generated)(_ || _) :| s"$generated in [$set]"
     }
   }
 
