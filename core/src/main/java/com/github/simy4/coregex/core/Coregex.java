@@ -174,15 +174,16 @@ public abstract class Coregex implements Serializable {
             "remainder: " + remainder + " has to be greater than " + minLength);
       }
       StringBuilder sb = new StringBuilder(minLength + 16);
+      remainder -= minLength;
       Coregex chunk = first;
       int i = 0;
       do {
         int chunkMinLength = chunk.minLength();
-        Pair<RNG, String> rngAndCoregex = chunk.apply(rng, remainder - minLength + chunkMinLength);
+        Pair<RNG, String> rngAndCoregex = chunk.apply(rng, remainder + chunkMinLength);
         rng = rngAndCoregex.getFirst();
         String value = rngAndCoregex.getSecond();
         sb.append(value);
-        remainder -= (value.length() - chunkMinLength);
+        remainder -= value.length() - chunkMinLength;
       } while (i < rest.length && (chunk = rest[i++]) != null);
       return new Pair<>(rng, sb.toString());
     }
@@ -452,15 +453,14 @@ public abstract class Coregex implements Serializable {
       }
       StringBuilder sb = new StringBuilder(minLength + 16);
       int quantifier = 0;
+      remainder -= minLength;
       for (; quantifier < min; quantifier++) {
-        Pair<RNG, String> rngAndCoregex =
-            quantified.apply(rng, remainder - minLength + quantifiedMinLength);
+        Pair<RNG, String> rngAndCoregex = quantified.apply(rng, remainder + quantifiedMinLength);
         rng = rngAndCoregex.getFirst();
         String value = rngAndCoregex.getSecond();
         sb.append(value);
-        remainder -= (value.length() - quantifiedMinLength);
+        remainder -= value.length() - quantifiedMinLength;
       }
-      remainder -= sb.length();
       while (quantifiedMinLength <= remainder && (-1 == max || quantifier++ < max)) {
         Pair<RNG, Boolean> rngAndNext = rng.genBoolean();
         rng = rngAndNext.getFirst();
