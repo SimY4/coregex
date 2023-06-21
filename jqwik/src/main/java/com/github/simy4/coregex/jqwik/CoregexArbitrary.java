@@ -20,6 +20,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -64,6 +65,25 @@ public class CoregexArbitrary extends ArbitraryDecorator<String> {
     this.edgeCases.addAll(Arrays.asList(edgeCases));
     return this;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    CoregexArbitrary that = (CoregexArbitrary) o;
+    return sized == that.sized
+        && pattern.pattern().equals(that.pattern.pattern())
+        && edgeCases.equals(that.edgeCases);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(pattern, edgeCases, sized);
+  }
 }
 
 final class SizedArbitrary implements Arbitrary<String> {
@@ -90,5 +110,25 @@ final class SizedArbitrary implements Arbitrary<String> {
         edgeCases.stream()
             .<Supplier<Shrinkable<String>>>map(edgeCase -> () -> Shrinkable.unshrinkable(edgeCase))
             .collect(Collectors.toList()));
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    SizedArbitrary that = (SizedArbitrary) o;
+    return size == that.size
+        && pattern.flags() == that.pattern.flags()
+        && pattern.pattern().equals(that.pattern.pattern())
+        && edgeCases.equals(that.edgeCases);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(pattern.flags(), pattern.pattern(), edgeCases, size);
   }
 }
