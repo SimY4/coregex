@@ -26,9 +26,9 @@ import io.kotest.property.RandomSource;
 import io.kotest.property.Sample;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.regex.Pattern;
+import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,15 +58,7 @@ public class CoregexArbitrary extends Arb<String> {
   @Nullable
   @Override
   public String edgecase(@NotNull RandomSource randomSource) {
-    if (edgeCases.isEmpty()) {
-      return null;
-    }
-    int idx = randomSource.getRandom().nextInt(edgeCases.size());
-    Iterator<String> iterator = edgeCases.iterator();
-    for (int counter = 0; iterator.hasNext() && counter < idx; counter++) {
-      iterator.next();
-    }
-    return iterator.next();
+    return edgeCases.isEmpty() ? null : CollectionsKt.random(edgeCases, randomSource.getRandom());
   }
 
   @NotNull
@@ -86,6 +78,11 @@ public class CoregexArbitrary extends Arb<String> {
     return this;
   }
 
+  /**
+   * @deprecated Use {@link io.kotest.property.arbitrary.EdgecasesKt#withEdgecases(Arb, Object[])}
+   *     instead. For removal.
+   */
+  @Deprecated
   public CoregexArbitrary withEdgeCases(String... edgeCases) {
     this.edgeCases.addAll(Arrays.asList(edgeCases));
     return this;
