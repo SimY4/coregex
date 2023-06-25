@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -61,6 +62,8 @@ public class CoregexArbitrary extends ArbitraryDecorator<String> {
     return this;
   }
 
+  /** @deprecated User {@link net.jqwik.api.Arbitrary#edgeCases(Consumer)} instead. For removal. */
+  @Deprecated
   public CoregexArbitrary withEdgeCases(String... edgeCases) {
     this.edgeCases.addAll(Arrays.asList(edgeCases));
     return this;
@@ -76,13 +79,14 @@ public class CoregexArbitrary extends ArbitraryDecorator<String> {
     }
     CoregexArbitrary that = (CoregexArbitrary) o;
     return sized == that.sized
+        && pattern.flags() == that.pattern.flags()
         && pattern.pattern().equals(that.pattern.pattern())
         && edgeCases.equals(that.edgeCases);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(pattern, edgeCases, sized);
+    return Objects.hash(pattern.flags(), pattern.pattern(), edgeCases, sized);
   }
 }
 
