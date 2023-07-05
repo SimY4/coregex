@@ -75,9 +75,9 @@ lazy val jqwik = (project in file("jqwik"))
     autoScalaLibrary := false,
     headerEndYear    := Some(2023),
     libraryDependencies ++= Seq(
-      "net.jqwik"   % "jqwik-api"         % "1.7.3"  % Provided,
-      "net.jqwik"   % "jqwik-engine"      % "1.7.3"  % Test,
-      "net.jqwik"   % "jqwik-testing"     % "1.7.3"  % Test,
+      "net.jqwik"   % "jqwik-api"         % "1.7.4"  % Provided,
+      "net.jqwik"   % "jqwik-engine"      % "1.7.4"  % Test,
+      "net.jqwik"   % "jqwik-testing"     % "1.7.4"  % Test,
       "net.aichler" % "jupiter-interface" % "0.11.1" % Test
     ),
     testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v"),
