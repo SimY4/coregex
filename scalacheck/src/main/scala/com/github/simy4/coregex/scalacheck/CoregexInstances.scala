@@ -23,17 +23,17 @@ import org.scalacheck.{ Arbitrary, Gen, Shrink }
 import java.util.regex.Pattern
 
 trait CoregexInstances {
-  type Matching[A >: Null <: String, Regex >: Null <: String with Singleton] <: A
+  type Matching[A <: String, Regex <: String with Singleton] <: A
 
   implicit def arbitraryInputStringMatchingRegexStringWithSingleton[
-    A >: Null <: String,
-    Regex >: Null <: String with Singleton
+    A <: String,
+    Regex <: String with Singleton
   ](implicit regex: ValueOf[Regex]): Arbitrary[Matching[A, Regex]] =
     Arbitrary(CoregexGen.fromPattern(Pattern.compile(regex.value)).asInstanceOf[Gen[Matching[A, Regex]]])
 
   implicit def shrinkInputStringMatchingRegexStringWithSingleton[
-    A >: Null <: String,
-    Regex >: Null <: String with Singleton
+    A <: String,
+    Regex <: String with Singleton
   ](implicit regex: ValueOf[Regex]): Shrink[Matching[A, Regex]] = {
     val coregex = CoregexParser.getInstance().parse(Pattern.compile(regex.value))
     Shrink.withLazyList { larger =>
