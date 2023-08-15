@@ -264,11 +264,8 @@ public final class CoregexParser {
       negated = true;
     }
     Set.Builder set = Set.builder(ctx.flags);
-    setItem(set, ctx);
-    if (']' != ctx.peek()) {
-      while (']' != ctx.peek()) {
-        setItem(set, ctx);
-      }
+    while (']' != ctx.peek()) {
+      setItem(set, ctx);
     }
     ctx.match(']');
     return (negated ? set.negate() : set).build();
