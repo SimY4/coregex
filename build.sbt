@@ -76,6 +76,7 @@ lazy val jqwik = (project in file("jqwik"))
       "net.jqwik"   % "jqwik-testing"     % "1.7.4"  % Test,
       "net.aichler" % "jupiter-interface" % "0.11.1" % Test
     ),
+    Test / parallelExecution := false,
     testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v"),
     Compile / compile / javacOptions ++= Seq("-Xlint:all", "-Werror") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8")
