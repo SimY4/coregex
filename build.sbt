@@ -20,7 +20,13 @@ inThisBuild(
     ),
     releaseNotesURL := Some(url("https://github.com/SimY4/coregex/releases")),
     versionScheme   := Some("early-semver"),
-    startYear       := Some(2021)
+    startYear       := Some(2021),
+    Test / jacocoReportSettings := JacocoReportSettings()
+      .withThresholds(
+        JacocoThresholds(
+          line = 50
+        )
+      )
   )
 )
 
@@ -171,5 +177,5 @@ lazy val vavrTest = (project in file("vavr-test"))
   )
   .dependsOn(core)
 
-addCommandAlias("build", ";coverage;javafmtCheckAll;scalafmtCheckAll;headerCheck;test;coverageReport")
+addCommandAlias("build", ";javafmtCheckAll;scalafmtCheckAll;headerCheck;jacoco")
 addCommandAlias("fmt", ";javafmtAll;scalafmtAll;scalafmtSbt;headerCreate")
