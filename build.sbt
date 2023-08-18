@@ -20,13 +20,7 @@ inThisBuild(
     ),
     releaseNotesURL := Some(url("https://github.com/SimY4/coregex/releases")),
     versionScheme   := Some("early-semver"),
-    startYear       := Some(2021),
-    Test / jacocoReportSettings := JacocoReportSettings()
-      .withThresholds(
-        JacocoThresholds(
-          line = 50
-        )
-      )
+    startYear       := Some(2021)
   )
 )
 
@@ -65,7 +59,13 @@ lazy val core = (project in file("core"))
        else Seq("-source", "1.8", "-target", "1.8")),
     Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8", "-html5")
-       else Seq("-source", "1.8", "-target", "1.8"))
+       else Seq("-source", "1.8", "-target", "1.8")),
+    Test / jacocoReportSettings := JacocoReportSettings()
+      .withThresholds(
+        JacocoThresholds(
+          line = 50
+        )
+      )
   )
 
 lazy val jqwik = (project in file("jqwik"))
@@ -82,14 +82,20 @@ lazy val jqwik = (project in file("jqwik"))
       "net.jqwik"   % "jqwik-testing"     % "1.7.4"  % Test,
       "net.aichler" % "jupiter-interface" % "0.11.1" % Test
     ),
-    Test / parallelExecution := false,
-    testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v"),
     Compile / compile / javacOptions ++= Seq("-Xlint:all", "-Werror") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8")
        else Seq("-source", "1.8", "-target", "1.8")),
     Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8", "-html5")
-       else Seq("-source", "1.8", "-target", "1.8"))
+       else Seq("-source", "1.8", "-target", "1.8")),
+    Test / parallelExecution := false,
+    testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v"),
+    Test / jacocoReportSettings := JacocoReportSettings()
+      .withThresholds(
+        JacocoThresholds(
+          line = 50
+        )
+      )
   )
   .dependsOn(core)
 
@@ -108,13 +114,19 @@ lazy val junitQuickcheck = (project in file("junit-quickcheck"))
       "org.slf4j"      % "slf4j-simple"                % "1.7.25" % Test,
       "com.github.sbt" % "junit-interface"             % "0.13.3" % Test
     ),
-    testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
     Compile / compile / javacOptions ++= Seq("-Xlint:all", "-Werror") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8")
        else Seq("-source", "1.8", "-target", "1.8")),
     Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8", "-html5")
-       else Seq("-source", "1.8", "-target", "1.8"))
+       else Seq("-source", "1.8", "-target", "1.8")),
+    testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
+    Test / jacocoReportSettings := JacocoReportSettings()
+      .withThresholds(
+        JacocoThresholds(
+          line = 50
+        )
+      )
   )
   .dependsOn(core)
 
@@ -130,13 +142,19 @@ lazy val kotest = (project in file("kotest"))
       "io.kotest"   % "kotest-property-jvm" % "5.6.2"  % Provided,
       "net.aichler" % "jupiter-interface"   % "0.11.1" % Test
     ),
-    testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v"),
     Compile / compile / javacOptions ++= Seq("-Xlint:all", "-Werror") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8")
        else Seq("-source", "1.8", "-target", "1.8")),
     Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8", "-html5")
-       else Seq("-source", "1.8", "-target", "1.8"))
+       else Seq("-source", "1.8", "-target", "1.8")),
+    testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v"),
+    Test / jacocoReportSettings := JacocoReportSettings()
+      .withThresholds(
+        JacocoThresholds(
+          line = 50
+        )
+      )
   )
   .dependsOn(core)
 
@@ -166,14 +184,19 @@ lazy val vavrTest = (project in file("vavr-test"))
       "io.vavr"     % "vavr-test"         % "0.10.4" % Provided,
       "net.aichler" % "jupiter-interface" % "0.11.1" % Test
     ),
-    crossScalaVersions := supportedScalaVersions,
-    testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v"),
     Compile / compile / javacOptions ++= Seq("-Xlint:all", "-Werror") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8")
        else Seq("-source", "1.8", "-target", "1.8")),
     Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing") ++
       (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8", "-html5")
-       else Seq("-source", "1.8", "-target", "1.8"))
+       else Seq("-source", "1.8", "-target", "1.8")),
+    testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v"),
+    Test / jacocoReportSettings := JacocoReportSettings()
+      .withThresholds(
+        JacocoThresholds(
+          line = 50
+        )
+      )
   )
   .dependsOn(core)
 
