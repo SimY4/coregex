@@ -21,6 +21,10 @@ jobs:
         cache: sbt
     - name: Build with sbt
       run: sbt ++${{ matrix.scala }} build
+    - name: Code Coverage
+      uses: codecov/codecov-action@v3
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     - name: Create test summary
       uses: test-summary/action@v2
       with:

@@ -171,5 +171,5 @@ lazy val vavrTest = (project in file("vavr-test"))
   )
   .dependsOn(core)
 
-addCommandAlias("build", ";javafmtCheckAll;scalafmtCheckAll;headerCheck;test")
+addCommandAlias("build", ";coverage;javafmtCheckAll;scalafmtCheckAll;headerCheck;test;coverageReport")
 addCommandAlias("fmt", ";javafmtAll;scalafmtAll;scalafmtSbt;headerCreate")
