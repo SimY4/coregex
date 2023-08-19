@@ -16,9 +16,6 @@
 
 package com.github.simy4.coregex.jqwik;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.format.DateTimeFormatter;
@@ -27,8 +24,9 @@ import java.util.List;
 import java.util.UUID;
 import net.jqwik.api.ForAll;
 import net.jqwik.api.Property;
+import org.junit.jupiter.api.Assertions;
 
-class CoregexArbitraryProviderTest {
+class CoregexArbitraryProviderTest extends Assertions {
   @Property
   void shouldGenerateMatchingUUIDString(
       @ForAll @Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}")

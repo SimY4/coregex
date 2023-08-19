@@ -16,9 +16,6 @@
 
 package com.github.simy4.coregex.junit.quickcheck;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import com.pholser.junit.quickcheck.Property;
 import com.pholser.junit.quickcheck.runner.JUnitQuickcheck;
 import java.net.InetAddress;
@@ -27,10 +24,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
+import org.junit.Assert;
 import org.junit.runner.RunWith;
 
 @RunWith(JUnitQuickcheck.class)
-public class CoregexGeneratorTest {
+public class CoregexGeneratorTest extends Assert {
   @Property
   public void shouldGenerateMatchingUUIDString(
       @Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}")

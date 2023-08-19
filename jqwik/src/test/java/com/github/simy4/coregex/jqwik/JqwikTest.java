@@ -16,8 +16,6 @@
 
 package com.github.simy4.coregex.jqwik;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.util.Random;
 import java.util.regex.Pattern;
 import net.jqwik.api.Arbitraries;
@@ -27,8 +25,9 @@ import net.jqwik.api.Property;
 import net.jqwik.api.Provide;
 import net.jqwik.testing.ShrinkingSupport;
 import net.jqwik.testing.TestingSupport;
+import org.junit.jupiter.api.Assertions;
 
-class JqwikTest {
+class JqwikTest extends Assertions {
   @Property
   void arbitraryTest(@ForAll("regex") Pattern regex, @ForAll Random random) {
     CoregexArbitrary coregex = new CoregexArbitrary(regex);
