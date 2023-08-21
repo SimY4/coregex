@@ -16,10 +16,6 @@
 
 package com.github.simy4.coregex.kotest;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import io.kotest.property.Arb;
 import io.kotest.property.EdgeConfig;
 import io.kotest.property.RandomSource;
@@ -30,9 +26,10 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import kotlin.Unit;
 import kotlin.sequences.SequencesKt;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-class CoregexArbitraryTest {
+class CoregexArbitraryTest extends Assertions {
   @Test
   void shouldGenerateMatchingUUIDString() {
     RandomSource randomSource =

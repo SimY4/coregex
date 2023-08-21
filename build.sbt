@@ -29,23 +29,24 @@ lazy val scala3                 = "3.3.0"
 lazy val supportedScalaVersions = List(scala213, scala3)
 
 lazy val javaLibSettings = Seq(
-  crossPaths := false,
+  crossPaths       := false,
   autoScalaLibrary := false,
   Compile / compile / javacOptions ++= Seq("-Xlint:all", "-Werror") ++
     (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8")
-    else Seq("-source", "1.8", "-target", "1.8")),
+     else Seq("-source", "1.8", "-target", "1.8")),
   Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing") ++
     (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8", "-html5")
-    else Seq("-source", "1.8", "-target", "1.8"))
+     else Seq("-source", "1.8", "-target", "1.8"))
 )
 lazy val jacocoSettings = Test / jacocoReportSettings := JacocoReportSettings(
   "Jacoco Coverage Report",
   None,
   JacocoThresholds(
-    line = 50,
+    line = 50
   ),
   Seq(JacocoReportFormats.ScalaHTML, JacocoReportFormats.XML), // note XML formatter
-  "utf-8")
+  "utf-8"
+)
 
 ThisBuild / scalaVersion := scala213
 
@@ -63,10 +64,10 @@ lazy val root = (project in file("."))
 
 lazy val core = (project in file("core"))
   .settings(
-    name             := "core",
-    moduleName       := "coregex-core",
-    description      := "A handy utility for generating strings that match given regular expression criteria.",
-    headerEndYear    := Some(2023),
+    name          := "core",
+    moduleName    := "coregex-core",
+    description   := "A handy utility for generating strings that match given regular expression criteria.",
+    headerEndYear := Some(2023),
     libraryDependencies ++= Seq(
       "org.scalameta" %% "munit"            % "0.7.29" % Test,
       "org.scalameta" %% "munit-scalacheck" % "0.7.29" % Test
@@ -77,10 +78,10 @@ lazy val core = (project in file("core"))
 
 lazy val jqwik = (project in file("jqwik"))
   .settings(
-    name             := "jqwik",
-    moduleName       := "coregex-jqwik",
-    description      := "JQwik bindings for coregex library.",
-    headerEndYear    := Some(2023),
+    name          := "jqwik",
+    moduleName    := "coregex-jqwik",
+    description   := "JQwik bindings for coregex library.",
+    headerEndYear := Some(2023),
     libraryDependencies ++= Seq(
       "net.jqwik"   % "jqwik-api"         % "1.7.4"  % Provided,
       "net.jqwik"   % "jqwik-engine"      % "1.7.4"  % Test,
@@ -88,7 +89,7 @@ lazy val jqwik = (project in file("jqwik"))
       "net.aichler" % "jupiter-interface" % "0.11.1" % Test
     ),
     Test / parallelExecution := false,
-    testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v"),
+    testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v")
   )
   .settings(javaLibSettings)
   .settings(jacocoSettings)
@@ -96,10 +97,10 @@ lazy val jqwik = (project in file("jqwik"))
 
 lazy val junitQuickcheck = (project in file("junit-quickcheck"))
   .settings(
-    name             := "junit-quickcheck",
-    moduleName       := "coregex-junit-quickcheck",
-    description      := "JUnit Quickcheck bindings for coregex library.",
-    headerEndYear    := Some(2023),
+    name          := "junit-quickcheck",
+    moduleName    := "coregex-junit-quickcheck",
+    description   := "JUnit Quickcheck bindings for coregex library.",
+    headerEndYear := Some(2023),
     libraryDependencies ++= Seq(
       "com.pholser"    % "junit-quickcheck-core"       % "1.0"    % Provided,
       "com.pholser"    % "junit-quickcheck-generators" % "1.0"    % Test,
@@ -146,15 +147,15 @@ lazy val scalacheck = (project in file("scalacheck"))
 
 lazy val vavrTest = (project in file("vavr-test"))
   .settings(
-    name             := "vavr-test",
-    moduleName       := "coregex-vavr-test",
-    description      := "VAVR Test bindings for coregex library.",
-    headerEndYear    := Some(2023),
+    name          := "vavr-test",
+    moduleName    := "coregex-vavr-test",
+    description   := "VAVR Test bindings for coregex library.",
+    headerEndYear := Some(2023),
     libraryDependencies ++= Seq(
       "io.vavr"     % "vavr-test"         % "0.10.4" % Provided,
       "net.aichler" % "jupiter-interface" % "0.11.1" % Test
     ),
-    testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v"),
+    testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v")
   )
   .settings(javaLibSettings)
   .settings(jacocoSettings)

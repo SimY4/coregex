@@ -20,6 +20,7 @@ import com.pholser.junit.quickcheck.Property;
 import com.pholser.junit.quickcheck.generator.GenerationStatus;
 import com.pholser.junit.quickcheck.generator.Generator;
 import com.pholser.junit.quickcheck.generator.Only;
+import com.pholser.junit.quickcheck.generator.Size;
 import com.pholser.junit.quickcheck.internal.GeometricDistribution;
 import com.pholser.junit.quickcheck.internal.generator.SimpleGenerationStatus;
 import com.pholser.junit.quickcheck.random.SourceOfRandomness;
@@ -46,7 +47,7 @@ public class JunitQuickcheckTest extends Assert {
           String regexStr) {
     Pattern regex = Pattern.compile(regexStr);
     SourceOfRandomness random = new SourceOfRandomness(new Random(seed));
-    GenerationStatus status = new SimpleGenerationStatus(new GeometricDistribution(), random, 0);
+    GenerationStatus status = new SimpleGenerationStatus(new GeometricDistribution(), random, 1000);
     Generator<String> coregexGenerator = new CoregexGenerator(regex);
 
     assertTrue(
@@ -69,7 +70,7 @@ public class JunitQuickcheckTest extends Assert {
           String regexStr) {
     Pattern regex = Pattern.compile(regexStr);
     SourceOfRandomness random = new SourceOfRandomness(new Random(seed));
-    GenerationStatus status = new SimpleGenerationStatus(new GeometricDistribution(), random, 0);
+    GenerationStatus status = new SimpleGenerationStatus(new GeometricDistribution(), random, 1000);
     Generator<String> coregexGenerator = new CoregexGenerator(regex);
 
     String generated = coregexGenerator.generate(random, status);
