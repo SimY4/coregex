@@ -17,7 +17,6 @@
 package com.github.simy4.coregex.kotest;
 
 import io.kotest.property.Arb;
-import io.kotest.property.EdgeConfig;
 import io.kotest.property.RandomSource;
 import io.kotest.property.arbitrary.CollectionsKt;
 import java.net.InetAddress;
@@ -39,7 +38,7 @@ class CoregexArbitraryTest extends Assertions {
             SequencesKt.take(
                 CoregexArbitrary.of(
                         "[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}")
-                    .generate(randomSource, new EdgeConfig()),
+                    .samples(randomSource),
                 100),
             uuid -> uuid.getValue().equals(UUID.fromString(uuid.getValue()).toString())));
   }
@@ -52,7 +51,7 @@ class CoregexArbitraryTest extends Assertions {
         SequencesKt.take(
             CoregexArbitrary.of(
                     "((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])")
-                .generate(randomSource, new EdgeConfig()),
+                .samples(randomSource),
             100),
         ipv4 -> {
           String[] expected = ipv4.getValue().split("\\.");
@@ -78,7 +77,7 @@ class CoregexArbitraryTest extends Assertions {
             SequencesKt.take(
                 CoregexArbitrary.of(
                         "[12]\\d{3}-(?:0[1-9]|1[012])-(?:0[1-9]|1\\d|2[0-8])T(?:1\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d{2}[1-9])?Z")
-                    .generate(randomSource, new EdgeConfig()),
+                    .samples(randomSource),
                 100),
             iso8601Date ->
                 iso8601Date
@@ -94,7 +93,7 @@ class CoregexArbitraryTest extends Assertions {
         SequencesKt.all(
             SequencesKt.take(
                 CollectionsKt.list(Arb.Companion, CoregexArbitrary.of("[a-zA-Z0-9]{32,}"))
-                    .generate(randomSource, new EdgeConfig()),
+                    .samples(randomSource),
                 100),
             strings ->
                 strings.getValue().stream()

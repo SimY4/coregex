@@ -20,7 +20,6 @@ import com.pholser.junit.quickcheck.Property;
 import com.pholser.junit.quickcheck.generator.GenerationStatus;
 import com.pholser.junit.quickcheck.generator.Generator;
 import com.pholser.junit.quickcheck.generator.Only;
-import com.pholser.junit.quickcheck.generator.Size;
 import com.pholser.junit.quickcheck.internal.GeometricDistribution;
 import com.pholser.junit.quickcheck.internal.generator.SimpleGenerationStatus;
 import com.pholser.junit.quickcheck.random.SourceOfRandomness;

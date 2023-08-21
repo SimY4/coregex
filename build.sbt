@@ -116,15 +116,15 @@ lazy val junitQuickcheck = (project in file("junit-quickcheck"))
 
 lazy val kotest = (project in file("kotest"))
   .settings(
-    name             := "kotest",
-    moduleName       := "coregex-kotest",
-    description      := "Kotest bindings for coregex library.",
-    headerEndYear    := Some(2023),
+    name          := "kotest",
+    moduleName    := "coregex-kotest",
+    description   := "Kotest bindings for coregex library.",
+    headerEndYear := Some(2023),
     libraryDependencies ++= Seq(
       "io.kotest"   % "kotest-property-jvm" % "5.6.2"  % Provided,
       "net.aichler" % "jupiter-interface"   % "0.11.1" % Test
     ),
-    testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v"),
+    testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v")
   )
   .settings(javaLibSettings)
   .settings(jacocoSettings)
