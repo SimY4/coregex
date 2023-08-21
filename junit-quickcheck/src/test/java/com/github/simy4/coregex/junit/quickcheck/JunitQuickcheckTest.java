@@ -74,14 +74,9 @@ public class JunitQuickcheckTest extends Assert {
 
     String generated = coregexGenerator.generate(random, status);
 
-    assertTrue(
-        coregexGenerator.shrink(random, generated).stream()
-            .allMatch(
-                shrinked ->
-                    0
-                            <= coregexGenerator
-                                .magnitude(shrinked)
-                                .compareTo(coregexGenerator.magnitude(generated))
-                        && regex.matcher(shrinked).matches()));
+    coregexGenerator.shrink(random, generated).forEach(shrinked -> {
+      assertTrue(coregexGenerator.magnitude(shrinked).compareTo(coregexGenerator.magnitude(generated)) <= 0);
+      assertTrue(regex.matcher(shrinked).matches());
+    });
   }
 }
