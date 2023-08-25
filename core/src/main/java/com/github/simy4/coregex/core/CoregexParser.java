@@ -125,11 +125,11 @@ public final class CoregexParser {
         break;
       case '{':
         ctx.match('{');
-        String times = ctx.takeWhile(this::isDigit);
+        String times = ctx.span(this::isDigit);
         quantifierMin = times.isEmpty() ? 0 : Integer.parseInt(times);
         if (',' == ctx.peek()) {
           ctx.match(',');
-          String end = ctx.takeWhile(this::isDigit);
+          String end = ctx.span(this::isDigit);
           quantifierMax = end.isEmpty() ? -1 : Integer.parseInt(end);
         } else {
           quantifierMax = quantifierMin;
@@ -206,7 +206,7 @@ public final class CoregexParser {
     ctx.match('Q');
     StringBuilder literal = new StringBuilder();
     do {
-      literal.append(ctx.takeWhile(ch -> '\\' != ch));
+      literal.append(ctx.span(ch -> '\\' != ch));
       ctx.match('\\');
     } while ('E' != ctx.peek() && (literal.append('\\') != null));
     ctx.match('E');
@@ -224,14 +224,14 @@ public final class CoregexParser {
     char ch = ctx.peek();
     ctx.match(ch);
     if ('#' == ch && 0 != (Pattern.COMMENTS & ctx.flags)) {
-      ctx.takeWhile(c -> '\n' != c && '\r' != c);
+      ctx.span(c -> '\n' != c && '\r' != c);
     } else if (!isWhitespace(ch) || 0 == (Pattern.COMMENTS & ctx.flags)) {
       literal.append(ch);
     }
     loop:
     while (ctx.hasMoreElements() && !isREMetachar(ch = ctx.peek())) {
       if ('#' == ch && 0 != (Pattern.COMMENTS & ctx.flags)) {
-        ctx.takeWhile(c -> '\n' != c && '\r' != c);
+        ctx.span(c -> '\n' != c && '\r' != c);
         continue;
       }
       char next = ctx.peek(1);
@@ -348,7 +348,7 @@ public final class CoregexParser {
               group = ctx.unsupported("look-behinds are not supported");
               break;
             default:
-              ctx.takeWhile(ch -> '>' != ch);
+              ctx.span(ch -> '>' != ch);
               ctx.match('>');
               group = RE(ctx);
               break;
@@ -461,7 +461,7 @@ public final class CoregexParser {
       case 'p':
         ctx.match('p');
         ctx.match('{');
-        String posix = ctx.takeWhile(pos -> '}' != pos);
+        String posix = ctx.span(pos -> '}' != pos);
         switch (posix) {
           case "Lower":
           case "javaLowerCase":
@@ -588,34 +588,34 @@ public final class CoregexParser {
     private int flags;
     private int cursor;
 
-    private Context(String regex, int flags) {
+    Context(String regex, int flags) {
       this.regex = regex;
       this.flags = flags;
     }
 
-    private boolean hasMoreElements() {
+    boolean hasMoreElements() {
       return cursor < regex.length();
     }
 
-    private char peek() {
+    char peek() {
       return peek(0);
     }
 
-    private char peek(int i) {
+    char peek(int i) {
       if (regex.length() <= cursor + i) {
         return (char) -1;
       }
       return regex.charAt(cursor + i);
     }
 
-    private void match(char ch) {
+    void match(char ch) {
       if (ch != peek()) {
         error(String.valueOf(ch));
       }
       cursor++;
     }
 
-    private String takeWhile(IntPredicate charPredicate) {
+    String span(IntPredicate charPredicate) {
       if (charPredicate.test(peek())) {
         int start = cursor++;
         while (hasMoreElements() && charPredicate.test(peek())) {
@@ -627,7 +627,7 @@ public final class CoregexParser {
       }
     }
 
-    private <T> T error(String expected) {
+    <T> T error(String expected) {
       char[] cursor = new char[this.cursor];
       Arrays.fill(cursor, ' ');
       cursor[cursor.length - 1] = '^';
@@ -642,7 +642,7 @@ public final class CoregexParser {
       throw new IllegalArgumentException(message);
     }
 
-    private <T> T unsupported(String reason) {
+    <T> T unsupported(String reason) {
       char[] cursor = new char[this.cursor];
       Arrays.fill(cursor, ' ');
       cursor[cursor.length - 1] = '^';
