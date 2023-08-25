@@ -204,12 +204,15 @@ public final class CoregexParser {
    */
   private Coregex.Literal quoted(Context ctx) {
     ctx.match('Q');
+    int comments = ctx.flags & Pattern.COMMENTS;
+    ctx.flags &= ~Pattern.COMMENTS;
     StringBuilder literal = new StringBuilder();
     do {
       literal.append(ctx.span(ch -> '\\' != ch));
       ctx.match('\\');
     } while ('E' != ctx.peek() && (literal.append('\\') != null));
     ctx.match('E');
+    ctx.flags |= comments;
     return new Coregex.Literal(literal.toString());
   }
 
@@ -220,35 +223,31 @@ public final class CoregexParser {
    * }</pre>
    */
   private Coregex literal(Context ctx) {
-    StringBuilder literal = new StringBuilder();
-    char ch = ctx.peek();
-    ctx.match(ch);
-    if ('#' == ch && 0 != (Pattern.COMMENTS & ctx.flags)) {
-      ctx.span(c -> '\n' != c && '\r' != c);
-    } else if (!isWhitespace(ch) || 0 == (Pattern.COMMENTS & ctx.flags)) {
-      literal.append(ch);
-    }
-    loop:
-    while (ctx.hasMoreElements() && !isREMetachar(ch = ctx.peek())) {
-      if ('#' == ch && 0 != (Pattern.COMMENTS & ctx.flags)) {
-        ctx.span(c -> '\n' != c && '\r' != c);
-        continue;
+    Coregex literal;
+    char ch;
+    if (ctx.hasMoreElements() && !isREMetachar(ch = ctx.peek())) {
+      StringBuilder sb = new StringBuilder();
+      ctx.match(ch);
+      sb.append(ch);
+      loop:
+      while (ctx.hasMoreElements() && !isREMetachar(ch = ctx.peek())) {
+        char next = ctx.peek(2);
+        switch (next) {
+          case '*':
+          case '+':
+          case '?':
+          case '{':
+            break loop;
+          default:
+            ctx.match(ch);
+            sb.append(ch);
+        }
       }
-      char next = ctx.peek(1);
-      switch (next) {
-        case '*':
-        case '+':
-        case '?':
-        case '{':
-          break loop;
-        default:
-          ctx.match(ch);
-          if (!isWhitespace(ch) || 0 == (Pattern.COMMENTS & ctx.flags)) {
-            literal.append(ch);
-          }
-      }
+      literal = new Coregex.Literal(sb.toString(), ctx.flags);
+    } else {
+      literal = Coregex.empty();
     }
-    return new Coregex.Literal(literal.toString(), ctx.flags);
+    return literal;
   }
 
   /*
@@ -584,9 +583,12 @@ public final class CoregexParser {
   }
 
   private static final class Context {
+    private static final char SKIP = '\u0000';
+    private static final char EOF = '\uFFFF';
+
     private final String regex;
-    private int flags;
-    private int cursor;
+    private final char[] tokens = { SKIP, SKIP };
+    private int flags, cursor, charsCursor;
 
     Context(String regex, int flags) {
       this.regex = regex;
@@ -594,37 +596,71 @@ public final class CoregexParser {
     }
 
     boolean hasMoreElements() {
-      return cursor < regex.length();
+      return EOF != peek();
     }
 
     char peek() {
-      return peek(0);
+      return peek(1);
     }
 
     char peek(int i) {
-      if (regex.length() <= cursor + i) {
-        return (char) -1;
+      for (; charsCursor < i; charsCursor++) {
+        tokens[charsCursor] = token();
       }
-      return regex.charAt(cursor + i);
+      return tokens[i - 1];
     }
 
     void match(char ch) {
       if (ch != peek()) {
         error(String.valueOf(ch));
       }
-      cursor++;
+      charsCursor--;
+      tokens[0] = tokens[1];
+      tokens[1] = SKIP;
     }
 
     String span(IntPredicate charPredicate) {
-      if (charPredicate.test(peek())) {
-        int start = cursor++;
-        while (hasMoreElements() && charPredicate.test(peek())) {
-          cursor++;
+      char ch;
+      if (EOF != (ch = peek()) && charPredicate.test(ch)) {
+        StringBuilder span = new StringBuilder();
+        match(ch);
+        span.append(ch);
+        while (EOF != (ch = peek()) && charPredicate.test(ch)) {
+          match(ch);
+          span.append(ch);
         }
-        return regex.substring(start, cursor);
+        return span.toString();
       } else {
         return "";
       }
+    }
+
+    private char token() {
+      char ch;
+      do {
+        ch = cursor < regex.length() ? regex.charAt(cursor) : EOF;
+        switch (ch) {
+          case ' ':
+          case '\t':
+          case '\f':
+          case '\r':
+          case '\n':
+            if (0 != (flags & Pattern.COMMENTS)) {
+              ch = SKIP;
+            }
+            break;
+          case '#':
+            if (0 != (flags & Pattern.COMMENTS)) {
+              while (cursor < regex.length() && ('\n' != (ch = regex.charAt(cursor)) && (0 == (flags & Pattern.UNIX_LINES) || '\r' != ch))) {
+                cursor++;
+              }
+              ch = SKIP;
+            }
+            break;
+        }
+        cursor++;
+      } while (SKIP == ch);
+      return ch;
     }
 
     <T> T error(String expected) {
