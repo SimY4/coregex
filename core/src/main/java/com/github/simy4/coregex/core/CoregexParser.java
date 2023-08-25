@@ -569,25 +569,12 @@ public final class CoregexParser {
     return ((ch - '0') | ('9' - ch)) >= 0;
   }
 
-  private boolean isWhitespace(int ch) {
-    switch (ch) {
-      case ' ':
-      case '\t':
-      case '\f':
-      case '\r':
-      case '\n':
-        return true;
-      default:
-        return false;
-    }
-  }
-
   private static final class Context {
     private static final char SKIP = '\u0000';
     private static final char EOF = '\uFFFF';
 
     private final String regex;
-    private final char[] tokens = { SKIP, SKIP };
+    private final char[] tokens = {SKIP, SKIP};
     private int flags, cursor, charsCursor;
 
     Context(String regex, int flags) {
@@ -651,7 +638,9 @@ public final class CoregexParser {
             break;
           case '#':
             if (0 != (flags & Pattern.COMMENTS)) {
-              while (cursor < regex.length() && ('\n' != (ch = regex.charAt(cursor)) && (0 == (flags & Pattern.UNIX_LINES) || '\r' != ch))) {
+              while (cursor < regex.length()
+                  && ('\n' != (ch = regex.charAt(cursor))
+                      && (0 == (flags & Pattern.UNIX_LINES) || '\r' != ch))) {
                 cursor++;
               }
               ch = SKIP;
