@@ -659,7 +659,11 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
           ),
           3,
           6
-        )               -> Pattern.compile("((?i)[a-z]+(?-i)-[A-Z]){3,6}"),
+        ) -> Pattern.compile("((?i)[a-z]+(?-i)-[A-Z]){3,6}"),
+        new Coregex.Concat(
+          new Coregex.Set(Set.builder().range(0x61, 0x7a).build()),
+          new Coregex.Set(Set.builder().range('\u0041', '\u005a').build())
+        )               -> Pattern.compile("[\\x61-\\x7a][\\u0041-\\u005a]"),
         Coregex.empty() -> Pattern.compile("^(?:||)$")
       )
     rng <- List(new RandomRNG())
