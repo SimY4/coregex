@@ -627,18 +627,22 @@ public final class CoregexParser {
       do {
         int offset = 1;
         ch = cursor < regex.length() ? regex.charAt(cursor) : EOF;
+        if (0 != (flags & Pattern.LITERAL)) {
+          cursor += offset;
+          break;
+        }
         switch (ch) {
           case ' ':
           case '\t':
           case '\f':
           case '\r':
           case '\n':
-            if (0 != (flags & Pattern.COMMENTS) && 0 == (flags & Pattern.LITERAL)) {
+            if (0 != (flags & Pattern.COMMENTS)) {
               ch = SKIP;
             }
             break;
           case '#':
-            if (0 != (flags & Pattern.COMMENTS) && 0 == (flags & Pattern.LITERAL)) {
+            if (0 != (flags & Pattern.COMMENTS)) {
               while (cursor + offset < regex.length()
                   && ('\n' != (ch = regex.charAt(cursor + offset))
                       && (0 == (flags & Pattern.UNIX_LINES) || '\r' != ch))) {
@@ -648,10 +652,7 @@ public final class CoregexParser {
             }
             break;
           case '\\':
-            if (0 != (flags & Pattern.LITERAL)) {
-              break;
-            }
-            switch (cursor + 1 < regex.length() ? regex.charAt(cursor + 1) : EOF) {
+            switch (cursor + offset < regex.length() ? regex.charAt(cursor + offset) : EOF) {
               case 'u':
                 String u = regex.substring(cursor + 2, cursor + 6);
                 char[] chars = Character.toChars(Integer.parseInt(u, 16));
