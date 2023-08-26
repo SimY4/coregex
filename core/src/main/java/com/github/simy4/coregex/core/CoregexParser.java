@@ -651,18 +651,16 @@ public final class CoregexParser {
             }
             switch (cursor + 1 < regex.length() ? regex.charAt(cursor + 1) : EOF) {
               case 'u':
-                cursor += 2;
-                String u = regex.substring(cursor, cursor + 4);
+                String u = regex.substring(cursor + 2, cursor + 6);
                 char[] chars = Character.toChars(Integer.parseInt(u, 16));
                 System.arraycopy(chars, 0, tokens, tokensCursor, chars.length);
                 ch = chars[0];
-                cursor += 3;
+                cursor += 5;
                 break;
               case 'x':
-                cursor += 2;
-                String x = regex.substring(cursor, cursor + 2);
+                String x = regex.substring(cursor + 2, cursor + 4);
                 ch = (char) Integer.parseInt(x, 16);
-                cursor++;
+                cursor += 3;
                 break;
             }
         }
