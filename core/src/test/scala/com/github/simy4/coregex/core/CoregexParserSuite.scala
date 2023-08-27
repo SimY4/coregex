@@ -590,6 +590,186 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
           Pattern.COMMENTS
         ),
         new Concat(
+          new Union(
+            new Concat(
+              new Quantified(
+                set() {
+                  _.range('a', 'z')
+                    .range('0', '9')
+                    .set('!', '#', '$', '%', '&', '\'', '*', '+', '/', '=', '?', '^', '_', '`', '{', '|', '}', '~', '-')
+                },
+                1
+              ),
+              new Quantified(
+                new Concat(
+                  set()(_.single('.')),
+                  new Quantified(
+                    set() {
+                      _.range('a', 'z')
+                        .range('0', '9')
+                        .set('!', '#', '$', '%', '&', '\'', '*', '+', '/', '=', '?', '^', '_', '`', '{', '|', '}', '~',
+                          '-')
+                    },
+                    1
+                  )
+                ),
+                0
+              )
+            ),
+            new Concat(
+              "\"",
+              new Quantified(
+                new Union(
+                  set() {
+                    _.range(0x01, 0x08)
+                      .set(0x0b, 0x0c)
+                      .range(0x0e, 0x1f)
+                      .single(0x21)
+                      .range(0x23, 0x5b)
+                      .range(0x5e, 0x7f)
+                  },
+                  new Concat(
+                    set()(_.single('\\')),
+                    set()(_.range(0x01, 0x09).set(0x0b, 0x0c).range(0x0e, 0x7f))
+                  )
+                ),
+                0
+              ),
+              "\""
+            )
+          ),
+          "@",
+          new Union(
+            new Concat(
+              new Quantified(
+                new Concat(
+                  set()(_.range('a', 'z').range('0', '9')),
+                  new Quantified(
+                    new Concat(
+                      new Quantified(
+                        set()(_.range('a', 'z').range('0', '9').single('-')),
+                        0
+                      ),
+                      set()(_.range('a', 'z').range('0', '9'))
+                    ),
+                    0,
+                    1
+                  ),
+                  set()(_.single('.'))
+                ),
+                1
+              ),
+              set()(_.range('a', 'z').range('0', '9')),
+              new Quantified(
+                new Concat(
+                  new Quantified(
+                    set()(_.range('a', 'z').range('0', '9').single('-')),
+                    0
+                  ),
+                  set()(_.range('a', 'z').range('0', '9'))
+                ),
+                0,
+                1
+              )
+            ),
+            new Concat(
+              set()(_.single('[')),
+              new Quantified(
+                new Concat(
+                  new Union(
+                    new Concat(
+                      "2",
+                      new Union(
+                        new Concat(
+                          "5",
+                          set()(_.range('0', '5'))
+                        ),
+                        new Concat(
+                          set()(_.range('0', '4')),
+                          set()(_.range('0', '9'))
+                        )
+                      )
+                    ),
+                    new Concat(
+                      "1",
+                      set()(_.range('0', '9')),
+                      set()(_.range('0', '9'))
+                    ),
+                    new Concat(
+                      new Quantified(
+                        set()(_.range('1', '9')),
+                        0,
+                        1
+                      ),
+                      set()(_.range('0', '9'))
+                    )
+                  ),
+                  set()(_.single('.'))
+                ),
+                3,
+                3
+              ),
+              new Union(
+                new Union(
+                  new Concat(
+                    "2",
+                    new Union(
+                      new Concat(
+                        "5",
+                        set()(_.range('0', '5'))
+                      ),
+                      new Concat(
+                        set()(_.range('0', '4')),
+                        set()(_.range('0', '9'))
+                      )
+                    )
+                  ),
+                  new Concat(
+                    "1",
+                    set()(_.range('0', '9')),
+                    set()(_.range('0', '9'))
+                  ),
+                  new Concat(
+                    new Quantified(
+                      set()(_.range('1', '9')),
+                      0,
+                      1
+                    ),
+                    set()(_.range('0', '9'))
+                  )
+                ),
+                new Concat(
+                  new Quantified(
+                    set()(_.range('a', 'z').range('0', '9').single('-')),
+                    0
+                  ),
+                  set()(_.range('a', 'z').range('0', '9')),
+                  ":",
+                  new Quantified(
+                    new Union(
+                      set() {
+                        _.range(0x01, 0x08)
+                          .set(0x0b, 0x0c)
+                          .range(0x0e, 0x1f)
+                          .range(0x21, 0x5a)
+                          .range(0x53, 0x7f)
+                      },
+                      new Concat(
+                        set()(_.single('\\')),
+                        set()(_.range(0x01, 0x09).set(0x0b, 0x0c).range(0x0e, 0x7f))
+                      )
+                    ),
+                    1
+                  )
+                )
+              ),
+              "]"
+            )
+          )
+        ) -> Pattern.compile(
+          "(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5e-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])\\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)])"
+        ),
+        new Concat(
           "arn:",
           new Quantified(
             set()(_.range('0', '9').range('a', 'z').range('A', 'Z').single('_')),

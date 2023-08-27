@@ -601,8 +601,10 @@ public final class CoregexParser {
         error(String.valueOf(ch));
       }
       tokensCursor--;
-      tokens[0] = tokens[1];
-      tokens[1] = SKIP;
+      for (int i = 0; i < tokens.length - 1; i++) {
+        tokens[i] = tokens[i + 1];
+      }
+      tokens[tokens.length - 1] = SKIP;
     }
 
     String span(IntPredicate charPredicate) {
@@ -624,11 +626,11 @@ public final class CoregexParser {
     private char token() {
       char ch;
       int cursor = this.cursor;
+      loop:
       do {
-        int offset = 1;
         ch = cursor < regex.length() ? regex.charAt(cursor) : EOF;
         if (0 != (flags & Pattern.LITERAL)) {
-          cursor += offset;
+          cursor += 1;
           break;
         }
         switch (ch) {
@@ -643,8 +645,8 @@ public final class CoregexParser {
             break;
           case '#':
             if (0 != (flags & Pattern.COMMENTS)) {
-              while (cursor + offset < regex.length()
-                  && ('\n' != (ch = regex.charAt(cursor + offset))
+              while (cursor + 1 < regex.length()
+                  && ('\n' != (ch = regex.charAt(cursor + 1))
                       && (0 == (flags & Pattern.UNIX_LINES) || '\r' != ch))) {
                 cursor++;
               }
@@ -652,22 +654,22 @@ public final class CoregexParser {
             }
             break;
           case '\\':
-            switch (cursor + offset < regex.length() ? regex.charAt(cursor + offset) : EOF) {
+            switch (cursor + 1 < regex.length() ? regex.charAt(cursor + 1) : EOF) {
               case 'u':
                 String u = regex.substring(cursor + 2, cursor + 6);
                 char[] chars = Character.toChars(Integer.parseInt(u, 16));
                 System.arraycopy(chars, 0, tokens, tokensCursor, chars.length);
                 ch = chars[0];
-                offset = 6;
-                break;
+                cursor += 6;
+                break loop;
               case 'x':
                 String x = regex.substring(cursor + 2, cursor + 4);
                 ch = (char) Integer.parseInt(x, 16);
-                offset = 4;
-                break;
+                cursor += 4;
+                break loop;
             }
         }
-        cursor += offset;
+        cursor += 1;
       } while (SKIP == ch);
       this.cursor = cursor;
       return ch;
