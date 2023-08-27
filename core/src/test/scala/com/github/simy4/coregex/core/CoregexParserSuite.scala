@@ -20,6 +20,7 @@ import munit.{ Location, ScalaCheckSuite }
 import rng.RandomRNG
 
 import java.util.regex.Pattern
+import scala.util.control.NonFatal
 
 class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
   @inline private def set(flags: Int = 0)(set: Set.Builder => Set.Builder): Coregex.Set =
@@ -51,6 +52,17 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
       val actual    = Coregex.from(expected)
       val generated = actual.generate(rng)
       assert(expected.matcher(generated).matches(), s"${expected.pattern()} should match generated: $generated")
+    }
+
+  def shouldThrowUnsupported(pattern: Pattern)(implicit loc: Location): Unit =
+    test(s"should throw unsupported: ${pattern.pattern()}") {
+      try {
+        Coregex.from(pattern)
+        fail(s"should throw error for: ${pattern.pattern()}")
+      } catch {
+        case _: UnsupportedOperationException =>
+        case NonFatal(ex) => fail(s"should throw UnsupportedOperationException for: ${pattern.pattern()}", ex)
+      }
     }
 
   for {
@@ -838,5 +850,16 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
     shouldParseExampleRegex(expected, pattern, rng)
     shouldParseQuotedRegex(pattern, rng)
     shouldParseLiteralRegex(pattern, rng)
+  }
+
+  for {
+    pattern <- List(
+      Pattern.compile("(?!.{255,}).+"),
+      Pattern.compile("(?=[a-z]+).+"),
+      Pattern.compile(".+(?<=[a-z]+)"),
+      Pattern.compile(".+(?<!.{255,})")
+    )
+  } {
+    shouldThrowUnsupported(pattern)
   }
 }
