@@ -23,13 +23,9 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
-import net.jqwik.api.EdgeCases;
-import net.jqwik.api.RandomGenerator;
-import net.jqwik.api.Shrinkable;
 import net.jqwik.api.arbitraries.ArbitraryDecorator;
 
 public class CoregexArbitrary extends ArbitraryDecorator<String> {
@@ -51,7 +47,14 @@ public class CoregexArbitrary extends ArbitraryDecorator<String> {
 
   @Override
   protected Arbitrary<String> arbitrary() {
-    return new SizedArbitrary(pattern, edgeCases, sized);
+    Arbitrary<String> arbitrary =
+        -1 == sized
+            ? Arbitraries.fromGeneratorWithSize(size -> new CoregexGenerator(pattern, size))
+            : Arbitraries.fromGenerator(new CoregexGenerator(pattern, sized));
+    if (!edgeCases.isEmpty()) {
+      arbitrary = arbitrary.edgeCases(config -> config.add(edgeCases.toArray(new String[0])));
+    }
+    return arbitrary;
   }
 
   public CoregexArbitrary withSize(int size) {
@@ -87,52 +90,5 @@ public class CoregexArbitrary extends ArbitraryDecorator<String> {
   @Override
   public int hashCode() {
     return Objects.hash(pattern.flags(), pattern.pattern(), edgeCases, sized);
-  }
-}
-
-final class SizedArbitrary implements Arbitrary<String> {
-  private final Pattern pattern;
-  private final Set<String> edgeCases;
-  private final int size;
-
-  SizedArbitrary(Pattern pattern, Set<String> edgeCases, int size) {
-    this.pattern = pattern;
-    this.edgeCases = edgeCases;
-    this.size = size;
-  }
-
-  @Override
-  public RandomGenerator<String> generator(int genSize) {
-    int size = this.size;
-    size = -1 == size ? genSize : size;
-    return new CoregexGenerator(pattern, size);
-  }
-
-  @Override
-  public EdgeCases<String> edgeCases(int maxEdgeCases) {
-    return EdgeCases.fromSuppliers(
-        edgeCases.stream()
-            .<Supplier<Shrinkable<String>>>map(edgeCase -> () -> Shrinkable.unshrinkable(edgeCase))
-            .collect(Collectors.toList()));
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    SizedArbitrary that = (SizedArbitrary) o;
-    return size == that.size
-        && pattern.flags() == that.pattern.flags()
-        && pattern.pattern().equals(that.pattern.pattern())
-        && edgeCases.equals(that.edgeCases);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(pattern.flags(), pattern.pattern(), edgeCases, size);
   }
 }
