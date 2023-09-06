@@ -23,7 +23,6 @@ import io.kotest.property.arbitrary.CollectionsKt;
 import java.net.InetAddress;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
-import kotlin.Unit;
 import kotlin.coroutines.EmptyCoroutineContext;
 import kotlin.sequences.SequencesKt;
 import kotlinx.coroutines.BuildersKt;
@@ -35,41 +34,37 @@ class CoregexArbitraryTest extends Assertions {
   void shouldGenerateMatchingUUIDString() throws InterruptedException {
     BuildersKt.runBlocking(
         EmptyCoroutineContext.INSTANCE,
-        (scope, c1) -> {
-          forAll(
-              CoregexArbitrary.of(
-                  "[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}"),
-              (context, uuid, c2) -> uuid.equals(UUID.fromString(uuid).toString()),
-              c1);
-          return Unit.INSTANCE;
-        });
+        (scope, c1) ->
+            forAll(
+                CoregexArbitrary.of(
+                    "[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}"),
+                (context, uuid, c2) -> uuid.equals(UUID.fromString(uuid).toString()),
+                c1));
   }
 
   @Test
   void shouldGenerateMatchingIPv4String() throws InterruptedException {
     BuildersKt.runBlocking(
         EmptyCoroutineContext.INSTANCE,
-        (scope, c1) -> {
-          forAll(
-              CoregexArbitrary.of(
-                  "((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])"),
-              (context, ipv4, c2) -> {
-                var expected = ipv4.split("\\.");
-                var actual =
-                    assertDoesNotThrow(() -> InetAddress.getByName(ipv4))
-                        .getHostAddress()
-                        .split("\\.");
-                return expected.length == actual.length
-                    && SequencesKt.all(
-                        SequencesKt.zip(
-                            SequencesKt.sequenceOf(expected), SequencesKt.sequenceOf(actual)),
-                        pair ->
-                            Integer.parseInt(pair.getFirst())
-                                == Integer.parseInt(pair.getSecond()));
-              },
-              c1);
-          return Unit.INSTANCE;
-        });
+        (scope, c1) ->
+            forAll(
+                CoregexArbitrary.of(
+                    "((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])"),
+                (context, ipv4, c2) -> {
+                  var expected = ipv4.split("\\.");
+                  var actual =
+                      assertDoesNotThrow(() -> InetAddress.getByName(ipv4))
+                          .getHostAddress()
+                          .split("\\.");
+                  return expected.length == actual.length
+                      && SequencesKt.all(
+                          SequencesKt.zip(
+                              SequencesKt.sequenceOf(expected), SequencesKt.sequenceOf(actual)),
+                          pair ->
+                              Integer.parseInt(pair.getFirst())
+                                  == Integer.parseInt(pair.getSecond()));
+                },
+                c1));
   }
 
   @Test
@@ -77,30 +72,27 @@ class CoregexArbitraryTest extends Assertions {
     var formatter = DateTimeFormatter.ISO_INSTANT;
     BuildersKt.runBlocking(
         EmptyCoroutineContext.INSTANCE,
-        (scope, c1) -> {
-          forAll(
-              CoregexArbitrary.of(
-                  "[12]\\d{3}-(?:0[1-9]|1[012])-(?:0[1-9]|1\\d|2[0-8])T(?:1\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d{2}[1-9])?Z"),
-              (context, iso8601Date, c2) ->
-                  iso8601Date.equals(formatter.format(formatter.parse(iso8601Date))),
-              c1);
-          return Unit.INSTANCE;
-        });
+        (scope, c1) ->
+            forAll(
+                CoregexArbitrary.of(
+                    "[12]\\d{3}-(?:0[1-9]|1[012])-(?:0[1-9]|1\\d|2[0-8])T(?:1\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d{2}[1-9])?Z"),
+                (context, iso8601Date, c2) ->
+                    iso8601Date.equals(formatter.format(formatter.parse(iso8601Date))),
+                c1));
   }
 
   @Test
   void shouldGenerateUniqueStrings() throws InterruptedException {
     BuildersKt.runBlocking(
         EmptyCoroutineContext.INSTANCE,
-        (scope, c1) -> {
-          forAll(
-              CollectionsKt.list(Arb.Companion, CoregexArbitrary.of("[a-zA-Z0-9]{32,}")),
-              (context, strings, c2) ->
-                  strings.stream()
-                      .allMatch(
-                          s -> s.length() >= 32 && s.chars().allMatch(Character::isLetterOrDigit)),
-              c1);
-          return Unit.INSTANCE;
-        });
+        (scope, c1) ->
+            forAll(
+                CollectionsKt.list(Arb.Companion, CoregexArbitrary.of("[a-zA-Z0-9]{32,}")),
+                (context, strings, c2) ->
+                    strings.stream()
+                        .allMatch(
+                            s ->
+                                s.length() >= 32 && s.chars().allMatch(Character::isLetterOrDigit)),
+                c1));
   }
 }
