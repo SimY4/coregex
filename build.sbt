@@ -28,14 +28,14 @@ lazy val scala213               = "2.13.11"
 lazy val scala3                 = "3.3.1"
 lazy val supportedScalaVersions = List(scala213, scala3)
 
-lazy val javaLibSettings = Seq(
+def javaLibSettings(release: Int) = Seq(
   crossPaths       := false,
   autoScalaLibrary := false,
   Compile / compile / javacOptions ++= Seq("-Xlint:all", "-Werror") ++
-    (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8")
+    (if (9 <= release || scala.util.Properties.isJavaAtLeast("9")) Seq("--release", release.toString)
      else Seq("-source", "1.8", "-target", "1.8")),
   Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing") ++
-    (if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8", "-html5")
+    (if (9 <= release || scala.util.Properties.isJavaAtLeast("9")) Seq("--release", release.toString, "-html5")
      else Seq("-source", "1.8", "-target", "1.8"))
 )
 lazy val jacocoSettings = Test / jacocoReportSettings := JacocoReportSettings(
@@ -73,7 +73,7 @@ lazy val core = (project in file("core"))
       "org.scalameta" %% "munit-scalacheck" % "0.7.29" % Test
     )
   )
-  .settings(javaLibSettings)
+  .settings(javaLibSettings(8))
   .settings(jacocoSettings)
 
 lazy val jqwik = (project in file("jqwik"))
@@ -91,7 +91,7 @@ lazy val jqwik = (project in file("jqwik"))
     Test / parallelExecution := false,
     testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v")
   )
-  .settings(javaLibSettings)
+  .settings(javaLibSettings(8))
   .settings(jacocoSettings)
   .dependsOn(core)
 
@@ -110,7 +110,7 @@ lazy val junitQuickcheck = (project in file("junit-quickcheck"))
     ),
     testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v")
   )
-  .settings(javaLibSettings)
+  .settings(javaLibSettings(8))
   .settings(jacocoSettings)
   .dependsOn(core)
 
@@ -126,7 +126,7 @@ lazy val kotest = (project in file("kotest"))
     ),
     testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v")
   )
-  .settings(javaLibSettings)
+  .settings(javaLibSettings(11))
   .settings(jacocoSettings)
   .dependsOn(core)
 
@@ -157,7 +157,7 @@ lazy val vavrTest = (project in file("vavr-test"))
     ),
     testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v")
   )
-  .settings(javaLibSettings)
+  .settings(javaLibSettings(8))
   .settings(jacocoSettings)
   .dependsOn(core)
 

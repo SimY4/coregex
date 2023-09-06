@@ -31,8 +31,7 @@ import org.junit.jupiter.api.Test;
 class CoregexArbitraryTest extends Assertions {
   @Test
   void shouldGenerateMatchingUUIDString() {
-    RandomSource randomSource =
-        RandomSource.Companion.seeded(ThreadLocalRandom.current().nextLong());
+    var randomSource = RandomSource.Companion.seeded(ThreadLocalRandom.current().nextLong());
     assertTrue(
         SequencesKt.all(
             SequencesKt.take(
@@ -45,8 +44,7 @@ class CoregexArbitraryTest extends Assertions {
 
   @Test
   void shouldGenerateMatchingIPv4String() {
-    RandomSource randomSource =
-        RandomSource.Companion.seeded(ThreadLocalRandom.current().nextLong());
+    var randomSource = RandomSource.Companion.seeded(ThreadLocalRandom.current().nextLong());
     SequencesKt.forEach(
         SequencesKt.take(
             CoregexArbitrary.of(
@@ -69,9 +67,8 @@ class CoregexArbitraryTest extends Assertions {
 
   @Test
   void shouldGenerateMatchingIsoDateString() {
-    DateTimeFormatter formatter = DateTimeFormatter.ISO_INSTANT;
-    RandomSource randomSource =
-        RandomSource.Companion.seeded(ThreadLocalRandom.current().nextLong());
+    var formatter = DateTimeFormatter.ISO_INSTANT;
+    var randomSource = RandomSource.Companion.seeded(ThreadLocalRandom.current().nextLong());
     assertTrue(
         SequencesKt.all(
             SequencesKt.take(
@@ -87,8 +84,7 @@ class CoregexArbitraryTest extends Assertions {
 
   @Test
   void shouldGenerateUniqueStrings() {
-    RandomSource randomSource =
-        RandomSource.Companion.seeded(ThreadLocalRandom.current().nextLong());
+    var randomSource = RandomSource.Companion.seeded(ThreadLocalRandom.current().nextLong());
     assertTrue(
         SequencesKt.all(
             SequencesKt.take(

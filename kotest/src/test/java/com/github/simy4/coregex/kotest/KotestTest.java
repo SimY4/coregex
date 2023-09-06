@@ -36,8 +36,7 @@ import org.junit.jupiter.api.Test;
 class KotestTest extends Assertions {
   @Test
   void shrinkingTest() {
-    RandomSource randomSource =
-        RandomSource.Companion.seeded(ThreadLocalRandom.current().nextLong());
+    var randomSource = RandomSource.Companion.seeded(ThreadLocalRandom.current().nextLong());
     SequencesKt.forEach(
         SequencesKt.take(regexes().samples(randomSource), 100),
         samplePair -> {
