@@ -51,8 +51,8 @@ class CoregexArbitraryTest extends Assertions {
                 CoregexArbitrary.of(
                     "((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])"),
                 (context, ipv4, c2) -> {
-                  var expected = ipv4.split("\\.");
-                  var actual =
+                  String[] expected = ipv4.split("\\.");
+                  String[] actual =
                       assertDoesNotThrow(() -> InetAddress.getByName(ipv4))
                           .getHostAddress()
                           .split("\\.");
@@ -69,7 +69,7 @@ class CoregexArbitraryTest extends Assertions {
 
   @Test
   void shouldGenerateMatchingIsoDateString() throws InterruptedException {
-    var formatter = DateTimeFormatter.ISO_INSTANT;
+    DateTimeFormatter formatter = DateTimeFormatter.ISO_INSTANT;
     BuildersKt.runBlocking(
         EmptyCoroutineContext.INSTANCE,
         (scope, c1) ->

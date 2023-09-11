@@ -37,7 +37,7 @@ public class CoregexShrinker implements Shrinker<String> {
   @NotNull
   @Override
   public List<String> shrink(String s) {
-    var shinks = new ArrayList<String>();
+    List<String> shinks = new ArrayList<String>();
     for (int remainder = coregex.minLength();
         remainder < s.length();
         remainder = (remainder * 2) + 1) {

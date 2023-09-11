@@ -17,12 +17,14 @@
 package com.github.simy4.coregex.kotest;
 
 import com.github.simy4.coregex.core.Coregex;
+import com.github.simy4.coregex.core.RNG;
 import com.github.simy4.coregex.core.rng.RandomRNG;
 import io.kotest.property.Arb;
 import io.kotest.property.Classifier;
 import io.kotest.property.GenKt;
 import io.kotest.property.RandomSource;
 import io.kotest.property.Sample;
+import io.kotest.property.Shrinker;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -63,9 +65,9 @@ public class CoregexArbitrary extends Arb<String> {
   @NotNull
   @Override
   public Sample<String> sample(@NotNull RandomSource randomSource) {
-    var rng = new RandomRNG(randomSource.getRandom().nextLong());
-    var shrinker = new CoregexShrinker(coregex, rng);
-    var sample = coregex.sized(sized >= 0 ? sized : Integer.MAX_VALUE - 2).generate(rng);
+    RNG rng = new RandomRNG(randomSource.getRandom().nextLong());
+    Shrinker<String> shrinker = new CoregexShrinker(coregex, rng);
+    String sample = coregex.sized(sized >= 0 ? sized : Integer.MAX_VALUE - 2).generate(rng);
     return GenKt.sampleOf(sample, shrinker);
   }
 
