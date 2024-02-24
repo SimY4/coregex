@@ -38,10 +38,11 @@ trait CoregexInstances {
     val coregex = CoregexParser.getInstance().parse(Pattern.compile(regex.value))
     Shrink.withLazyList { larger =>
       val rng = new RandomRNG()
-      LazyList
-        .iterate(coregex.minLength())(remainder => (remainder * 2) + 1)
-        .takeWhile(remainder => remainder < larger.length)
-        .map(remainder => coregex.sized(remainder).generate(rng).asInstanceOf[Matching[A, Regex]])
+      LazyList.unfold(coregex.minLength()) { remainder =>
+        Option.when(remainder < larger.length) {
+          (coregex.sized(remainder).generate(rng).asInstanceOf[Matching[A, Regex]], (remainder * 2) + 1)
+        }
+      }
     }
   }
 }
