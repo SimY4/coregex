@@ -24,7 +24,7 @@ inThisBuild(
   )
 )
 
-lazy val scala213               = "2.13.12"
+lazy val scala213               = "2.13.13"
 lazy val scala3                 = "3.3.1"
 lazy val supportedScalaVersions = List(scala213, scala3)
 
@@ -83,9 +83,9 @@ lazy val jqwik = (project in file("jqwik"))
     description   := "JQwik bindings for coregex library.",
     headerEndYear := Some(2023),
     libraryDependencies ++= Seq(
-      "net.jqwik"   % "jqwik-api"         % "1.8.2"  % Provided,
-      "net.jqwik"   % "jqwik-engine"      % "1.8.2"  % Test,
-      "net.jqwik"   % "jqwik-testing"     % "1.8.2"  % Test,
+      "net.jqwik"   % "jqwik-api"         % "1.8.3"  % Provided,
+      "net.jqwik"   % "jqwik-engine"      % "1.8.3"  % Test,
+      "net.jqwik"   % "jqwik-testing"     % "1.8.3"  % Test,
       "net.aichler" % "jupiter-interface" % "0.11.1" % Test
     ),
     Test / parallelExecution := false,
