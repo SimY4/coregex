@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.StringJoiner;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -109,6 +111,15 @@ public abstract class Coregex implements Serializable {
   }
 
   /**
+   * @return maximal possible length of all generated strings of this regex. {@code -1} means no
+   *     upper limit.
+   */
+  public abstract int maxLength();
+
+  /** @return minimal possible length of all generated strings of this regex */
+  public abstract int minLength();
+
+  /**
    * Quantify this regex.
    *
    * @param min min number of times this regex should be repeated
@@ -124,6 +135,9 @@ public abstract class Coregex implements Serializable {
     return 1 == min && 1 == max ? this : new Quantified(this, min, max, type);
   }
 
+  /** @return simplified and more memory efficient version of this regex. */
+  public abstract Coregex simplify();
+
   /**
    * Size this regex. Generated string will be at most this long.
    *
@@ -136,18 +150,6 @@ public abstract class Coregex implements Serializable {
     int maxLength = maxLength();
     return -1 != maxLength && maxLength <= size ? this : new Sized(this, size);
   }
-
-  /** @return minimal possible length of all generated strings of this regex */
-  public abstract int minLength();
-
-  /**
-   * @return maximal possible length of all generated strings of this regex. {@code -1} means no
-   *     upper limit.
-   */
-  public abstract int maxLength();
-
-  /** @return simplified and more memory efficient version of this regex. */
-  public abstract Coregex simplify();
 
   /** Sequential concatenation of regexes. */
   public static final class Concat extends Coregex {
@@ -190,16 +192,6 @@ public abstract class Coregex implements Serializable {
 
     /** {@inheritDoc} */
     @Override
-    public int minLength() {
-      int min = first.minLength();
-      for (Coregex coregex : rest) {
-        min += coregex.minLength();
-      }
-      return min;
-    }
-
-    /** {@inheritDoc} */
-    @Override
     public int maxLength() {
       int sum = first.maxLength();
       if (-1 == sum) {
@@ -213,6 +205,16 @@ public abstract class Coregex implements Serializable {
         sum += max;
       }
       return sum;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public int minLength() {
+      int min = first.minLength();
+      for (Coregex coregex : rest) {
+        min += coregex.minLength();
+      }
+      return min;
     }
 
     /** {@inheritDoc} */
@@ -279,6 +281,137 @@ public abstract class Coregex implements Serializable {
     }
   }
 
+  /** Regex group. */
+  public static final class Group extends Coregex {
+    private static final long serialVersionUID = 1L;
+
+    private final int index;
+    private final String name;
+    private final Coregex group;
+
+    /**
+     * Non-capturing group.
+     *
+     * @param group group body
+     * @see Group(int, Coregex)
+     * @see Group(int, String, Coregex)
+     */
+    public Group(Coregex group) {
+      this(-1, null, group);
+    }
+
+    /**
+     * Capturing group.
+     *
+     * @param index group index
+     * @param group group body
+     * @throws IllegalArgumentException if index is negative
+     * @see Group(Coregex)
+     * @see Group(int, String, Coregex)
+     */
+    public Group(int index, Coregex group) {
+      this(index, null, group);
+    }
+
+    /**
+     * Named capturing group.
+     *
+     * @param index group index
+     * @param name group name
+     * @param group group body
+     * @throws IllegalArgumentException if index is negative
+     * @see Group(Coregex)
+     * @see Group(int, Coregex)
+     */
+    public Group(int index, String name, Coregex group) {
+      if (-1 != index && 0 > index) {
+        throw new IllegalArgumentException("index: " + index + " has to be positive");
+      }
+      this.index = index;
+      this.name = name;
+      this.group = requireNonNull(group, "group");
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    protected Pair<RNG, String> apply(RNG rng, int remainder) {
+      if (remainder < minLength()) {
+        throw new IllegalArgumentException(
+            "remainder: " + remainder + " has to be greater than " + minLength());
+      }
+      return group.apply(rng, remainder);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public int maxLength() {
+      return group.maxLength();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public int minLength() {
+      return group.minLength();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Coregex simplify() {
+      Coregex simplified = group.simplify();
+      if (0 == index && null == name) {
+        return simplified;
+      } else {
+        return new Group(index, name, simplified);
+      }
+    }
+
+    /** @return group index if group is a capturing group */
+    public OptionalInt index() {
+      return -1 == index ? OptionalInt.empty() : OptionalInt.of(index);
+    }
+
+    /** @return group name if group is a named group */
+    public Optional<String> name() {
+      return Optional.ofNullable(name);
+    }
+
+    /** @return group body */
+    public Coregex group() {
+      return group;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      Group group = (Group) o;
+      return index == group.index
+          && Objects.equals(this.name, group.name)
+          && this.group.equals(group.group);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(index, name, group);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("(");
+      if (null != name) {
+        sb.append("?<").append(name).append('>');
+      }
+      if (0 > index) {
+        sb.append("?:");
+      }
+      return sb.append(group).append(')').toString();
+    }
+  }
+
   /** Literal string regex. */
   public static final class Literal extends Coregex {
     private static final long serialVersionUID = 1L;
@@ -341,13 +474,13 @@ public abstract class Coregex implements Serializable {
 
     /** {@inheritDoc} */
     @Override
-    public int minLength() {
+    public int maxLength() {
       return literal.length();
     }
 
     /** {@inheritDoc} */
     @Override
-    public int maxLength() {
+    public int minLength() {
       return literal.length();
     }
 
@@ -479,15 +612,15 @@ public abstract class Coregex implements Serializable {
 
     /** {@inheritDoc} */
     @Override
-    public int minLength() {
-      return quantified.minLength() * min;
+    public int maxLength() {
+      int maxLength;
+      return -1 == max || -1 == (maxLength = quantified.maxLength()) ? -1 : maxLength * max;
     }
 
     /** {@inheritDoc} */
     @Override
-    public int maxLength() {
-      int maxLength;
-      return -1 == max || -1 == (maxLength = quantified.maxLength()) ? -1 : maxLength * max;
+    public int minLength() {
+      return quantified.minLength() * min;
     }
 
     /** {@inheritDoc} */
@@ -515,7 +648,7 @@ public abstract class Coregex implements Serializable {
     }
 
     /**
-     * @return quantifier type. Currently doesn't affect the generation flow - only display.
+     * @return quantifier type. Currently, doesn't affect the generation flow - only display.
      * @see Type
      */
     public Type type() {
@@ -546,14 +679,7 @@ public abstract class Coregex implements Serializable {
     @SuppressWarnings("fallthrough")
     public String toString() {
       StringBuilder string = new StringBuilder();
-      boolean wrapInBraces = quantified instanceof Concat;
-      if (wrapInBraces) {
-        string.append('(');
-        string.append(quantified);
-        string.append(')');
-      } else {
-        string.append(quantified);
-      }
+      string.append(quantified);
       switch (max) {
         case -1:
           switch (min) {
@@ -633,13 +759,13 @@ public abstract class Coregex implements Serializable {
 
     /** {@inheritDoc} */
     @Override
-    public int minLength() {
+    public int maxLength() {
       return 1;
     }
 
     /** {@inheritDoc} */
     @Override
-    public int maxLength() {
+    public int minLength() {
       return 1;
     }
 
@@ -705,19 +831,19 @@ public abstract class Coregex implements Serializable {
         throw new IllegalArgumentException(
             "remainder: " + remainder + " has to be greater than " + minLength());
       }
-      return sized.apply(rng, maxLength());
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public int minLength() {
-      return Math.min(size, sized.minLength());
+      return sized.apply(rng, Math.min(remainder, maxLength()));
     }
 
     /** {@inheritDoc} */
     @Override
     public int maxLength() {
       return -1 == sized.maxLength() ? size : Math.min(size, sized.maxLength());
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public int minLength() {
+      return Math.min(size, sized.minLength());
     }
 
     /** {@inheritDoc} */
@@ -806,16 +932,6 @@ public abstract class Coregex implements Serializable {
 
     /** {@inheritDoc} */
     @Override
-    public int minLength() {
-      int min = first.minLength();
-      for (Coregex coregex : rest) {
-        min = Math.min(min, coregex.minLength());
-      }
-      return min;
-    }
-
-    /** {@inheritDoc} */
-    @Override
     public int maxLength() {
       int agg = first.maxLength();
       if (-1 == agg) {
@@ -829,6 +945,16 @@ public abstract class Coregex implements Serializable {
         agg = Math.max(agg, max);
       }
       return agg;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public int minLength() {
+      int min = first.minLength();
+      for (Coregex coregex : rest) {
+        min = Math.min(min, coregex.minLength());
+      }
+      return min;
     }
 
     @Override
@@ -868,7 +994,7 @@ public abstract class Coregex implements Serializable {
 
     @Override
     public String toString() {
-      StringJoiner joiner = new StringJoiner("|", "(?:", ")");
+      StringJoiner joiner = new StringJoiner("|");
       joiner.add(first.toString());
       for (Coregex coregex : rest) {
         joiner.add(coregex.toString());

@@ -52,7 +52,7 @@ public final class CoregexParser {
       return new Coregex.Literal(regex, flags);
     }
     Context ctx = new Context(regex, flags);
-    Coregex coregex = RE(ctx);
+    Coregex coregex = new Coregex.Group(ctx.index(), RE(ctx));
     if (ctx.hasMoreElements()) {
       coregex = ctx.error("EOL");
     }
@@ -328,11 +328,11 @@ public final class CoregexParser {
       switch (ctx.peek()) {
         case ':':
           ctx.match(':');
-          group = RE(ctx);
+          group = new Coregex.Group(RE(ctx));
           break;
         case '>':
           ctx.match('>');
-          group = RE(ctx);
+          group = new Coregex.Group(RE(ctx));
           break;
         case '=':
         case '!':
@@ -346,9 +346,9 @@ public final class CoregexParser {
               group = ctx.unsupported("look-behinds are not supported");
               break;
             default:
-              ctx.span(ch -> '>' != ch);
+              String name = ctx.span(ch -> '>' != ch);
               ctx.match('>');
-              group = RE(ctx);
+              group = new Coregex.Group(ctx.index(), name, RE(ctx));
               break;
           }
           break;
@@ -364,7 +364,7 @@ public final class CoregexParser {
           break;
       }
     } else {
-      group = RE(ctx);
+      group = new Coregex.Group(ctx.index(), RE(ctx));
     }
     ctx.match(')');
     return group;
@@ -574,7 +574,7 @@ public final class CoregexParser {
 
     private final String regex;
     private final char[] tokens = {SKIP, SKIP, SKIP, SKIP};
-    private int flags, cursor, tokensCursor;
+    private int flags, groupIndex, cursor, tokensCursor;
 
     Context(String regex, int flags) {
       this.regex = regex;
@@ -583,6 +583,10 @@ public final class CoregexParser {
 
     boolean hasMoreElements() {
       return EOF != peek();
+    }
+
+    int index() {
+      return groupIndex++;
     }
 
     char peek() {
