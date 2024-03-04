@@ -67,7 +67,7 @@ lazy val core = (project in file("core"))
     name          := "core",
     moduleName    := "coregex-core",
     description   := "A handy utility for generating strings that match given regular expression criteria.",
-    headerEndYear := Some(2023),
+    headerEndYear := Some(2024),
     libraryDependencies ++= Seq(
       "org.scalameta" %% "munit"            % "0.7.29" % Test,
       "org.scalameta" %% "munit-scalacheck" % "0.7.29" % Test
@@ -81,7 +81,7 @@ lazy val jqwik = (project in file("jqwik"))
     name          := "jqwik",
     moduleName    := "coregex-jqwik",
     description   := "JQwik bindings for coregex library.",
-    headerEndYear := Some(2023),
+    headerEndYear := Some(2024),
     libraryDependencies ++= Seq(
       "net.jqwik"   % "jqwik-api"         % "1.8.3"  % Provided,
       "net.jqwik"   % "jqwik-engine"      % "1.8.3"  % Test,
@@ -100,7 +100,7 @@ lazy val junitQuickcheck = (project in file("junit-quickcheck"))
     name          := "junit-quickcheck",
     moduleName    := "coregex-junit-quickcheck",
     description   := "JUnit Quickcheck bindings for coregex library.",
-    headerEndYear := Some(2023),
+    headerEndYear := Some(2024),
     libraryDependencies ++= Seq(
       "com.pholser"    % "junit-quickcheck-core"       % "1.0"    % Provided,
       "com.pholser"    % "junit-quickcheck-generators" % "1.0"    % Test,
@@ -119,7 +119,7 @@ lazy val kotest = (project in file("kotest"))
     name          := "kotest",
     moduleName    := "coregex-kotest",
     description   := "Kotest bindings for coregex library.",
-    headerEndYear := Some(2023),
+    headerEndYear := Some(2024),
     libraryDependencies ++= Seq(
       "io.kotest"   % "kotest-property-jvm" % "5.8.0"  % Provided,
       "net.aichler" % "jupiter-interface"   % "0.11.1" % Test
@@ -135,7 +135,7 @@ lazy val scalacheck = (project in file("scalacheck"))
     name          := "scalacheck",
     moduleName    := "coregex-scalacheck",
     description   := "ScalaCheck bindings for coregex library.",
-    headerEndYear := Some(2023),
+    headerEndYear := Some(2024),
     libraryDependencies ++= Seq(
       "org.scalacheck" %% "scalacheck" % "1.17.0" % Provided
     ),
@@ -150,7 +150,7 @@ lazy val vavrTest = (project in file("vavr-test"))
     name          := "vavr-test",
     moduleName    := "coregex-vavr-test",
     description   := "VAVR Test bindings for coregex library.",
-    headerEndYear := Some(2023),
+    headerEndYear := Some(2024),
     libraryDependencies ++= Seq(
       "io.vavr"     % "vavr-test"         % "0.10.4" % Provided,
       "net.aichler" % "jupiter-interface" % "0.11.1" % Test
