@@ -35,7 +35,10 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
       val generated = actual.generate(rng)
 
       assertEquals(actual, expected)
-      assert(pattern.matcher(generated).matches(), s"${pattern.pattern()} should match generated: $generated")
+      assert(
+        clue(pattern).matcher(clue(generated)).matches(),
+        s"${pattern.pattern()} should match generated: $generated"
+      )
     }
 
   def shouldParseQuotedRegex(pattern: Pattern, rng: RNG)(implicit loc: Location): Unit =
@@ -43,7 +46,10 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
       val expected  = Pattern.compile(Pattern.quote(pattern.pattern()))
       val actual    = Coregex.from(expected)
       val generated = actual.generate(rng)
-      assert(expected.matcher(generated).matches(), s"${expected.pattern()} should match generated: $generated")
+      assert(
+        clue(expected).matcher(clue(generated)).matches(),
+        s"${expected.pattern()} should match generated: $generated"
+      )
     }
 
   def shouldParseLiteralRegex(pattern: Pattern, rng: RNG)(implicit loc: Location): Unit =
@@ -51,7 +57,10 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
       val expected  = Pattern.compile(pattern.pattern(), Pattern.LITERAL)
       val actual    = Coregex.from(expected)
       val generated = actual.generate(rng)
-      assert(expected.matcher(generated).matches(), s"${expected.pattern()} should match generated: $generated")
+      assert(
+        clue(expected).matcher(clue(generated)).matches(),
+        s"${expected.pattern()} should match generated: $generated"
+      )
     }
 
   def shouldThrowUnsupported(pattern: Pattern)(implicit loc: Location): Unit =
