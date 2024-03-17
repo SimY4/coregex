@@ -121,7 +121,7 @@ lazy val kotest = (project in file("kotest"))
     description   := "Kotest bindings for coregex library.",
     headerEndYear := Some(2024),
     libraryDependencies ++= Seq(
-      "io.kotest"   % "kotest-property-jvm" % "5.8.0"  % Provided,
+      "io.kotest"   % "kotest-property-jvm" % "5.8.1"  % Provided,
       "net.aichler" % "jupiter-interface"   % "0.11.1" % Test
     ),
     testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v")
