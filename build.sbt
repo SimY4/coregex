@@ -137,7 +137,7 @@ lazy val scalacheck = (project in file("scalacheck"))
     description   := "ScalaCheck bindings for coregex library.",
     headerEndYear := Some(2024),
     libraryDependencies ++= Seq(
-      "org.scalacheck" %% "scalacheck" % "1.17.1" % Provided
+      "org.scalacheck" %% "scalacheck" % "1.18.0" % Provided
     ),
     crossScalaVersions := supportedScalaVersions,
     Test / tpolecatExcludeOptions += org.typelevel.scalacoptions.ScalacOptions.warnNonUnitStatement
