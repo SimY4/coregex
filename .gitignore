@@ -6,3 +6,4 @@
 target/
 *.iml
 .jqwik-database
+metals.sbt
