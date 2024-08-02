@@ -39,6 +39,6 @@ object QuantifyRange {
   implicit def shrinkQuantifyRange(implicit shrinkInt: Shrink[Int]): Shrink[QuantifyRange] =
     Shrink { case QuantifyRange(min, max, tpe) =>
       shrinkInt.shrink(min).map(QuantifyRange(_, max, tpe)) #:::
-        shrinkInt.shrink(max).map(QuantifyRange(min, _, tpe))
+        shrinkInt.shrink(max).filter(min <= _).map(QuantifyRange(min, _, tpe))
     }
 }

@@ -29,14 +29,14 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
   }
 
   property("empty quantified should give empty") {
-    forAll { (range: QuantifyRange, `type`: Coregex.Quantified.Type, rng: RNG) =>
-      Coregex.empty().quantify(range.min, range.max, `type`).generate(rng).isEmpty
+    forAll { (range: QuantifyRange, rng: RNG) =>
+      Coregex.empty().quantify(range.min, range.max, range.`type`).generate(rng).isEmpty
     }
   }
 
   property("quantified length should be in range") {
-    forAll { (coregex: Coregex, range: QuantifyRange, `type`: Coregex.Quantified.Type, rng: RNG) =>
-      val quantified = coregex.quantify(range.min, range.max, `type`)
+    forAll { (coregex: Coregex, range: QuantifyRange, rng: RNG) =>
+      val quantified = coregex.quantify(range.min, range.max, range.`type`)
       val generated  = quantified.generate(rng)
 
       val quantifiedMinLengthCheck = (0 < quantified.minLength()) ==>
@@ -53,11 +53,21 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
   }
 
   property("double quantified should multiply quantification") {
-    forAll {
-      (coregex: Coregex, first: QuantifyRange, second: QuantifyRange, `type`: Coregex.Quantified.Type, rng: RNG) =>
-        val quantified       = coregex.quantify(first.min * second.min, first.min * second.min, `type`)
-        val doubleQuantified = coregex.quantify(first.min, first.min, `type`).quantify(second.min, second.min, `type`)
-        quantified.generate(rng) ?= doubleQuantified.generate(rng)
+    forAll { (coregex: Coregex, first: QuantifyRange, second: QuantifyRange, rng: RNG) =>
+      val quantified = coregex.quantify(first.min * second.min, first.min * second.min, first.`type`)
+      val doubleQuantified =
+        coregex.quantify(first.min, first.min, first.`type`).quantify(second.min, second.min, second.`type`)
+      quantified.generate(rng) ?= doubleQuantified.generate(rng)
+    }
+  }
+
+  property("quantified sized respect both") {
+    forAll { (coregex: Coregex, range: QuantifyRange, length: Byte, rng: RNG) =>
+      val quantified        = coregex.quantify(range.min, range.max, range.`type`)
+      val size              = quantified.minLength() + length.toInt.abs
+      val expectedMaxLength = if (quantified.maxLength() < 0) size else quantified.maxLength() min size
+      val generated         = quantified.sized(size).generate(rng)
+      (generated.length() <= expectedMaxLength) :| s"${generated.length()} <= $expectedMaxLength"
     }
   }
 
