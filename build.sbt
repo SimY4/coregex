@@ -69,7 +69,7 @@ lazy val core = (project in file("core"))
     description   := "A handy utility for generating strings that match given regular expression criteria.",
     headerEndYear := Some(2024),
     libraryDependencies ++= Seq(
-      "org.scalameta" %% "munit"            % "1.0.0" % Test,
+      "org.scalameta" %% "munit"            % "1.0.1" % Test,
       "org.scalameta" %% "munit-scalacheck" % "1.0.0" % Test
     )
   )
