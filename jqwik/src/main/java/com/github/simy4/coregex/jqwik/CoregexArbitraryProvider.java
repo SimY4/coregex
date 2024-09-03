@@ -28,8 +28,7 @@ import net.jqwik.api.providers.TypeUsage;
 public class CoregexArbitraryProvider implements ArbitraryProvider {
   @Override
   public boolean canProvideFor(TypeUsage targetType) {
-    return targetType.isAssignableFrom(String.class)
-        && targetType.findAnnotation(Regex.class).isPresent();
+    return targetType.isAssignableFrom(String.class) && targetType.isAnnotated(Regex.class);
   }
 
   @Override
