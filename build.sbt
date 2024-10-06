@@ -83,10 +83,10 @@ lazy val jqwik = (project in file("jqwik"))
     description   := "JQwik bindings for coregex library.",
     headerEndYear := Some(2024),
     libraryDependencies ++= Seq(
-      "net.jqwik"   % "jqwik-api"         % "1.9.1"  % Provided,
-      "net.jqwik"   % "jqwik-engine"      % "1.9.1"  % Test,
-      "net.jqwik"   % "jqwik-testing"     % "1.9.1"  % Test,
-      "net.aichler" % "jupiter-interface" % "0.11.1" % Test
+      "net.jqwik"            % "jqwik-api"         % "1.9.1"                          % Provided,
+      "net.jqwik"            % "jqwik-engine"      % "1.9.1"                          % Test,
+      "net.jqwik"            % "jqwik-testing"     % "1.9.1"                          % Test,
+      "com.github.sbt.junit" % "jupiter-interface" % JupiterKeys.jupiterVersion.value % Test
     ),
     Test / parallelExecution := false,
     testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v")
@@ -121,8 +121,8 @@ lazy val kotest = (project in file("kotest"))
     description   := "Kotest bindings for coregex library.",
     headerEndYear := Some(2024),
     libraryDependencies ++= Seq(
-      "io.kotest"   % "kotest-property-jvm" % "5.9.1"  % Provided,
-      "net.aichler" % "jupiter-interface"   % "0.11.1" % Test
+      "io.kotest"            % "kotest-property-jvm" % "5.9.1"                          % Provided,
+      "com.github.sbt.junit" % "jupiter-interface"   % JupiterKeys.jupiterVersion.value % Test
     ),
     testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v")
   )
@@ -152,8 +152,8 @@ lazy val vavrTest = (project in file("vavr-test"))
     description   := "VAVR Test bindings for coregex library.",
     headerEndYear := Some(2024),
     libraryDependencies ++= Seq(
-      "io.vavr"     % "vavr-test"         % "0.10.4" % Provided,
-      "net.aichler" % "jupiter-interface" % "0.11.1" % Test
+      "io.vavr"              % "vavr-test"         % "0.10.4"                         % Provided,
+      "com.github.sbt.junit" % "jupiter-interface" % JupiterKeys.jupiterVersion.value % Test
     ),
     testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v")
   )
