@@ -1027,14 +1027,21 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
           3,
           6
         ) -> Pattern.compile("((?i)[a-z]+(?-i)-[A-Z]){3,6}"),
-        new Quantified(
-          set() {
+        new Concat(
+          new Quantified(
+            set() {
+              _.range('a', 'z')
+                .intersect(set()(_.union(set()(_.set('a', 'e', 'i', 'o', 'u').negate()).set())).set())
+            },
+            1
+          ),
+          set()(_.single(']')),
+          set()(
             _.range('a', 'z')
-              .range('A', 'Z')
-              .intersect(set()(_.set('a', 'e', 'i', 'o', 'u', 'A', 'E', 'I', 'O', 'U').negate()).set())
-          },
-          1
-        )       -> Pattern.compile("[a-zA-Z&&[^aeiouAEIOU]]+"),
+              .intersect(set()(_.set('a', 'e', 'i', 'o', 'u')).set())
+              .intersect(set()(_.set('e', 'i')).set())
+          )
+        )       -> Pattern.compile("[a-z&&[^aeiou]]+[]][a-z&&aeiou&&ei]"),
         empty() -> Pattern.compile("^(?:||)$")
       )
     rng <- List(new RandomRNG())

@@ -251,7 +251,7 @@ public final class CoregexParser {
 
   /*
    * <pre>{@code
-   * set ::= '[', [ '^' ], { set-item }, ']'
+   * set ::= '[', [ '^' ], set-item, { [ '&&' ], set-item }, ']'
    * }</pre>
    */
   private Set set(Context ctx) {
@@ -261,9 +261,28 @@ public final class CoregexParser {
       ctx.match('^');
       negated = true;
     }
-    Set.Builder set = Set.builder(ctx.flags);
+    Set.Builder set = Set.builder(ctx.flags), intersect = null;
+    setItem(set, ctx);
     while (']' != ctx.peek()) {
+      boolean mustIntersect = false;
+      if ('&' == ctx.peek() && '&' == ctx.peek(2)) {
+        ctx.match('&');
+        ctx.match('&');
+        if (null != intersect) {
+          set = intersect.intersect(set.build());
+        }
+        intersect = set;
+        set = Set.builder(ctx.flags);
+        mustIntersect = '[' == ctx.peek();
+      }
       setItem(set, ctx);
+      if (mustIntersect) {
+        set = intersect.intersect(set.build());
+        intersect = null;
+      }
+    }
+    if (null != intersect) {
+      set = intersect.intersect(set.build());
     }
     ctx.match(']');
     return (negated ? set.negate() : set).build();
@@ -282,16 +301,6 @@ public final class CoregexParser {
     switch (ch) {
       case '[':
         set.union(set(ctx));
-        break;
-      case '&':
-        ctx.match('&');
-        ch = ctx.peek();
-        if ('&' == ch) {
-          ctx.match('&');
-          set.intersect(set(ctx));
-        } else {
-          set.single('&');
-        }
         break;
       case '-':
         ctx.match('-');

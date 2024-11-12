@@ -52,9 +52,11 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
   }
 
   property("sampled should not be in intersection") {
-    forAll { (set: Set, ch: Char) =>
-      val intersection = Set.builder().union(set).intersect(Set.builder().single(ch).build()).build()
-      !intersection.test(ch.toInt) :| s"$ch in [$intersection]"
+    forAll { (left: Set, right: Set, seed1: Long, seed2: Long) =>
+      val leftWithCommon = Set.builder().union(left).single(right.sample(seed1)).build()
+      val intersection   = Set.builder().union(leftWithCommon).intersect(right).build()
+      val generated      = intersection.sample(seed2)
+      (leftWithCommon.test(generated.toInt) && right.test(generated.toInt)) :| s"$generated in [$intersection]"
     }
   }
 
