@@ -113,11 +113,15 @@ public final class Set implements IntPredicate, Serializable {
    * @return selected character
    */
   public char sample(long seed) {
-    return (char)
-        chars.stream()
-            .skip(Math.abs(seed % chars.cardinality()))
-            .findFirst()
-            .orElseThrow(() -> new IllegalStateException("empty set: " + description));
+    if (chars.isEmpty()) {
+      throw new IllegalStateException("empty set: " + description);
+    }
+    long skip = Math.abs(seed % chars.cardinality());
+    int sample = chars.nextSetBit(0);
+    while (skip-- > 0) {
+      sample = chars.nextSetBit(sample + 1);
+    }
+    return (char) sample;
   }
 
   /** @return partitions this set into chunks. */
