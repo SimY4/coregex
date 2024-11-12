@@ -213,15 +213,32 @@ public final class Set implements IntPredicate, Serializable {
       return this;
     }
 
+    @Deprecated
+    public Builder set(Set set) {
+      return union(set);
+    }
+
     /**
-     * Adds a compiled set of characters to this set.
+     * Combines this set with another compiled set of characters.
      *
      * @param set set of characters
      * @return this builder instance
      */
-    public Builder set(Set set) {
+    public Builder union(Set set) {
       chars.or(requireNonNull(set, "set").chars);
       description.append(set);
+      return this;
+    }
+
+    /**
+     * Intersects this set with another compiled set of characters.
+     *
+     * @param set set of characters
+     * @return this builder instance
+     */
+    public Builder intersect(Set set) {
+      chars.and(requireNonNull(set, "set").chars);
+      description.append("&&").append(set);
       return this;
     }
 

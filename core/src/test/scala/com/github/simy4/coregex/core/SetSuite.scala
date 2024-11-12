@@ -44,10 +44,17 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
   }
 
   property("sampled should be in union") {
-    forAll { (first: Set, rest: List[Set], seed: Long) =>
-      val union     = rest.foldLeft(Set.builder().set(first))(_ set _).build()
+    forAll { (left: Set, right: Set, seed: Long) =>
+      val union     = Set.builder().union(left).union(right).build()
       val generated = union.sample(seed)
-      (first :: rest).exists(_.test(generated.toInt)) :| s"$generated in [$union]"
+      (left.test(generated.toInt) || right.test(generated.toInt)) :| s"$generated in [$union]"
+    }
+  }
+
+  property("sampled should not be in intersection") {
+    forAll { (set: Set, ch: Char) =>
+      val intersection = Set.builder().union(set).intersect(Set.builder().single(ch).build()).build()
+      !intersection.test(ch.toInt) :| s"$ch in [$intersection]"
     }
   }
 
@@ -61,7 +68,7 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
 
   property("double negation") {
     forAll { (set: Set, seed: Long) =>
-      set.sample(seed) ?= Set.builder().set(set).negate().negate().build().sample(seed)
+      set.sample(seed) ?= Set.builder().union(set).negate().negate().build().sample(seed)
     }
   }
 
@@ -69,7 +76,7 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
     forAll { (set: Set, seed: Long) =>
       val result = Set
         .builder(Pattern.CASE_INSENSITIVE)
-        .set(set)
+        .union(set)
         .build()
         .sample(seed)
 
@@ -81,7 +88,7 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
     forAll { (seed: Long) =>
       val result = Set
         .builder()
-        .set(Set.ALL.get())
+        .union(Set.ALL.get())
         .negate()
         .build()
         .sample(seed)
@@ -94,7 +101,7 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
     forAll { (seed: Long) =>
       val result = Set
         .builder()
-        .set(Set.UNIX_LINES.get())
+        .union(Set.UNIX_LINES.get())
         .negate()
         .build()
         .sample(seed)

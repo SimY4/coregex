@@ -281,7 +281,17 @@ public final class CoregexParser {
     char ch = ctx.peek();
     switch (ch) {
       case '[':
-        set.set(set(ctx));
+        set.union(set(ctx));
+        break;
+      case '&':
+        ctx.match('&');
+        ch = ctx.peek();
+        if ('&' == ch) {
+          ctx.match('&');
+          set.intersect(set(ctx));
+        } else {
+          set.single('&');
+        }
         break;
       case '-':
         ctx.match('-');
@@ -289,7 +299,7 @@ public final class CoregexParser {
         break;
       case '\\':
         ctx.match('\\');
-        set.set(metachar(ctx));
+        set.union(metachar(ctx));
         break;
       default:
         ctx.match(ch);

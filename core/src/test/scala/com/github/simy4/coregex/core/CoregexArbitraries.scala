@@ -104,7 +104,7 @@ trait CoregexArbitraries {
         yield Set.builder(flags).set(ch, rest.toCharArray: _*).build(),
       for (flags <- genFlags; ch1 <- charGen; ch2 <- charGen; if ch1 != ch2)
         yield Set.builder(flags).range(ch1 min ch2, ch1 max ch2).build(),
-      for (flags <- genFlags; set <- fix.map(set => Set.builder(flags).set(set).build())) yield set
+      for (flags <- genFlags; set <- fix.map(set => Set.builder(flags).union(set).build())) yield set
     )
   }
   def shrinkSet(set: Set): LazyList[Set] = set.shrink().toScala(LazyList)

@@ -721,8 +721,6 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
             ")",
           Pattern.COMMENTS
         ),
-//(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]+|::(ffff(:0{1,4})?:)?((25[0-5]|(2[0-4]|1?[0-9])?[0-9])[.]){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1?[0-9])?[0-9])[.]){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9]))
-//(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|[0-9a-fA-F]{1,4}:{1,6}:[0-9a-fA-F]{1,4}|[0-9a-fA-F]{1,4}:{1,5}:[0-9a-fA-F]{1,4}{1,2}|[0-9a-fA-F]{1,4}:{1,4}:[0-9a-fA-F]{1,4}{1,3}|[0-9a-fA-F]{1,4}:{1,3}:[0-9a-fA-F]{1,4}{1,4}|[0-9a-fA-F]{1,4}:{1,2}:[0-9a-fA-F]{1,4}{1,5}|[0-9a-fA-F]{1,4}::[0-9a-fA-F]{1,4}{1,6}|::[0-9a-fA-F]{1,4}{1,7}|:|fe80::[0-9a-fA-F]{0,4}{0,4}%[0-9a-zA-Z]+|::ffff:0{1,4}?:?25[0-5]|2[0-4]|1?[0-9]?[0-9][.]{3}25[0-5]|2[0-4]|1?[0-9]?[0-9]|[0-9a-fA-F]{1,4}:{1,4}:25[0-5]|2[0-4]|1?[0-9]?[0-9][.]{3}25[0-5]|2[0-4]|1?[0-9]?[0-9])
         new Concat(
           new Group(
             new Union(
@@ -961,7 +959,7 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
             "region",
             new Quantified(
               set() {
-                _.set(set()(_.range('0', '9').range('a', 'z').range('A', 'Z').single('_')).set())
+                _.union(set()(_.range('0', '9').range('a', 'z').range('A', 'Z').single('_')).set())
                   .single('-')
               },
               1
@@ -988,13 +986,13 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
                   "resourceType",
                   new Quantified(
                     set() {
-                      _.set(set()(_.range('0', '9').range('a', 'z').range('A', 'Z').single('_')).set())
+                      _.union(set()(_.range('0', '9').range('a', 'z').range('A', 'Z').single('_')).set())
                         .single('-')
                     },
                     1
                   )
                 ),
-                set()(_.single(':').set(set()(_.single('/')).set()))
+                set()(_.single(':').union(set()(_.single('/')).set()))
               )
             ),
             0,
@@ -1005,7 +1003,7 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
             "resource",
             new Quantified(
               set() {
-                _.set(set()(_.range('0', '9').range('a', 'z').range('A', 'Z').single('_')).set())
+                _.union(set()(_.range('0', '9').range('a', 'z').range('A', 'Z').single('_')).set())
                   .set('.', '-')
               },
               1
@@ -1028,7 +1026,15 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
           ),
           3,
           6
-        )       -> Pattern.compile("((?i)[a-z]+(?-i)-[A-Z]){3,6}"),
+        ) -> Pattern.compile("((?i)[a-z]+(?-i)-[A-Z]){3,6}"),
+        new Quantified(
+          set() {
+            _.range('a', 'z')
+              .range('A', 'Z')
+              .intersect(set()(_.set('a', 'e', 'i', 'o', 'u', 'A', 'E', 'I', 'O', 'U').negate()).set())
+          },
+          1
+        )       -> Pattern.compile("[a-zA-Z&&[^aeiouAEIOU]]+"),
         empty() -> Pattern.compile("^(?:||)$")
       )
     rng <- List(new RandomRNG())
