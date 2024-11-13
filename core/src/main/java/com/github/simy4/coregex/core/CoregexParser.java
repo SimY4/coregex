@@ -165,8 +165,7 @@ public final class CoregexParser {
    */
   private Coregex elementaryRE(Context ctx) {
     Coregex elementaryRE;
-    char ch = ctx.peek();
-    switch (ch) {
+    switch (ctx.peek()) {
       case '.':
         ctx.match('.');
         elementaryRE = Coregex.any(ctx.flags);
@@ -187,8 +186,24 @@ public final class CoregexParser {
         break;
       case '\\':
         ctx.match('\\');
-        ch = ctx.peek();
-        elementaryRE = 'Q' == ch ? quoted(ctx) : new Coregex.Set(metachar(ctx));
+        char ch = ctx.peek();
+        switch (ch) {
+          case 'Q':
+            elementaryRE = quoted(ctx);
+            break;
+          case 'b':
+          case 'B':
+          case 'A':
+          case 'G':
+          case 'Z':
+          case 'z':
+          case 'k':
+            elementaryRE = ctx.unsupported("metacharacter \\" + ch + " is not supported");
+            break;
+          default:
+            elementaryRE = new Coregex.Set(metachar(ctx));
+            break;
+        }
         break;
       default:
         elementaryRE = literal(ctx);
@@ -391,7 +406,7 @@ public final class CoregexParser {
 
   /*
    * <pre>{@code
-   * falgs ::= 'd' | 'i' | 'm' | 's' | 'u' | 'U' | 'x'
+   * flags ::= 'd' | 'i' | 'm' | 's' | 'u' | 'U' | 'x'
    * }</pre>
    */
   private int flags(Context ctx) {
@@ -475,6 +490,10 @@ public final class CoregexParser {
         ctx.match('s');
         metachar.set(' ', '\t');
         break;
+      case 'S':
+        ctx.match('S');
+        metachar.set('\r', '\n', '\t', '\f', ' ').negate();
+        break;
       case 'p':
         ctx.match('p');
         ctx.match('{');
@@ -534,16 +553,6 @@ public final class CoregexParser {
         for (char quoted : quoted(ctx).literal().toCharArray()) {
           metachar.single(quoted);
         }
-        break;
-      case 'S':
-      case 'b':
-      case 'B':
-      case 'A':
-      case 'G':
-      case 'Z':
-      case 'z':
-      case 'k':
-        ctx.unsupported("metacharacter \\" + ch + " is not supported");
         break;
       default:
         if (isDigit(ch)) {
