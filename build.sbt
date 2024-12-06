@@ -60,7 +60,7 @@ lazy val root = (project in file("."))
     name           := "coregex-parent",
     publish / skip := true
   )
-  .aggregate(core, jqwik, junitQuickcheck, kotest, scalacheck, vavrTest)
+  .aggregate(core, functionaljavaQuickcheck, jqwik, junitQuickcheck, kotest, scalacheck, vavrTest)
 
 lazy val core = (project in file("core"))
   .settings(
@@ -75,6 +75,23 @@ lazy val core = (project in file("core"))
   )
   .settings(javaLibSettings(8))
   .settings(jacocoSettings)
+
+lazy val functionaljavaQuickcheck = (project in file("functionaljava-quickcheck"))
+  .settings(
+    name          := "functionaljava-quickcheck",
+    moduleName    := "coregex-functionaljava-quickcheck",
+    description   := "Functionaljava quickcheck bindings for coregex library.",
+    headerEndYear := Some(2024),
+    libraryDependencies ++= Seq(
+      "org.functionaljava" % "functionaljava-quickcheck" % "5.0"    % Provided,
+      "junit"              % "junit"                     % "4.13.2" % Test,
+      "com.github.sbt"     % "junit-interface"           % "0.13.3" % Test
+    ),
+    testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v")
+  )
+  .settings(javaLibSettings(8))
+  .settings(jacocoSettings)
+  .dependsOn(core)
 
 lazy val jqwik = (project in file("jqwik"))
   .settings(

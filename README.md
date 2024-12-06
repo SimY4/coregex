@@ -17,6 +17,24 @@ A handy utility for generating strings that match given regular expression crite
 - [vavr-test](https://github.com/vavr-io/vavr-test)
 
 # Usage
+## Functionaljava Quickcheck
+Include the following dependency into your project:
+
+```groovy
+testImplementation "com.github.simy4.coregex:coregex-functionaljava-quickcheck"
+```
+
+Use the provided `CoregexArbirary` class to generate a string that would match the regular expression predicate:
+
+```java
+@RunWith(PropertyTestRunner.class)
+class MyTest {
+  public Property myProperty(@ForAll @Regex("[a-zA-Z]{3}") String str) {
+    return property(CoregexArbitrary.of("[a-zA-Z]{3}"), str -> prop(3 == str.length()));
+  }
+}
+```
+
 ## Jqwik
 Include the following dependency into your project:
 
