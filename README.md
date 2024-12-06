@@ -10,6 +10,7 @@ A handy utility for generating strings that match given regular expression crite
 
 # Supported generators
 
+- [functionaljava-quickcheck](https://github.com/functionaljava/functionaljava) 
 - [Jqwik](https://jqwik.net/) 
 - [JUnit Quickcheck](https://pholser.github.io/junit-quickcheck)
 - [Kotest](https://kotest.io/)
