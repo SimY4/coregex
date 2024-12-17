@@ -29,8 +29,8 @@ Use the provided `CoregexArbirary` class to generate a string that would match t
 
 ```java
 @RunWith(PropertyTestRunner.class)
-class MyTest {
-  public Property myProperty(@ForAll @Regex("[a-zA-Z]{3}") String str) {
+public class MyTest {
+  public Property myProperty() {
     return property(CoregexArbitrary.of("[a-zA-Z]{3}"), str -> prop(3 == str.length()));
   }
 }
