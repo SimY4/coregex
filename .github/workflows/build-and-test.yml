@@ -28,8 +28,9 @@ jobs:
         java-version: ${{ matrix.java }}
         distribution: temurin
         cache: sbt
-    - uses: sbt/setup-sbt@v1
-    - name: Build with sbt
+    - name: Install sbt
+      uses: sbt/setup-sbt@v1
+    - name: ⚙️ Run build
       run: sbt ++${{ matrix.scala }} build
     - name: Publish Test Report
       uses: mikepenz/action-junit-report@v5
