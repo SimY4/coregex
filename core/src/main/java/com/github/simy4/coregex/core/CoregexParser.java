@@ -656,6 +656,7 @@ public final class CoregexParser {
     }
 
     private char token() {
+      char[] chars;
       char ch;
       int cursor = this.cursor;
       loop:
@@ -687,9 +688,18 @@ public final class CoregexParser {
             break;
           case '\\':
             switch (cursor + 1 < regex.length() ? regex.charAt(cursor + 1) : EOF) {
+              case 'N':
+                int start = cursor += 3;
+                while ('}' != regex.charAt(cursor)) {
+                  cursor++;
+                }
+                chars = Character.toChars(Character.codePointOf(regex.substring(start, cursor)));
+                System.arraycopy(chars, 0, tokens, tokensCursor, chars.length);
+                ch = chars[0];
+                break;
               case 'u':
                 String u = regex.substring(cursor + 2, cursor + 6);
-                char[] chars = Character.toChars(Integer.parseInt(u, 16));
+                chars = Character.toChars(Integer.parseInt(u, 16));
                 System.arraycopy(chars, 0, tokens, tokensCursor, chars.length);
                 ch = chars[0];
                 cursor += 6;

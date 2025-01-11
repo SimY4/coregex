@@ -1042,6 +1042,7 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
               .intersect(set()(_.set('e', 'i')).set())
           )
         )       -> Pattern.compile("[a-z&&[^aeiou]]+[]][a-z&&aeiou&&ei]"),
+        ("☺": Coregex.Literal) -> Pattern.compile("\\N{WHITE SMILING FACE}"),
         empty() -> Pattern.compile("^(?:||)$")
       )
     rng <- List(new RandomRNG())
