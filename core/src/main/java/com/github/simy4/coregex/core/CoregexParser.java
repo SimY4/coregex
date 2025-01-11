@@ -16,6 +16,9 @@
 
 package com.github.simy4.coregex.core;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -600,6 +603,21 @@ public final class CoregexParser {
     private static final char SKIP = '\u0000';
     private static final char EOF = '\uFFFF';
 
+    private static final MethodHandle CHARACTER_CODE_POINT_OF;
+
+    static {
+      MethodHandle codePointOf = null;
+      try {
+        codePointOf =
+            MethodHandles.lookup()
+                .findStatic(
+                    Character.class, "codePointOf", MethodType.methodType(int.class, String.class));
+      } catch (Exception ignored) {
+      } finally {
+        CHARACTER_CODE_POINT_OF = codePointOf;
+      }
+    }
+
     private final String regex;
     private final char[] tokens = {SKIP, SKIP, SKIP, SKIP};
     private int flags, groupIndex, cursor, tokensCursor;
@@ -698,13 +716,23 @@ public final class CoregexParser {
                 ch = chars[0];
                 break loop;
               case 'N':
+                if (null == CHARACTER_CODE_POINT_OF) {
+                  break;
+                }
                 start = cursor += 3;
                 while ('}' != regex.charAt(cursor)) {
                   cursor++;
                 }
-                chars = Character.toChars(Character.codePointOf(regex.substring(start, cursor)));
-                System.arraycopy(chars, 0, tokens, tokensCursor, chars.length);
-                ch = chars[0];
+                try {
+                  chars =
+                      Character.toChars(
+                          (int) CHARACTER_CODE_POINT_OF.invoke(regex.substring(start, cursor)));
+                  System.arraycopy(chars, 0, tokens, tokensCursor, chars.length);
+                  ch = chars[0];
+                } catch (Throwable t) {
+                  //noinspection DataFlowIssue
+                  throw (RuntimeException) t;
+                }
                 break;
               case 'u':
                 String u = regex.substring(cursor + 2, cursor + 6);
