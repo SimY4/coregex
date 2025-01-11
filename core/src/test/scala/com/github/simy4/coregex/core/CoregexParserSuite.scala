@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 Alex Simkin
+ * Copyright 2021-2025 Alex Simkin
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1041,9 +1041,9 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
               .intersect(set()(_.set('a', 'e', 'i', 'o', 'u')).set())
               .intersect(set()(_.set('e', 'i')).set())
           )
-        )       -> Pattern.compile("[a-z&&[^aeiou]]+[]][a-z&&aeiou&&ei]"),
+        )                      -> Pattern.compile("[a-z&&[^aeiou]]+[]][a-z&&aeiou&&ei]"),
         ("☺": Coregex.Literal) -> Pattern.compile("\\N{WHITE SMILING FACE}"),
-        empty() -> Pattern.compile("^(?:||)$")
+        empty()                -> Pattern.compile("^(?:||)$")
       )
     rng <- List(new RandomRNG())
   } {
