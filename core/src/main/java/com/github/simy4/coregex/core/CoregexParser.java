@@ -399,8 +399,8 @@ public final class CoregexParser {
           int flags = ctx.flags;
           ctx.flags = negate ? flags & ~flags(ctx) : flags | flags(ctx);
           if (')' == ctx.peek()) {
-            ctx.match(')');
-            return Coregex.empty();
+            group = Coregex.empty();
+            break;
           }
           group = new Coregex.Group(RE(ctx));
           ctx.flags = flags;
