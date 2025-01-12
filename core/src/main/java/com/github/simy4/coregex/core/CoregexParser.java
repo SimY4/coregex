@@ -357,7 +357,9 @@ public final class CoregexParser {
    * group ::= '(', [ '?', ( ':' | '>' | '=' | '!' | '<', [ '=' | '!' | literal, '>' ] | flags ) ], re, ')'
    * }</pre>
    */
+  @SuppressWarnings("fallthrough")
   private Coregex group(Context ctx) {
+    boolean negate = false;
     ctx.match('(');
     Coregex group;
     if ('?' == ctx.peek()) {
@@ -391,13 +393,17 @@ public final class CoregexParser {
           break;
         case '-':
           ctx.match('-');
-          int flags = flags(ctx);
-          ctx.flags &= ~flags;
-          group = Coregex.empty();
-          break;
+          negate = true;
+          // fallthrough
         default:
-          ctx.flags |= flags(ctx);
-          group = Coregex.empty();
+          int flags = ctx.flags;
+          ctx.flags = negate ? flags & ~flags(ctx) : flags | flags(ctx);
+          if (')' == ctx.peek()) {
+            ctx.match(')');
+            return Coregex.empty();
+          }
+          group = new Coregex.Group(RE(ctx));
+          ctx.flags = flags;
           break;
       }
     } else {
