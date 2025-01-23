@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         scala: [2.13.x, 3.3.x]
-        java: [17]
+        java: [8, 17]
 
     steps:
     - uses: actions/checkout@v4
