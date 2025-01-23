@@ -102,9 +102,12 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
         ),
         Pattern.compile("((?i)[a-z]+(?-i)-[A-Z]){3,6}"),
         Pattern.compile("[a-z&&[^aeiou]]+[]][a-z&&aeiou&&ei]"),
-        Pattern.compile("\\N{WHITE SMILING FACE}"),
         Pattern.compile("^(?:||)$")
-      )
+      ) ::: (if (scala.util.Properties.isJavaAtLeast(9)) {
+               List(
+                 Pattern.compile("\\N{WHITE SMILING FACE}")
+               )
+             } else Nil)
     rng <- List(new RandomRNG())
   } {
     shouldParseExampleRegex(pattern, rng)
