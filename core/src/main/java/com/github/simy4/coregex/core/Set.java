@@ -209,8 +209,7 @@ public final class Set implements IntPredicate, Serializable {
      * @return this builder instance
      */
     public Builder set(char first, char... rest) {
-      chars.set(first);
-      description.append(first);
+      single(first);
       for (char ch : rest) {
         single(ch);
       }
