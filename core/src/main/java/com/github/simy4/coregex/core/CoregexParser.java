@@ -463,6 +463,7 @@ public final class CoregexParser {
    * metachar ::= 't' | 'r' | 'n' | 'd' | 'D' | 'w' | 'W' | 's' | 'p', '{', ? posix ?, '}' | 'S' | 'b' | 'B' | 'A' | 'G' | 'z' | 'k' | digit | single
    * }</pre>
    */
+  @SuppressWarnings("fallthrough")
   private Set metachar(Context ctx) {
     char ch = ctx.peek();
     Set.Builder metachar = Set.builder();
@@ -525,28 +526,26 @@ public final class CoregexParser {
           case "XDigit":
             metachar.range('0', '9').range('a', 'f').range('A', 'F');
             break;
+
+          case "Alnum":
+            metachar.range('0', '9');
+            // fall through
           case "Alpha":
             metachar.range('a', 'z').range('A', 'Z');
             break;
-          case "Alnum":
-            metachar.range('a', 'z').range('A', 'Z').range('0', '9');
-            break;
+
+          case "Print":
+            metachar.single(' ');
+            // fall through
+          case "Graph":
+            metachar.range('0', '9').range('a', 'z').range('A', 'Z');
+            // fall through
           case "Punct":
             metachar.set(
                 '!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/', ':',
                 ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|', '}', '~');
             break;
-          case "Graph":
-          case "Print":
-            metachar
-                .range('a', 'z')
-                .range('A', 'Z')
-                .range('0', '9')
-                .set(
-                    '!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/', ':',
-                    ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|', '}',
-                    '~');
-            break;
+
           case "Blank":
           case "Space":
           case "javaWhitespace":
