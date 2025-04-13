@@ -26,7 +26,9 @@ package com.github.simy4.coregex.core;
  * @since 0.1.0
  */
 public interface RNG {
-  /** @return random boolean value. */
+  /**
+   * @return random boolean value.
+   */
   Pair<RNG, Boolean> genBoolean();
 
   /**
@@ -37,6 +39,8 @@ public interface RNG {
    */
   Pair<RNG, Integer> genInteger(int bound);
 
-  /** @return random long value. */
+  /**
+   * @return random long value.
+   */
   Pair<RNG, Long> genLong();
 }

@@ -65,7 +65,9 @@ public class CoregexArbitrary extends ArbitraryDecorator<String> {
     return this;
   }
 
-  /** @deprecated User {@link net.jqwik.api.Arbitrary#edgeCases(Consumer)} instead. For removal. */
+  /**
+   * @deprecated User {@link net.jqwik.api.Arbitrary#edgeCases(Consumer)} instead. For removal.
+   */
   @Deprecated
   public CoregexArbitrary withEdgeCases(String... edgeCases) {
     this.edgeCases.addAll(Arrays.asList(edgeCases));

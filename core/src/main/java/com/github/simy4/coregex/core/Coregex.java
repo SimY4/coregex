@@ -81,7 +81,9 @@ public abstract class Coregex implements Serializable {
     }
   }
 
-  /** @return predefined constructor for empty regex. */
+  /**
+   * @return predefined constructor for empty regex.
+   */
   public static Coregex empty() {
     return new Literal("");
   }
@@ -116,7 +118,9 @@ public abstract class Coregex implements Serializable {
    */
   public abstract int maxLength();
 
-  /** @return minimal possible length of all generated strings of this regex */
+  /**
+   * @return minimal possible length of all generated strings of this regex
+   */
   public abstract int minLength();
 
   /**
@@ -135,7 +139,9 @@ public abstract class Coregex implements Serializable {
     return 1 == min && 1 == max ? this : new Quantified(this, min, max, type);
   }
 
-  /** @return simplified and more memory efficient version of this regex. */
+  /**
+   * @return simplified and more memory efficient version of this regex.
+   */
   public abstract Coregex simplify();
 
   /**
@@ -243,7 +249,9 @@ public abstract class Coregex implements Serializable {
       }
     }
 
-    /** @return underlying regexes in order of concatenation. */
+    /**
+     * @return underlying regexes in order of concatenation.
+     */
     public List<Coregex> concat() {
       List<Coregex> concat = new ArrayList<>(rest.length + 1);
       concat.add(first);
@@ -365,17 +373,23 @@ public abstract class Coregex implements Serializable {
       }
     }
 
-    /** @return group index if group is a capturing group */
+    /**
+     * @return group index if group is a capturing group
+     */
     public OptionalInt index() {
       return -1 == index ? OptionalInt.empty() : OptionalInt.of(index);
     }
 
-    /** @return group name if group is a named group */
+    /**
+     * @return group name if group is a named group
+     */
     public Optional<String> name() {
       return Optional.ofNullable(name);
     }
 
-    /** @return group body */
+    /**
+     * @return group body
+     */
     public Coregex group() {
       return group;
     }
@@ -490,7 +504,9 @@ public abstract class Coregex implements Serializable {
       return this;
     }
 
-    /** @return literal */
+    /**
+     * @return literal
+     */
     public String literal() {
       return literal;
     }
@@ -632,17 +648,23 @@ public abstract class Coregex implements Serializable {
           : new Quantified(quantified, min, max, type);
     }
 
-    /** @return quantified regex */
+    /**
+     * @return quantified regex
+     */
     public Coregex quantified() {
       return quantified;
     }
 
-    /** @return min number of times this regex should be repeated */
+    /**
+     * @return min number of times this regex should be repeated
+     */
     public int min() {
       return min;
     }
 
-    /** @return max number of times this regex should be repeated. {@code -1} means no limit. */
+    /**
+     * @return max number of times this regex should be repeated. {@code -1} means no limit.
+     */
     public int max() {
       return max;
     }
@@ -699,7 +721,7 @@ public abstract class Coregex implements Serializable {
             string.append('?');
             break;
           }
-          // fall through
+        // fall through
         default:
           if (min == max) {
             string.append('{').append(min).append('}');
@@ -739,7 +761,9 @@ public abstract class Coregex implements Serializable {
 
     private final com.github.simy4.coregex.core.Set set;
 
-    /** @param set set of characters */
+    /**
+     * @param set set of characters
+     */
     public Set(com.github.simy4.coregex.core.Set set) {
       this.set = requireNonNull(set, "set");
     }
@@ -775,7 +799,9 @@ public abstract class Coregex implements Serializable {
       return this;
     }
 
-    /** @return set of characters */
+    /**
+     * @return set of characters
+     */
     public com.github.simy4.coregex.core.Set set() {
       return set;
     }
@@ -858,12 +884,16 @@ public abstract class Coregex implements Serializable {
       }
     }
 
-    /** @return sized regex */
+    /**
+     * @return sized regex
+     */
     public Coregex sized() {
       return sized;
     }
 
-    /** @return preferred size of generated string */
+    /**
+     * @return preferred size of generated string
+     */
     public int size() {
       return size;
     }
@@ -965,7 +995,9 @@ public abstract class Coregex implements Serializable {
               first.simplify(), Arrays.stream(rest).map(Coregex::simplify).toArray(Coregex[]::new));
     }
 
-    /** @return underlying regexes forming this unification. */
+    /**
+     * @return underlying regexes forming this unification.
+     */
     public List<Coregex> union() {
       List<Coregex> union = new ArrayList<>(rest.length + 1);
       union.add(first);
