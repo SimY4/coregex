@@ -124,7 +124,9 @@ public final class Set implements IntPredicate, Serializable {
     return (char) sample;
   }
 
-  /** @return partitions this set into chunks. */
+  /**
+   * @return partitions this set into chunks.
+   */
   public Stream<Set> shrink() {
     int partitionSize = chars.size() / 2;
     if (partitionSize < 64) {
@@ -276,7 +278,9 @@ public final class Set implements IntPredicate, Serializable {
       return this;
     }
 
-    /** @return compiled set */
+    /**
+     * @return compiled set
+     */
     public Set build() {
       return new Set(chars, description.append(']').toString());
     }

@@ -34,7 +34,9 @@ import java.util.regex.Pattern;
 public final class CoregexParser {
   private static final CoregexParser instance = new CoregexParser();
 
-  /** @return coregex parser singleton instance. */
+  /**
+   * @return coregex parser singleton instance.
+   */
   public static CoregexParser getInstance() {
     return instance;
   }
@@ -340,7 +342,7 @@ public final class CoregexParser {
             case '\\':
               ctx.match('\\');
               end = ctx.peek();
-              // fall through
+            // fall through
             default:
               ctx.match(end);
               set.range(ch, end);
@@ -394,7 +396,7 @@ public final class CoregexParser {
         case '-':
           ctx.match('-');
           negate = true;
-          // fallthrough
+        // fallthrough
         default:
           int flags = ctx.flags;
           ctx.flags = negate ? flags & ~flags(ctx) : flags | flags(ctx);
@@ -529,17 +531,17 @@ public final class CoregexParser {
 
           case "Alnum":
             metachar.range('0', '9');
-            // fall through
+          // fall through
           case "Alpha":
             metachar.range('a', 'z').range('A', 'Z');
             break;
 
           case "Print":
             metachar.single(' ');
-            // fall through
+          // fall through
           case "Graph":
             metachar.range('0', '9').range('a', 'z').range('A', 'Z');
-            // fall through
+          // fall through
           case "Punct":
             metachar.set(
                 '!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/', ':',
