@@ -32,7 +32,7 @@ def javaLibSettings(release: Int) = Seq(
   crossPaths       := false,
   autoScalaLibrary := false,
   Compile / compile / javacOptions ++= Seq("-Xlint:all", "-Werror", "--release", release.toString),
-  Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing", "--release", release.toString)
+  Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing", "--release", release.toString, "-html5")
 )
 lazy val jacocoSettings = Test / jacocoReportSettings := JacocoReportSettings(
   "Jacoco Coverage Report",
