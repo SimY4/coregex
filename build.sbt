@@ -31,12 +31,8 @@ lazy val supportedScalaVersions = List(scala213, scala3)
 def javaLibSettings(release: Int) = Seq(
   crossPaths       := false,
   autoScalaLibrary := false,
-  Compile / compile / javacOptions ++= Seq("-Xlint:all", "-Werror") ++
-    (if (9 <= release || scala.util.Properties.isJavaAtLeast("9")) Seq("--release", release.toString)
-     else Seq("-source", "1.8", "-target", "1.8")),
-  Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing") ++
-    (if (9 <= release || scala.util.Properties.isJavaAtLeast("9")) Seq("--release", release.toString, "-html5")
-     else Seq("-source", "1.8", "-target", "1.8"))
+  Compile / compile / javacOptions ++= Seq("-Xlint:all", "-Werror", "--release", release.toString),
+  Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing", "--release", release.toString)
 )
 lazy val jacocoSettings = Test / jacocoReportSettings := JacocoReportSettings(
   "Jacoco Coverage Report",
