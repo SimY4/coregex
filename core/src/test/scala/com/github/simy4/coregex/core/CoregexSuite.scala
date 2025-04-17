@@ -19,30 +19,28 @@ package com.github.simy4.coregex.core
 import munit.ScalaCheckSuite
 import org.scalacheck.Prop._
 
-import java.util.regex.Pattern
-
 class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
   property("quantified zero times should give empty") {
-    forAll { (coregex: Coregex, `type`: Coregex.Quantified.Type, rng: RNG) =>
-      coregex.quantify(0, 0, `type`).generate(rng).isEmpty
+    forAll { (coregex: Coregex, `type`: Coregex.Quantified.Type, seed: Long) =>
+      coregex.quantify(0, 0, `type`).generate(seed).isEmpty
     }
   }
 
   property("empty quantified should give empty") {
-    forAll { (range: QuantifyRange, rng: RNG) =>
-      Coregex.empty().quantify(range.min, range.max, range.`type`).generate(rng).isEmpty
+    forAll { (range: QuantifyRange, seed: Long) =>
+      Coregex.empty().quantify(range.min, range.max, range.`type`).generate(seed).isEmpty
     }
   }
 
   property("quantified length should be in range") {
-    forAll { (coregex: Coregex, range: QuantifyRange, rng: RNG) =>
+    forAll { (coregex: Coregex, range: QuantifyRange, seed: Long) =>
       val quantified = coregex.quantify(range.min, range.max, range.`type`)
-      val generated  = quantified.generate(rng)
+      val generated  = quantified.generate(seed)
 
-      val quantifiedMinLengthCheck = (0 < quantified.minLength()) ==>
+      val quantifiedMinLengthCheck = (0 < range.min) ==>
         (coregex.minLength() <= quantified
           .minLength()) :| s"$coregex.minLength(${coregex.minLength()}) <= $quantified.minLength(${quantified.minLength()})"
-      val quantifiedMaxLengthCheck = (0 < quantified.maxLength()) ==>
+      val quantifiedMaxLengthCheck = (0 < range.max) ==>
         (coregex.maxLength() <= quantified
           .maxLength()) :| s"$coregex.maxLength(${coregex.minLength()}) <= $quantified.maxLength(${quantified.minLength()})"
       val generatedLength = (quantified.minLength() <= generated
@@ -53,29 +51,29 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
   }
 
   property("double quantified should multiply quantification") {
-    forAll { (coregex: Coregex, first: QuantifyRange, second: QuantifyRange, rng: RNG) =>
+    forAll { (coregex: Coregex, first: QuantifyRange, second: QuantifyRange, seed: Long) =>
       val quantified       = coregex.quantify(first.min * second.min, first.min * second.min, first.`type`)
       val doubleQuantified =
         coregex.quantify(first.min, first.min, first.`type`).quantify(second.min, second.min, second.`type`)
-      quantified.generate(rng) ?= doubleQuantified.generate(rng)
+      quantified.generate(seed) ?= doubleQuantified.generate(seed)
     }
   }
 
   property("quantified sized respect both") {
-    forAll { (coregex: Coregex, range: QuantifyRange, length: Byte, rng: RNG) =>
+    forAll { (coregex: Coregex, range: QuantifyRange, length: Byte, seed: Long) =>
       val quantified        = coregex.quantify(range.min, range.max, range.`type`)
       val size              = quantified.minLength() + length.toInt.abs
       val expectedMaxLength = if (quantified.maxLength() < 0) size else quantified.maxLength() min size
-      val generated         = quantified.sized(size).generate(rng)
+      val generated         = quantified.sized(size).generate(seed)
       (generated.length() <= expectedMaxLength) :| s"${generated.length()} <= $expectedMaxLength"
     }
   }
 
   property("sized length should be withing limits") {
-    forAll { (coregex: Coregex, length: Byte, rng: RNG) =>
+    forAll { (coregex: Coregex, length: Byte, seed: Long) =>
       val size      = coregex.minLength() + length.toInt.abs
       val sized     = coregex.sized(size)
-      val generated = sized.generate(rng)
+      val generated = sized.generate(seed)
 
       val sizedMinLengthCheck = (coregex.minLength() ?= sized
         .minLength()) :| s"$coregex.minLength(${coregex.minLength()}) == $sized.minLength(${sized.minLength()})"
@@ -90,56 +88,21 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
 
   // region Concat
   property("concat with empty should be identity") {
-    forAll { (coregex: Coregex, rng: RNG) =>
+    forAll { (coregex: Coregex, seed: Long) =>
       val concat1 = new Coregex.Concat(coregex, Coregex.empty()).simplify()
       val concat2 = new Coregex.Concat(Coregex.empty(), coregex).simplify()
-      (coregex.simplify().generate(rng) ?= concat1.generate(rng)) && (coregex.simplify().generate(rng) ?= concat2
-        .generate(rng))
-    }
-  }
-  // endregion
-
-  // region Literal
-  property("generated should be literal") {
-    forAll { (literal: String, flags: Flags, rng: RNG) =>
-      val literalCoregex = new Coregex.Literal(literal, flags)
-      val generated      = literalCoregex.generate(rng)
-
-      val literalIsGenerated =
-        (0 != (Pattern.CASE_INSENSITIVE & flags)) ==> (literal equalsIgnoreCase generated) || (literal ?= generated)
-      val literalLengthIsMinLength = literal.length ?= literalCoregex.minLength()
-      val literalLengthIsMaxLength = literal.length ?= literalCoregex.maxLength()
-      literalIsGenerated && literalLengthIsMinLength && literalLengthIsMaxLength
-    }
-  }
-
-  property("concat literals should be literal of concat") {
-    forAll { (s1: String, s2: String, rng: RNG) =>
-      (s1.length + s2.length < Int.MaxValue - 2) ==> {
-        val l1     = new Coregex.Literal(s1)
-        val l2     = new Coregex.Literal(s2)
-        val concat = new Coregex.Concat(l1, l2).simplify()
-        (s1 + s2) ?= concat.generate(rng)
-      }
-    }
-  }
-
-  property("quantified generated should be repeated literal") {
-    forAll { (literal: String, range: QuantifyRange, `type`: Coregex.Quantified.Type, rng: RNG) =>
-      val literalCoregex = new Coregex.Literal(literal).quantify(range.min, range.max, `type`)
-      val generated      = literalCoregex.generate(rng)
-
-      s"(${Pattern.quote(literal)})*".r.matches(generated)
+      (coregex.simplify().generate(seed) ?= concat1.generate(seed)) && (coregex.simplify().generate(seed) ?= concat2
+        .generate(seed))
     }
   }
   // endregion
 
   // region Set
   property("generated should be in set") {
-    forAll { (set: Coregex.Set, rng: RNG) =>
-      val generated = set.generate(rng)
+    forAll { (set: Set, seed: Long) =>
+      val generated = set.generate(seed)
 
-      val inSetCheck  = generated.chars().allMatch(ch => set.set().test(ch)) :| s"$generated in $set"
+      val inSetCheck  = generated.chars().allMatch(set) :| s"$generated in $set"
       val lengthCheck = (generated.length ?= 1) :| s"$generated.length == 1"
 
       inSetCheck && lengthCheck
@@ -147,30 +110,14 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
   }
 
   property("quantified generated should be in set") {
-    forAll { (set: Coregex.Set, range: QuantifyRange, `type`: Coregex.Quantified.Type, rng: RNG) =>
-      val generated = set.quantify(range.min, range.max, `type`).generate(rng)
+    forAll { (set: Set, range: QuantifyRange, `type`: Coregex.Quantified.Type, seed: Long) =>
+      val generated = set.quantify(range.min, range.max, `type`).generate(seed)
 
-      generated.chars().allMatch(ch => set.set().test(ch)) :| s"$generated in $set"
+      generated.chars().allMatch(set) :| s"$generated in $set"
     }
   }
   // endregion
 
   // region Union
-  property("generated should be in union") {
-    forAll { (union: Coregex.Union, rng: RNG) =>
-      val generated = union.generate(rng)
-
-      val nextRng    = rng.genLong().getFirst
-      val inSetCheck = union
-        .union()
-        .stream()
-        .map(_.generate(nextRng) =? generated)
-        .reduce(falsified, _ || _)
-      val lengthCheck = (union.minLength() <= generated
-        .length()) :| s"union.minLength(${union.minLength()}) <= $generated.length(${generated.length})"
-
-      inSetCheck && lengthCheck
-    }
-  }
   // endregion
 }

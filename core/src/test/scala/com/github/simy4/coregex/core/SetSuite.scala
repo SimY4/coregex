@@ -30,33 +30,33 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
         if (start == end) (end + 1).asInstanceOf[Char] else end
       }
       val range     = Set.builder().range(start, end).build()
-      val generated = range.sample(seed)
-      (start <= generated && generated <= end) :| s"$start <= $generated <= $end"
+      val generated = range.sample(seed).orElse(-1)
+      (start.toInt <= generated && generated <= end.toInt) :| s"$start <= $generated <= $end"
     }
   }
 
   property("sampled should be in set") {
     forAll { (first: Char, rest: String, seed: Long) =>
       val set       = Set.builder().set(first, rest.toCharArray: _*).build()
-      val generated = set.sample(seed)
-      rest.map(_ =? generated).foldLeft(first =? generated)(_ || _) :| s"$generated in [$set]"
+      val generated = set.sample(seed).orElse(-1)
+      rest.map(_.toInt =? generated).foldLeft(first.toInt =? generated)(_ || _) :| s"$generated in [$set]"
     }
   }
 
   property("sampled should be in union") {
     forAll { (left: Set, right: Set, seed: Long) =>
       val union     = Set.builder().union(left).union(right).build()
-      val generated = union.sample(seed)
-      (left.test(generated.toInt) || right.test(generated.toInt)) :| s"$generated in [$union]"
+      val generated = union.sample(seed).orElse(-1)
+      (left.test(generated) || right.test(generated)) :| s"$generated in [$union]"
     }
   }
 
   property("sampled should not be in intersection") {
     forAll { (left: Set, right: Set, seed1: Long, seed2: Long) =>
-      val leftWithCommon = Set.builder().union(left).single(right.sample(seed1)).build()
+      val leftWithCommon = Set.builder().union(left).single(right.sample(seed1).orElse(-1).toChar).build()
       val intersection   = Set.builder().union(leftWithCommon).intersect(right).build()
-      val generated      = intersection.sample(seed2)
-      (leftWithCommon.test(generated.toInt) && right.test(generated.toInt)) :| s"$generated in [$intersection]"
+      val generated      = intersection.sample(seed2).orElse(-1)
+      (leftWithCommon.test(generated) && right.test(generated)) :| s"$generated in [$intersection]"
     }
   }
 
@@ -81,8 +81,9 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
         .union(set)
         .build()
         .sample(seed)
+        .orElse(-1)
 
-      set.test(Character.toLowerCase(result.toInt)) || set.test(Character.toUpperCase(result.toInt))
+      set.test(Character.toLowerCase(result)) || set.test(Character.toUpperCase(result))
     }
   }
 
@@ -94,6 +95,7 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
         .negate()
         .build()
         .sample(seed)
+        .orElse(-1)
 
       (result ?= '\r') || (result ?= '\n')
     }
@@ -107,6 +109,7 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
         .negate()
         .build()
         .sample(seed)
+        .orElse(-1)
 
       result ?= '\n'
     }

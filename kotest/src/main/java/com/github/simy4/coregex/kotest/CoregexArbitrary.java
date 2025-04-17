@@ -17,8 +17,6 @@
 package com.github.simy4.coregex.kotest;
 
 import com.github.simy4.coregex.core.Coregex;
-import com.github.simy4.coregex.core.RNG;
-import com.github.simy4.coregex.core.rng.RandomRNG;
 import io.kotest.property.Arb;
 import io.kotest.property.Classifier;
 import io.kotest.property.GenKt;
@@ -34,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CoregexArbitrary extends Arb<String> {
+
   public static CoregexArbitrary of(String pattern) {
     return of(pattern, 0);
   }
@@ -65,9 +64,9 @@ public class CoregexArbitrary extends Arb<String> {
   @NotNull
   @Override
   public Sample<String> sample(@NotNull RandomSource randomSource) {
-    RNG rng = new RandomRNG(randomSource.getRandom().nextLong());
-    Shrinker<String> shrinker = new CoregexShrinker(coregex, rng);
-    String sample = coregex.sized(sized >= 0 ? sized : Integer.MAX_VALUE - 2).generate(rng);
+    long seed = randomSource.getRandom().nextLong();
+    Shrinker<String> shrinker = new CoregexShrinker(coregex, seed);
+    String sample = coregex.sized(sized >= 0 ? sized : Integer.MAX_VALUE - 2).generate(seed);
     return GenKt.sampleOf(sample, shrinker);
   }
 
