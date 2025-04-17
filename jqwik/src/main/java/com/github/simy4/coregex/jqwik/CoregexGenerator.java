@@ -17,8 +17,6 @@
 package com.github.simy4.coregex.jqwik;
 
 import com.github.simy4.coregex.core.Coregex;
-import com.github.simy4.coregex.core.RNG;
-import com.github.simy4.coregex.core.rng.RandomRNG;
 import java.util.Random;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -27,6 +25,7 @@ import net.jqwik.api.Shrinkable;
 import net.jqwik.api.ShrinkingDistance;
 
 public class CoregexGenerator implements RandomGenerator<String> {
+
   private final Coregex coregex;
   private final int size;
 
@@ -42,26 +41,23 @@ public class CoregexGenerator implements RandomGenerator<String> {
 }
 
 final class ShrinkableString implements Shrinkable<String> {
+
   private final Coregex coregex;
   private final int size;
-  private final RNG rng;
+  private final long seed;
 
   private String value;
 
   ShrinkableString(Coregex coregex, int size, long seed) {
-    this(coregex, size, new RandomRNG(seed));
-  }
-
-  private ShrinkableString(Coregex coregex, int size, RNG rng) {
     this.coregex = coregex;
     this.size = size;
-    this.rng = rng;
+    this.seed = seed;
   }
 
   @Override
   public String value() {
     if (null == value) {
-      value = coregex.sized(size).generate(rng);
+      value = coregex.sized(size).generate(seed);
     }
     return value;
   }
@@ -72,7 +68,7 @@ final class ShrinkableString implements Shrinkable<String> {
     for (int remainder = coregex.minLength();
         remainder < value().length();
         remainder = (remainder * 2) + 1) {
-      shrinks.add(new ShrinkableString(coregex, remainder, rng));
+      shrinks.add(new ShrinkableString(coregex, remainder, seed));
     }
     return shrinks.build();
   }

@@ -19,19 +19,19 @@ package com.github.simy4.coregex.kotest;
 import static java.util.Objects.requireNonNull;
 
 import com.github.simy4.coregex.core.Coregex;
-import com.github.simy4.coregex.core.RNG;
 import io.kotest.property.Shrinker;
 import java.util.ArrayList;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
 
 public class CoregexShrinker implements Shrinker<String> {
-  private final Coregex coregex;
-  private final RNG rng;
 
-  public CoregexShrinker(Coregex coregex, RNG rng) {
+  private final Coregex coregex;
+  private final long seed;
+
+  public CoregexShrinker(Coregex coregex, long seed) {
     this.coregex = requireNonNull(coregex, "coregex");
-    this.rng = requireNonNull(rng, "rng");
+    this.seed = seed;
   }
 
   @NotNull
@@ -41,7 +41,7 @@ public class CoregexShrinker implements Shrinker<String> {
     for (int remainder = coregex.minLength();
         remainder < s.length();
         remainder = (remainder * 2) + 1) {
-      shinks.add(coregex.sized(remainder).generate(rng));
+      shinks.add(coregex.sized(remainder).generate(seed));
     }
     return shinks;
   }

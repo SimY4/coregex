@@ -17,9 +17,9 @@
 package com.github.simy4.coregex.scalacheck
 
 import com.github.simy4.coregex.core.CoregexParser
-import com.github.simy4.coregex.core.rng.RandomRNG
 import org.scalacheck.{ Arbitrary, Gen, Shrink }
 
+import java.util.concurrent.ThreadLocalRandom
 import java.util.regex.Pattern
 
 trait CoregexInstances {
@@ -37,10 +37,12 @@ trait CoregexInstances {
   ](implicit regex: ValueOf[Regex]): Shrink[Matching[A, Regex]] = {
     val coregex = CoregexParser.getInstance().parse(Pattern.compile(regex.value))
     Shrink.withLazyList { larger =>
-      val rng = new RandomRNG()
       LazyList.unfold(coregex.minLength()) { remainder =>
         Option.when(remainder < larger.length) {
-          (coregex.sized(remainder).generate(rng).asInstanceOf[Matching[A, Regex]], (remainder * 2) + 1)
+          (
+            coregex.sized(remainder).generate(ThreadLocalRandom.current().nextLong()).asInstanceOf[Matching[A, Regex]],
+            (remainder * 2) + 1
+          )
         }
       }
     }

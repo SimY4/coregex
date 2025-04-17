@@ -17,12 +17,12 @@
 package com.github.simy4.coregex.vavr;
 
 import com.github.simy4.coregex.core.Coregex;
-import com.github.simy4.coregex.core.rng.RandomRNG;
 import io.vavr.test.Gen;
 import java.util.Random;
 import java.util.regex.Pattern;
 
 public class CoregexGenerator implements Gen<String> {
+
   private final Coregex coregex;
   private final int size;
 
@@ -33,6 +33,6 @@ public class CoregexGenerator implements Gen<String> {
 
   @Override
   public String apply(Random random) {
-    return coregex.sized(size).generate(new RandomRNG(random.nextLong()));
+    return coregex.sized(size).generate(random.nextLong());
   }
 }

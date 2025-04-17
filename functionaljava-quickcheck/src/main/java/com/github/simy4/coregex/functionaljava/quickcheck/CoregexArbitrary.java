@@ -17,11 +17,11 @@
 package com.github.simy4.coregex.functionaljava.quickcheck;
 
 import com.github.simy4.coregex.core.Coregex;
-import com.github.simy4.coregex.core.rng.RandomRNG;
 import fj.test.Gen;
 import java.util.regex.Pattern;
 
 public final class CoregexArbitrary {
+
   public static Gen<String> of(String regex) {
     return of(regex, 0);
   }
@@ -31,7 +31,7 @@ public final class CoregexArbitrary {
     return Gen.gen(
         size -> {
           Coregex sized = coregex.sized(Math.max(size, coregex.minLength()));
-          return rand -> sized.generate(new RandomRNG(rand.choose(Long.MIN_VALUE, Long.MAX_VALUE)));
+          return rand -> sized.generate(rand.choose(Long.MIN_VALUE, Long.MAX_VALUE));
         });
   }
 

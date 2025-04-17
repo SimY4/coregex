@@ -21,6 +21,8 @@ import static java.util.Objects.requireNonNull;
 import java.io.Serializable;
 import java.util.BitSet;
 import java.util.Objects;
+import java.util.OptionalInt;
+import java.util.Random;
 import java.util.function.IntPredicate;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -28,11 +30,12 @@ import java.util.stream.Stream;
 /**
  * Data representation of a set of characters AKA regular expression's char classes.
  *
+ * @see Coregex
  * @see Set.Builder
  * @author Alex Simkin
  * @since 0.1.0
  */
-public final class Set implements IntPredicate, Serializable {
+public final class Set extends Coregex implements IntPredicate, Serializable {
   private static final long serialVersionUID = 1L;
 
   static final Lazy<Set> ALL =
@@ -95,6 +98,35 @@ public final class Set implements IntPredicate, Serializable {
     this.description = description;
   }
 
+  /** {@inheritDoc} */
+  @Override
+  protected String apply(Random rng, int remainder) {
+    if (remainder < minLength()) {
+      throw new IllegalStateException(
+          "remainder: " + remainder + " has to be greater than " + minLength());
+    }
+    OptionalInt sample = sample(rng.nextLong());
+    return sample.isPresent() ? String.valueOf((char) sample.getAsInt()) : "";
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int maxLength() {
+    return 1;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int minLength() {
+    return 1;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Set simplify() {
+    return this;
+  }
+
   /**
    * Checks if given character is included in this set.
    *
@@ -112,16 +144,16 @@ public final class Set implements IntPredicate, Serializable {
    * @param seed seed to use for random selection
    * @return selected character
    */
-  public char sample(long seed) {
+  public OptionalInt sample(long seed) {
     if (chars.isEmpty()) {
-      throw new IllegalStateException("empty set: " + description);
+      return OptionalInt.empty();
     }
     long skip = Math.abs(seed % chars.cardinality());
     int sample = chars.nextSetBit(0);
     while (skip-- > 0) {
       sample = chars.nextSetBit(sample + 1);
     }
-    return (char) sample;
+    return OptionalInt.of(sample);
   }
 
   /**
@@ -282,7 +314,11 @@ public final class Set implements IntPredicate, Serializable {
      * @return compiled set
      */
     public Set build() {
-      return new Set(chars, description.append(']').toString());
+      return new Set(
+          chars,
+          chars.cardinality() == 1
+              ? String.valueOf((char) chars.nextSetBit(0))
+              : description.append(']').toString());
     }
   }
 }

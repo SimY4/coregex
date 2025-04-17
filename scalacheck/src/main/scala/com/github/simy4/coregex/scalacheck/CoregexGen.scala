@@ -18,7 +18,6 @@ package com.github.simy4.coregex
 package scalacheck
 
 import core.Coregex
-import core.rng.RandomRNG
 import org.scalacheck.Gen
 
 import java.util.regex.Pattern
@@ -33,5 +32,5 @@ object CoregexGen {
     for {
       seed <- Gen.long
       size <- size.fold(Gen.size)(Gen.const)
-    } yield coregex.sized(coregex.minLength() max size).generate(new RandomRNG(seed))
+    } yield coregex.sized(coregex.minLength() max size).generate(seed)
 }
