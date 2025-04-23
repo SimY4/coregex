@@ -89,10 +89,9 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
   // region Concat
   property("concat with empty should be identity") {
     forAll { (coregex: Coregex, seed: Long) =>
-      val concat1 = new Coregex.Concat(coregex, Coregex.empty()).simplify()
-      val concat2 = new Coregex.Concat(Coregex.empty(), coregex).simplify()
-      (coregex.simplify().generate(seed) ?= concat1.generate(seed)) && (coregex.simplify().generate(seed) ?= concat2
-        .generate(seed))
+      val concat1 = new Coregex.Concat(coregex, Coregex.empty())
+      val concat2 = new Coregex.Concat(Coregex.empty(), coregex)
+      (coregex.generate(seed) ?= concat1.generate(seed)) && (coregex.generate(seed) ?= concat2.generate(seed))
     }
   }
   // endregion

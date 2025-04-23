@@ -121,12 +121,6 @@ public final class Set extends Coregex implements IntPredicate, Serializable {
     return 1;
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public Set simplify() {
-    return this;
-  }
-
   /**
    * Checks if given character is included in this set.
    *

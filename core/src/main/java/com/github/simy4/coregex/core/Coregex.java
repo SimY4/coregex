@@ -24,12 +24,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.Random;
 import java.util.StringJoiner;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Data representation of regex language.
@@ -159,11 +156,6 @@ public abstract class Coregex implements Serializable {
   }
 
   /**
-   * @return simplified and more memory efficient version of this regex.
-   */
-  public abstract Coregex simplify();
-
-  /**
    * Size this regex. Generated string will be at most this long.
    *
    * @param size preferred size of generated string
@@ -241,32 +233,6 @@ public abstract class Coregex implements Serializable {
       return min;
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public Coregex simplify() {
-      List<Coregex> concat =
-          concat().stream()
-              .flatMap(
-                  coregex -> {
-                    coregex = coregex.simplify();
-                    if (coregex instanceof Concat) {
-                      return ((Concat) coregex).concat().stream();
-                    } else if ((0 == coregex.minLength() && 0 == coregex.maxLength())) {
-                      return Stream.empty();
-                    } else {
-                      return Stream.of(coregex);
-                    }
-                  })
-              .collect(Collectors.toList());
-      if (concat.isEmpty()) {
-        return Coregex.empty();
-      } else if (1 == concat.size()) {
-        return concat.get(0);
-      } else {
-        return new Concat(concat.get(0), concat.subList(1, concat.size()).toArray(new Coregex[0]));
-      }
-    }
-
     /**
      * @return underlying regexes in order of concatenation.
      */
@@ -310,53 +276,51 @@ public abstract class Coregex implements Serializable {
   /** Regex group. */
   public static final class Group extends Coregex {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
-    private final int index;
+    private final Type type;
     private final String name;
     private final Coregex group;
 
     /**
-     * Non-capturing group.
+     * Unnamed capturing group.
      *
      * @param group group body
-     * @see Group(int, Coregex)
-     * @see Group(int, String, Coregex)
+     * @see Group(Type, Coregex)
+     * @see Group(Type, String, Coregex)
      */
     public Group(Coregex group) {
-      this(-1, null, group);
+      this(Type.CAPTURING, requireNonNull(group, "group"));
     }
 
     /**
-     * Capturing group.
+     * Unnamed group.
      *
-     * @param index group index
+     * @param type group type
      * @param group group body
-     * @throws IllegalArgumentException if index is negative
      * @see Group(Coregex)
-     * @see Group(int, String, Coregex)
+     * @see Group(Type, String, Coregex)
      */
-    public Group(int index, Coregex group) {
-      this(index, null, group);
+    public Group(Type type, Coregex group) {
+      this(requireNonNull(type, "type"), null, requireNonNull(group, "group"));
     }
 
     /**
-     * Named capturing group.
+     * Named group.
      *
-     * @param index group index
      * @param name group name
      * @param group group body
-     * @throws IllegalArgumentException if index is negative
      * @see Group(Coregex)
-     * @see Group(int, Coregex)
+     * @see Group(Type, Coregex)
      */
-    public Group(int index, String name, Coregex group) {
-      if (-1 != index && 0 > index) {
-        throw new IllegalArgumentException("index: " + index + " has to be positive");
-      }
-      this.index = index;
+    public Group(String name, Coregex group) {
+      this(Type.NAMED, requireNonNull(name, "name"), requireNonNull(group, "group"));
+    }
+
+    private Group(Type type, String name, Coregex group) {
+      this.type = type;
       this.name = name;
-      this.group = requireNonNull(group, "group");
+      this.group = group;
     }
 
     /** {@inheritDoc} */
@@ -381,22 +345,11 @@ public abstract class Coregex implements Serializable {
       return group.minLength();
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public Coregex simplify() {
-      Coregex simplified = group.simplify();
-      if (0 == index && null == name) {
-        return simplified;
-      } else {
-        return new Group(index, name, simplified);
-      }
-    }
-
     /**
-     * @return group index if group is a capturing group
+     * @return group type
      */
-    public OptionalInt index() {
-      return -1 == index ? OptionalInt.empty() : OptionalInt.of(index);
+    public Type type() {
+      return type;
     }
 
     /**
@@ -422,26 +375,57 @@ public abstract class Coregex implements Serializable {
         return false;
       }
       Group group = (Group) o;
-      return index == group.index
+      return type == group.type
           && Objects.equals(this.name, group.name)
           && this.group.equals(group.group);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(index, name, group);
+      return Objects.hash(type, name, group);
     }
 
     @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("(");
-      if (null != name) {
-        sb.append("?<").append(name).append('>');
-      }
-      if (0 > index) {
-        sb.append("?:");
+      switch (type) {
+        case NON_CAPTURING:
+          sb.append("?:");
+          break;
+        case ATOMIC:
+          sb.append("?>");
+          break;
+        case NAMED:
+          sb.append("?<").append(name).append('>');
+          break;
+        case LOOKAHEAD:
+          sb.append("?=");
+          break;
+        case LOOKBEHIND:
+          sb.append("?<=");
+          break;
+        case NEGATIVE_LOOKAHEAD:
+          sb.append("?!");
+          break;
+        case NEGATIVE_LOOKBEHIND:
+          sb.append("?<!");
+          break;
+        default:
+          break;
       }
       return sb.append(group).append(')').toString();
+    }
+
+    /** Regex group type. * */
+    public enum Type {
+      NON_CAPTURING,
+      CAPTURING,
+      ATOMIC,
+      NAMED,
+      LOOKAHEAD,
+      LOOKBEHIND,
+      NEGATIVE_LOOKAHEAD,
+      NEGATIVE_LOOKBEHIND
     }
   }
 
@@ -544,15 +528,6 @@ public abstract class Coregex implements Serializable {
     @Override
     public int minLength() {
       return quantified.minLength() * min;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public Coregex simplify() {
-      Coregex quantified = this.quantified.simplify();
-      return (0 == quantified.minLength() && 0 == quantified.maxLength()) || (1 == min && 1 == max)
-          ? quantified
-          : new Quantified(quantified, min, max, type);
     }
 
     /**
@@ -702,18 +677,6 @@ public abstract class Coregex implements Serializable {
       return Math.min(size, sized.minLength());
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public Coregex simplify() {
-      Coregex simplified = sized.simplify();
-      if (simplified instanceof Sized) {
-        Sized sized = (Sized) simplified;
-        return new Sized(sized.sized(), Math.min(size, sized.size()));
-      } else {
-        return new Sized(simplified, size);
-      }
-    }
-
     /**
      * @return sized regex
      */
@@ -814,14 +777,6 @@ public abstract class Coregex implements Serializable {
         min = Math.min(min, coregex.minLength());
       }
       return min;
-    }
-
-    @Override
-    public Coregex simplify() {
-      return 0 == rest.length
-          ? first.simplify()
-          : new Union(
-              first.simplify(), Arrays.stream(rest).map(Coregex::simplify).toArray(Coregex[]::new));
     }
 
     /**
