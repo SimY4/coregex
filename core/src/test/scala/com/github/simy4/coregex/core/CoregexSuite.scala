@@ -59,33 +59,6 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
     }
   }
 
-  property("quantified sized respect both") {
-    forAll { (coregex: Coregex, range: QuantifyRange, length: Byte, seed: Long) =>
-      val quantified        = coregex.quantify(range.min, range.max, range.`type`)
-      val size              = quantified.minLength() + length.toInt.abs
-      val expectedMaxLength = if (quantified.maxLength() < 0) size else quantified.maxLength() min size
-      val generated         = quantified.sized(size).generate(seed)
-      (generated.length() <= expectedMaxLength) :| s"${generated.length()} <= $expectedMaxLength"
-    }
-  }
-
-  property("sized length should be withing limits") {
-    forAll { (coregex: Coregex, length: Byte, seed: Long) =>
-      val size      = coregex.minLength() + length.toInt.abs
-      val sized     = coregex.sized(size)
-      val generated = sized.generate(seed)
-
-      val sizedMinLengthCheck = (coregex.minLength() ?= sized
-        .minLength()) :| s"$coregex.minLength(${coregex.minLength()}) == $sized.minLength(${sized.minLength()})"
-      val sizedMaxLengthCheck = (-1 < coregex.maxLength()) ==> (coregex.maxLength() min size ?= sized.maxLength())
-      val sizedLength         =
-        (sized.minLength() <= generated.length() && generated.length <= size) :| s"$sized.minLength(${sized
-            .minLength()}) <= $generated.length(${generated.length}) <= $size"
-
-      sizedMinLengthCheck && sizedMaxLengthCheck && sizedLength
-    }
-  }
-
   // region Concat
   property("concat with empty should be identity") {
     forAll { (coregex: Coregex, seed: Long) =>

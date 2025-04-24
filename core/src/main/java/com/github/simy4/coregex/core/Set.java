@@ -22,7 +22,6 @@ import java.io.Serializable;
 import java.util.BitSet;
 import java.util.Objects;
 import java.util.OptionalInt;
-import java.util.Random;
 import java.util.function.IntPredicate;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -36,6 +35,7 @@ import java.util.stream.Stream;
  * @since 0.1.0
  */
 public final class Set extends Coregex implements IntPredicate, Serializable {
+
   private static final long serialVersionUID = 1L;
 
   static final Lazy<Set> ALL =
@@ -100,13 +100,12 @@ public final class Set extends Coregex implements IntPredicate, Serializable {
 
   /** {@inheritDoc} */
   @Override
-  protected String apply(Random rng, int remainder) {
-    if (remainder < minLength()) {
-      throw new IllegalStateException(
-          "remainder: " + remainder + " has to be greater than " + minLength());
+  void apply(Context ctx) {
+    ctx.ensureCapacity(minLength());
+    OptionalInt sample = sample(ctx.rng.nextLong());
+    if (sample.isPresent()) {
+      ctx.append((char) sample.getAsInt());
     }
-    OptionalInt sample = sample(rng.nextLong());
-    return sample.isPresent() ? String.valueOf((char) sample.getAsInt()) : "";
   }
 
   /** {@inheritDoc} */
@@ -194,6 +193,7 @@ public final class Set extends Coregex implements IntPredicate, Serializable {
    * @since 0.1.0
    */
   public static final class Builder {
+
     private final int flags;
     private final BitSet chars;
     private final StringBuilder description = new StringBuilder("[");
