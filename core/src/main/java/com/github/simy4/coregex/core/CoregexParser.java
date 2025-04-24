@@ -57,7 +57,7 @@ public final class CoregexParser {
       return Coregex.literal(regex, flags);
     }
     Context ctx = new Context(regex, flags);
-    Coregex coregex = new Coregex.Group(RE(ctx));
+    Coregex coregex = RE(ctx);
     if (ctx.hasMoreElements()) {
       coregex = ctx.error("EOL");
     }
