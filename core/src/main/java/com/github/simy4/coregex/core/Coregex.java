@@ -96,6 +96,9 @@ public abstract class Coregex implements Serializable {
       return empty();
     }
     Set first = Set.builder(flags).single(literal.charAt(0)).build();
+    if (1 == literal.length()) {
+      return first;
+    }
     Set[] rest = new Set[literal.length() - 1];
     for (int i = 1; i < literal.length(); i++) {
       rest[i - 1] = Set.builder(flags).single(literal.charAt(i)).build();
