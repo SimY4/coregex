@@ -160,6 +160,27 @@ public abstract class Coregex implements Serializable {
     return 1 == min && 1 == max ? this : new Quantified(this, min, max, type);
   }
 
+  /**
+   * Size this regex. Generated string will be at most this long.
+   *
+   * @param size preferred size of generated string
+   * @return sized regex
+   * @throws IllegalArgumentException if size is lesser than {@link #minLength()}
+   */
+  public final Coregex sized(int size) {
+    if (size < minLength()) {
+      throw new IllegalArgumentException(
+          "size: " + size + " has to be greater than " + minLength());
+    }
+    int maxLength = maxLength();
+    return -1 != maxLength && maxLength <= size
+        ? this
+        : new Concat(
+            new Group(
+                Group.Type.NEGATIVE_LOOKAHEAD, Set.any().quantify(0, size, Quantified.Type.GREEDY)),
+            this);
+  }
+
   /** Sequential concatenation of regexes. */
   public static final class Concat extends Coregex {
 
@@ -275,8 +296,7 @@ public abstract class Coregex implements Serializable {
       this(parent, index, parent.capacity, name, parent.rng);
     }
 
-    private Context(
-        Context parent, int index, int capacity, String name, Random rng) {
+    private Context(Context parent, int index, int capacity, String name, Random rng) {
       this.parent = parent;
       this.index = index;
       this.capacity = capacity;
@@ -404,8 +424,21 @@ public abstract class Coregex implements Serializable {
     @Override
     void apply(Context ctx) {
       ctx.ensureCapacity(minLength());
-      try (Context childCtx = new Context(ctx, ctx.index() + 1, name)) {
-        group.apply(childCtx);
+      switch (type) {
+        case NON_CAPTURING:
+        case ATOMIC:
+          group.apply(ctx);
+          break;
+        case LOOKAHEAD:
+        case LOOKBEHIND:
+        case NEGATIVE_LOOKAHEAD:
+        case NEGATIVE_LOOKBEHIND:
+          // FIXME
+          break;
+        default:
+          try (Context childCtx = new Context(ctx, ctx.index() + 1, name)) {
+            group.apply(childCtx);
+          }
       }
     }
 
@@ -758,7 +791,7 @@ public abstract class Coregex implements Serializable {
 
     @Override
     public String toString() {
-      return "\\" + ref;
+      return ref instanceof String ? "\\k<" + ref + '>' : "\\" + ref;
     }
   }
 
