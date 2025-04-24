@@ -202,11 +202,22 @@ public final class CoregexParser {
           case 'G':
           case 'Z':
           case 'z':
-          case 'k':
             elementaryRE = ctx.unsupported("metacharacter \\" + ch + " is not supported");
             break;
+          case 'k':
+            ctx.match('k');
+            ctx.match('<');
+            String name = ctx.span(c -> '>' != c);
+            ctx.match('>');
+            elementaryRE = new Coregex.Ref(name);
+            break;
           default:
-            elementaryRE = metachar(ctx);
+            if (isDigit(ch)) {
+              String n = ctx.span(this::isDigit);
+              elementaryRE = new Coregex.Ref(Integer.parseInt(n));
+            } else {
+              elementaryRE = metachar(ctx);
+            }
             break;
         }
         break;
@@ -565,13 +576,9 @@ public final class CoregexParser {
         }
         break;
       default:
-        if (isDigit(ch)) {
-          ctx.unsupported("metacharacter \\" + ch + " is not supported");
-        } else {
-          // escaped metacharacter
-          ctx.match(ch);
-          metachar.single(ch);
-        }
+        // escaped metacharacter
+        ctx.match(ch);
+        metachar.single(ch);
         break;
     }
     return metachar.build();

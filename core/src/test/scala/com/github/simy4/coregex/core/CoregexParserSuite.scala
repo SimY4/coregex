@@ -59,7 +59,8 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
       ),
       Pattern.compile("((?i)[a-z]+(?-i)-[A-Z]){3,6}"),
       Pattern.compile("[a-z&&[^aeiou]]+[]][a-z&&aeiou&&ei]"),
-      Pattern.compile("^(?:||)$")
+      Pattern.compile("^(?:||)$"),
+      Pattern.compile("<([A-Z][A-Z0-9]*)[^>]*>.*?</\\1>")
     ) ::: (if (scala.util.Properties.isJavaAtLeast(9)) {
              List(
                Pattern.compile("\\N{WHITE SMILING FACE}")

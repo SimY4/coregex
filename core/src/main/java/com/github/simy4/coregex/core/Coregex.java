@@ -21,7 +21,9 @@ import static java.util.Objects.requireNonNull;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
@@ -125,9 +127,10 @@ public abstract class Coregex implements Serializable {
   public final String generate(long seed) {
     int capacity = maxLength();
     capacity = -1 == capacity ? Integer.MAX_VALUE - 2 : capacity;
-    Context ctx = new Context(seed, capacity);
-    apply(ctx);
-    return ctx.toString();
+    try (Context ctx = new Context(seed, capacity)) {
+      apply(ctx);
+      return ctx.toString();
+    }
   }
 
   /**
@@ -182,8 +185,8 @@ public abstract class Coregex implements Serializable {
       Coregex chunk = first;
       do {
         reserved -= chunk.minLength();
-        try (Context bracket = ctx.reserveCapacity(reserved)) {
-          chunk.apply(bracket);
+        try (Context scope = ctx.reserveCapacity(reserved)) {
+          chunk.apply(scope);
         }
       } while (i < rest.length && (chunk = rest[i++]) != null);
     }
@@ -260,25 +263,23 @@ public abstract class Coregex implements Serializable {
     private final int index, capacity;
     private final String name;
     private final StringBuilder buffer = new StringBuilder();
+    private final Map<Serializable, String> groups = new HashMap<>();
 
     final Random rng;
 
-    int reserved;
-
     Context(long seed, int capacity) {
-      this(null, 0, capacity, 0, null, new Random(seed));
+      this(null, 0, capacity, null, new Random(seed));
     }
 
-    Context(Context parent, String name) {
-      this(parent, parent.index + 2, parent.capacity, parent.reserved, name, parent.rng);
+    Context(Context parent, int index, String name) {
+      this(parent, index, parent.capacity, name, parent.rng);
     }
 
     private Context(
-        Context parent, int index, int capacity, int reserved, String name, Random rng) {
+        Context parent, int index, int capacity, String name, Random rng) {
       this.parent = parent;
       this.index = index;
       this.capacity = capacity;
-      this.reserved = reserved;
       this.name = name;
       this.rng = rng;
     }
@@ -301,13 +302,33 @@ public abstract class Coregex implements Serializable {
       return this;
     }
 
+    int index() {
+      return -1 == index ? parent.index() : index;
+    }
+
+    String ref(Serializable ref) {
+      String group = groups.get(ref);
+      return null == group ? parent.ref(ref) : group;
+    }
+
     @Override
     public void close() {
-      reserved = 0;
+      Context parent = this.parent;
+      if (null == parent) {
+        return;
+      }
+      parent.buffer.append(buffer);
+      if (0 < index) {
+        parent.groups.put(index, buffer.toString());
+      }
+      if (null != name) {
+        parent.groups.put(name, buffer.toString());
+      }
+      parent.groups.putAll(groups);
     }
 
     int remainder() {
-      return capacity - buffer.length() - reserved;
+      return capacity - buffer.length();
     }
 
     void ensureCapacity(int minLength) {
@@ -320,8 +341,7 @@ public abstract class Coregex implements Serializable {
     }
 
     Context reserveCapacity(int reserved) {
-      this.reserved = reserved;
-      return this;
+      return new Context(this, -1, capacity - reserved, null, rng);
     }
 
     @Override
@@ -384,9 +404,9 @@ public abstract class Coregex implements Serializable {
     @Override
     void apply(Context ctx) {
       ctx.ensureCapacity(minLength());
-      Context childCtx = new Context(ctx, name);
-      group.apply(childCtx);
-      ctx.append(childCtx.toString());
+      try (Context childCtx = new Context(ctx, ctx.index() + 1, name)) {
+        group.apply(childCtx);
+      }
     }
 
     /** {@inheritDoc} */
@@ -613,11 +633,11 @@ public abstract class Coregex implements Serializable {
       if (o == null || getClass() != o.getClass()) {
         return false;
       }
-      Quantified that = (Quantified) o;
-      return min == that.min
-          && max == that.max
-          && type == that.type
-          && quantified.equals(that.quantified);
+      Quantified quantified = (Quantified) o;
+      return min == quantified.min
+          && max == quantified.max
+          && type == quantified.type
+          && this.quantified.equals(quantified.quantified);
     }
 
     @Override
@@ -628,6 +648,9 @@ public abstract class Coregex implements Serializable {
     @Override
     @SuppressWarnings("fallthrough")
     public String toString() {
+      if (0 == min && 0 == max) {
+        return "";
+      }
       StringBuilder string = new StringBuilder();
       string.append(quantified);
       switch (max) {
@@ -676,6 +699,66 @@ public abstract class Coregex implements Serializable {
       GREEDY,
       RELUCTANT,
       POSSESSIVE,
+    }
+  }
+
+  /** Backreference to a group. */
+  public static final class Ref extends Coregex {
+
+    private static final long serialVersionUID = 1L;
+
+    private final Serializable ref;
+
+    public Ref(String name) {
+      this.ref = requireNonNull(name, "name");
+    }
+
+    public Ref(int index) {
+      this.ref = index;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    void apply(Context ctx) {
+      ctx.append(ctx.ref(ref));
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public int maxLength() {
+      return -1;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public int minLength() {
+      return 0;
+    }
+
+    public Serializable ref() {
+      return ref;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      Ref ref = (Ref) o;
+      return ref.equals(ref.ref);
+    }
+
+    @Override
+    public int hashCode() {
+      return ref.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      return "\\" + ref;
     }
   }
 
