@@ -121,6 +121,18 @@ public final class Set extends Coregex implements IntPredicate, Serializable {
   }
 
   /**
+   * Negates this set.
+   *
+   * @return new negated set instance.
+   */
+  @Override
+  public Set negate() {
+    BitSet chars = BitSet.valueOf(this.chars.toLongArray());
+    chars.flip(0, chars.size());
+    return new Set(chars, "^" + description);
+  }
+
+  /**
    * Checks if given character is included in this set.
    *
    * @param value character to check
@@ -182,7 +194,7 @@ public final class Set extends Coregex implements IntPredicate, Serializable {
 
   @Override
   public String toString() {
-    return description;
+    return 1 == chars.cardinality() ? description : "[" + description + ']';
   }
 
   /**
@@ -196,7 +208,7 @@ public final class Set extends Coregex implements IntPredicate, Serializable {
 
     private final int flags;
     private final BitSet chars;
-    private final StringBuilder description = new StringBuilder("[");
+    private final StringBuilder description = new StringBuilder();
 
     private Builder(int flags, int size) {
       this.flags = flags;
@@ -242,11 +254,6 @@ public final class Set extends Coregex implements IntPredicate, Serializable {
         single(ch);
       }
       return this;
-    }
-
-    @Deprecated
-    public Builder set(Set set) {
-      return union(set);
     }
 
     /**
@@ -300,7 +307,7 @@ public final class Set extends Coregex implements IntPredicate, Serializable {
      */
     public Builder negate() {
       chars.flip(0, chars.size());
-      description.insert(1, '^');
+      description.insert(0, '^');
       return this;
     }
 
@@ -308,11 +315,7 @@ public final class Set extends Coregex implements IntPredicate, Serializable {
      * @return compiled set
      */
     public Set build() {
-      return new Set(
-          chars,
-          chars.cardinality() == 1
-              ? String.valueOf((char) chars.nextSetBit(0))
-              : description.append(']').toString());
+      return new Set(chars, description.toString());
     }
   }
 }
