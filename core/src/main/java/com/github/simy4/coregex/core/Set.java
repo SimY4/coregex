@@ -24,7 +24,7 @@ import java.util.Objects;
 import java.util.OptionalInt;
 import java.util.function.IntPredicate;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
+import java.util.stream.IntStream;
 
 /**
  * Data representation of a set of characters AKA regular expression's char classes.
@@ -62,6 +62,9 @@ public final class Set extends Coregex implements IntPredicate, Serializable {
             chars.set(Character.MIN_VALUE, Character.MIN_SURROGATE);
             return new Set(chars, ".");
           });
+  static final Lazy<Set> SMALLER =
+      new Lazy<>(
+          () -> builder().range('0', '9').range('a', 'z').range('A', 'Z').single('_').build());
 
   /**
    * Creates an instance of {@link Set} builder.
@@ -162,17 +165,15 @@ public final class Set extends Coregex implements IntPredicate, Serializable {
   }
 
   /**
-   * @return partitions this set into chunks.
+   * @param ch shrinks the given character.
+   * @return a stream of characters that are considered as "smaller" then given character.
    */
-  public Stream<Set> shrink() {
-    int partitionSize = chars.size() / 2;
-    if (partitionSize < 64) {
-      return Stream.empty();
+  public IntStream shrink(int ch) {
+    Set smaller = SMALLER.get();
+    if (smaller.test(ch)) {
+      return IntStream.empty();
     }
-    return Stream.of(
-            new Set(chars.get(0, partitionSize), description + "~"),
-            new Set(chars.get(partitionSize, chars.size()), "~" + description))
-        .filter(set -> !set.chars.isEmpty());
+    return smaller.chars.stream().filter(this).filter(c -> ch != c);
   }
 
   @Override

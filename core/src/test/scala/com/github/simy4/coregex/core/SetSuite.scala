@@ -60,6 +60,13 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
     }
   }
 
+  property("shrunk should be in set") {
+    forAll { (set: Set, seed: Long) =>
+      val generated = set.sample(seed).orElse(-1)
+      set.shrink(generated).allMatch(set) :| s"shrunk $generated in [$set]"
+    }
+  }
+
   property("same seed same result") {
     forAll { (set: Set, seed: Long) =>
       val generated1 = set.sample(seed)
