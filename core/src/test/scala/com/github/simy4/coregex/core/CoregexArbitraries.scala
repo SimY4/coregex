@@ -16,14 +16,12 @@
 
 package com.github.simy4.coregex.core
 
-import org.scalacheck.{ Arbitrary, Gen, Shrink }
+import org.scalacheck.{ Arbitrary, Gen }
 import org.scalacheck.Arbitrary.arbitrary
 
 import java.util.regex.Pattern
 
 trait CoregexArbitraries {
-  import scala.jdk.StreamConverters._
-
   type Flags <: Int
   implicit val arbitraryFlags: Arbitrary[Flags] = Arbitrary(genFlags)
   def genFlags: Gen[Flags]                      =
@@ -80,7 +78,6 @@ trait CoregexArbitraries {
     } yield new Coregex.Union(first, rest: _*)
 
   implicit val arbitrarySet: Arbitrary[Set] = Arbitrary(genSet())
-  implicit val shrinkSet: Shrink[Set]       = Shrink.withLazyList(shrinkSet(_))
   def genSet(charGen: Gen[Char] = Gen.asciiPrintableChar): Gen[Set] = Gen.recursive[Set] { fix =>
     Gen.oneOf(
       for (flags <- genFlags; ch <- charGen; rest <- Gen.stringOf(charGen))
@@ -90,5 +87,4 @@ trait CoregexArbitraries {
       for (flags <- genFlags; set <- fix.map(set => Set.builder(flags).union(set).build())) yield set
     )
   }
-  def shrinkSet(set: Set): LazyList[Set] = set.shrink().toScala(LazyList)
 }
