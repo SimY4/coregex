@@ -31,7 +31,7 @@ lazy val supportedScalaVersions = List(scala213, scala3)
 def javaLibSettings(release: Int) = Seq(
   crossPaths       := false,
   autoScalaLibrary := false,
-  Compile / compile / javacOptions ++= Seq("-Xlint:all", "-Werror", "--release", release.toString),
+  Compile / compile / javacOptions ++= Seq("-Xlint:all,-options", "-Werror", "--release", release.toString),
   Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing", "--release", release.toString, "-html5")
 )
 lazy val jacocoSettings = Test / jacocoReportSettings := JacocoReportSettings(

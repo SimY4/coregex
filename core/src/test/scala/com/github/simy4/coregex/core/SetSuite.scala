@@ -17,11 +17,31 @@
 package com.github.simy4.coregex.core
 
 import munit.ScalaCheckSuite
+import org.scalacheck.Prop
 import org.scalacheck.Prop._
 
 import java.util.regex.Pattern
 
 class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
+  property("generated should be in set") {
+    forAll { (set: Set, seed: Long) =>
+      val generated = set.generate(seed)
+
+      val inSetCheck  = generated.chars().allMatch(set) :| s"$generated in $set"
+      val lengthCheck = (generated.length ?= 1) :| s"$generated.length == 1"
+
+      inSetCheck && lengthCheck
+    }
+  }
+
+  property("quantified generated should be in set") {
+    forAll { (set: Set, range: QuantifyRange, `type`: Coregex.Quantified.Type, seed: Long) =>
+      val generated = set.quantify(range.min, range.max, `type`).generate(seed)
+
+      generated.chars().allMatch(set) :| s"$generated in $set"
+    }
+  }
+
   property("sampled should be in range") {
     forAll { (ch1: Char, ch2: Char, seed: Long) =>
       val start = ch1 min ch2
@@ -64,6 +84,16 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
     forAll { (set: Set, seed: Long) =>
       val generated = set.sample(seed).orElse(-1)
       set.shrink(generated).allMatch(set) :| s"shrunk $generated in [$set]"
+    }
+  }
+
+  property("shrunk characters all contained within a set") {
+    forAll { (set: Set, seed: Long) =>
+      val sampled = set.sample(seed).orElse(-1)
+      set
+        .shrink(sampled)
+        .mapToObj(ch => Prop(set.test(ch)) :| s"$sampled shrunk to $ch is in [$set]")
+        .reduce(Prop(true), _ && _)
     }
   }
 

@@ -51,9 +51,10 @@ trait CoregexArbitraries {
           Gen.oneOf(
             genCoregexConcat(charGen),
             genCoregexUnion(charGen),
-            genSet(charGen)
+            genSet(charGen),
+            Gen.const(Coregex.empty())
           )
-        else genSet(charGen)
+        else Gen.oneOf(genSet(charGen), Gen.const(Coregex.empty()))
       }
       coregex <- Gen.frequency(
         9 -> Gen.const(single),
@@ -69,13 +70,13 @@ trait CoregexArbitraries {
       rest  <- Gen.listOfN(size % 10, Gen.resize(size / 4, genCoregex(charGen)))
     } yield new Coregex.Concat(first, rest: _*)
 
-  implicit val arbitraryCoregexUnion: Arbitrary[Coregex.Union] = Arbitrary(genCoregexUnion())
-  def genCoregexUnion(charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex.Union] =
+  implicit val arbitraryCoregexRef: Arbitrary[Coregex.Ref] = Arbitrary(genCoregexRef)
+  def genCoregexRef: Gen[Coregex.Ref] =
     for {
-      first <- Gen.sized(h => Gen.resize(h / 4, genCoregex(charGen)))
-      size  <- Gen.size
-      rest  <- Gen.listOfN(size % 10, Gen.resize(size / 4, genCoregex(charGen)))
-    } yield new Coregex.Union(first, rest: _*)
+      fst  <- Gen.alphaChar
+      size <- Gen.size
+      rest <- Gen.listOfN(size % 10, Gen.alphaNumChar)
+    } yield new Coregex.Ref(rest.mkString(fst.toString, "", ""))
 
   implicit val arbitrarySet: Arbitrary[Set] = Arbitrary(genSet())
   def genSet(charGen: Gen[Char] = Gen.asciiPrintableChar): Gen[Set] = Gen.recursive[Set] { fix =>
@@ -87,4 +88,12 @@ trait CoregexArbitraries {
       for (flags <- genFlags; set <- fix.map(set => Set.builder(flags).union(set).build())) yield set
     )
   }
+
+  implicit val arbitraryCoregexUnion: Arbitrary[Coregex.Union] = Arbitrary(genCoregexUnion())
+  def genCoregexUnion(charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex.Union] =
+    for {
+      first <- Gen.sized(h => Gen.resize(h / 4, genCoregex(charGen)))
+      size  <- Gen.size
+      rest  <- Gen.listOfN(size % 10, Gen.resize(size / 4, genCoregex(charGen)))
+    } yield new Coregex.Union(first, rest: _*)
 }

@@ -17,7 +17,7 @@
 package com.github.simy4.coregex.core
 
 import munit.ScalaCheckSuite
-import org.scalacheck.Gen
+import org.scalacheck.{ Arbitrary, Gen }
 import org.scalacheck.Prop._
 
 import java.util.regex.Pattern
@@ -68,8 +68,10 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
            } else Nil)
   )
 
+  implicit val arbPatternExamples: Arbitrary[Pattern] = Arbitrary(genPatternExamples())
+
   property("should parse example regex") {
-    forAll(genPatternExamples(), Gen.long) { (pattern, seed) =>
+    forAll { (pattern: Pattern, seed: Long) =>
       val actual    = Coregex.from(pattern)
       val generated = actual.generate(seed)
 
@@ -81,7 +83,7 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
   }
 
   property("should parse quoted regex") {
-    forAll(genPatternExamples(), Gen.long) { (pattern, seed) =>
+    forAll { (pattern: Pattern, seed: Long) =>
       val expected  = Pattern.compile(Pattern.quote(pattern.pattern()))
       val actual    = Coregex.from(expected)
       val generated = actual.generate(seed)
@@ -93,7 +95,7 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
   }
 
   property("should parse literal regex") {
-    forAll(genPatternExamples(), Gen.long) { (pattern, seed) =>
+    forAll { (pattern: Pattern, seed: Long) =>
       val expected  = Pattern.compile(pattern.pattern(), Pattern.LITERAL)
       val actual    = Coregex.from(expected)
       val generated = actual.generate(seed)

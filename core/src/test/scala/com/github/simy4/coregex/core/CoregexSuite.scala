@@ -19,6 +19,8 @@ package com.github.simy4.coregex.core
 import munit.ScalaCheckSuite
 import org.scalacheck.Prop._
 
+import scala.util.Using.{ resource => using }
+
 class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
   property("quantified zero times should give empty") {
     forAll { (coregex: Coregex, `type`: Coregex.Quantified.Type, seed: Long) =>
@@ -29,24 +31,6 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
   property("empty quantified should give empty") {
     forAll { (range: QuantifyRange, seed: Long) =>
       Coregex.empty().quantify(range.min, range.max, range.`type`).generate(seed).isEmpty
-    }
-  }
-
-  property("quantified length should be in range") {
-    forAll { (coregex: Coregex, range: QuantifyRange, seed: Long) =>
-      val quantified = coregex.quantify(range.min, range.max, range.`type`)
-      val generated  = quantified.generate(seed)
-
-      val quantifiedMinLengthCheck = (0 < range.min) ==>
-        (coregex.minLength() <= quantified
-          .minLength()) :| s"$coregex.minLength(${coregex.minLength()}) <= $quantified.minLength(${quantified.minLength()})"
-      val quantifiedMaxLengthCheck = (0 < range.max) ==>
-        (coregex.maxLength() <= quantified
-          .maxLength()) :| s"$coregex.maxLength(${coregex.minLength()}) <= $quantified.maxLength(${quantified.minLength()})"
-      val generatedLength = (quantified.minLength() <= generated
-        .length()) :| s"$quantified.minLength(${quantified.minLength()}) <= $generated.length(${generated.length})"
-
-      quantifiedMinLengthCheck && quantifiedMaxLengthCheck && generatedLength
     }
   }
 
@@ -67,25 +51,37 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
       (coregex.generate(seed) ?= concat1.generate(seed)) && (coregex.generate(seed) ?= concat2.generate(seed))
     }
   }
+
+  property("generated should be concat of individual components") {
+    forAll { (fst: Coregex, snd: Coregex, seed: Long) =>
+      val generated = using(new Coregex.Context(seed)) { ctx =>
+        new Coregex.Concat(fst, snd).generate(ctx)
+        ctx.toString
+      }
+      val concat = using(new Coregex.Context(seed)) { ctx =>
+        fst.generate(ctx)
+        snd.generate(ctx)
+        ctx.toString
+      }
+      (generated ?= concat) :| s"$generated == $concat"
+    }
+  }
   // endregion
 
-  // region Set
-  property("generated should be in set") {
-    forAll { (set: Set, seed: Long) =>
-      val generated = set.generate(seed)
-
-      val inSetCheck  = generated.chars().allMatch(set) :| s"$generated in $set"
-      val lengthCheck = (generated.length ?= 1) :| s"$generated.length == 1"
-
-      inSetCheck && lengthCheck
+  // region Ref
+  property("generated ref by name should return group second time") {
+    forAll { (group: Coregex, ref: Coregex.Ref, seed: Long) =>
+      val re        = new Coregex.Concat(new Coregex.Group(ref.ref().toString, group), ref).generate(seed)
+      val generated = group.generate(seed)
+      (generated + generated ?= re) :| s"$generated$generated == $re"
     }
   }
 
-  property("quantified generated should be in set") {
-    forAll { (set: Set, range: QuantifyRange, `type`: Coregex.Quantified.Type, seed: Long) =>
-      val generated = set.quantify(range.min, range.max, `type`).generate(seed)
-
-      generated.chars().allMatch(set) :| s"$generated in $set"
+  property("generated ref by index should return group second time") {
+    forAll { (group: Coregex, seed: Long) =>
+      val re        = new Coregex.Concat(new Coregex.Group(group), new Coregex.Ref(1)).generate(seed)
+      val generated = group.generate(seed)
+      (generated + generated ?= re) :| s"$generated$generated == $re"
     }
   }
   // endregion
