@@ -26,7 +26,6 @@ import net.jqwik.api.Provide;
 import net.jqwik.testing.ShrinkingSupport;
 import net.jqwik.testing.TestingSupport;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 
 class JqwikTest extends Assertions {
   @Property
@@ -37,7 +36,6 @@ class JqwikTest extends Assertions {
   }
 
   @Property
-  @Disabled // FIXME re-enable when sized is supported again.
   void shrinkingTest(@ForAll("regex") Pattern regex, @ForAll Random random) {
     CoregexArbitrary coregex = new CoregexArbitrary(regex);
     String shrink = ShrinkingSupport.falsifyThenShrink(coregex, random);

@@ -19,11 +19,11 @@ package com.github.simy4.coregex.junit.quickcheck;
 import com.github.simy4.coregex.core.Coregex;
 import com.pholser.junit.quickcheck.generator.GenerationStatus;
 import com.pholser.junit.quickcheck.generator.Generator;
-import com.pholser.junit.quickcheck.generator.Size;
 import com.pholser.junit.quickcheck.random.SourceOfRandomness;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 public class CoregexGenerator extends Generator<String> {
@@ -32,7 +32,6 @@ public class CoregexGenerator extends Generator<String> {
 
   private Pattern regex;
   private Coregex coregex;
-  private Size sized;
 
   public CoregexGenerator() {
     this(ANY);
@@ -49,14 +48,9 @@ public class CoregexGenerator extends Generator<String> {
     this.coregex = Coregex.from(this.regex);
   }
 
-  public void configure(Size sized) {
-    this.sized = sized;
-  }
-
   @Override
   public String generate(SourceOfRandomness random, GenerationStatus status) {
-    int size = null == sized ? status.size() : sized.max();
-    return coregex.sized(Math.max(coregex.minLength(), size)).generate(random.nextLong());
+    return coregex.generate(random.nextLong());
   }
 
   @Override
@@ -67,16 +61,16 @@ public class CoregexGenerator extends Generator<String> {
   @Override
   public List<String> doShrink(SourceOfRandomness random, String larger) {
     List<String> shrinks = new ArrayList<>();
-    for (int remainder = coregex.minLength();
-        remainder < larger.length();
-        remainder = (remainder * 2) + 1) {
-      shrinks.add(coregex.sized(remainder).generate(random.nextLong()));
+    for (Optional<Coregex> coregex = this.coregex.shrink();
+        coregex.isPresent();
+        coregex = coregex.flatMap(Coregex::shrink)) {
+      shrinks.add(coregex.get().generate(random.nextLong()));
     }
     return shrinks;
   }
 
   @Override
   public BigDecimal magnitude(Object value) {
-    return BigDecimal.valueOf(narrow(value).length() - coregex.minLength());
+    return BigDecimal.valueOf(narrow(value).length());
   }
 }

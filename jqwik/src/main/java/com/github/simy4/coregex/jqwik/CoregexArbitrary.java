@@ -18,11 +18,7 @@ package com.github.simy4.coregex.jqwik;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
-import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
@@ -38,8 +34,6 @@ public class CoregexArbitrary extends ArbitraryDecorator<String> {
   }
 
   private final Pattern pattern;
-  private final Set<String> edgeCases = new HashSet<>();
-  private int sized = -1;
 
   public CoregexArbitrary(Pattern pattern) {
     this.pattern = requireNonNull(pattern, "pattern");
@@ -47,31 +41,7 @@ public class CoregexArbitrary extends ArbitraryDecorator<String> {
 
   @Override
   protected Arbitrary<String> arbitrary() {
-    Arbitrary<String> arbitrary =
-        -1 == sized
-            ? Arbitraries.fromGeneratorWithSize(size -> new CoregexGenerator(pattern, size))
-            : Arbitraries.fromGenerator(new CoregexGenerator(pattern, sized));
-    if (!edgeCases.isEmpty()) {
-      arbitrary = arbitrary.edgeCases(config -> config.add(edgeCases.toArray(new String[0])));
-    }
-    return arbitrary;
-  }
-
-  public CoregexArbitrary withSize(int size) {
-    if (size < 0) {
-      throw new IllegalArgumentException("Size must be positive");
-    }
-    sized = size;
-    return this;
-  }
-
-  /**
-   * @deprecated User {@link net.jqwik.api.Arbitrary#edgeCases(Consumer)} instead. For removal.
-   */
-  @Deprecated
-  public CoregexArbitrary withEdgeCases(String... edgeCases) {
-    this.edgeCases.addAll(Arrays.asList(edgeCases));
-    return this;
+    return Arbitraries.fromGenerator(new CoregexGenerator(pattern));
   }
 
   @Override
@@ -83,14 +53,12 @@ public class CoregexArbitrary extends ArbitraryDecorator<String> {
       return false;
     }
     CoregexArbitrary that = (CoregexArbitrary) o;
-    return sized == that.sized
-        && pattern.flags() == that.pattern.flags()
-        && pattern.pattern().equals(that.pattern.pattern())
-        && edgeCases.equals(that.edgeCases);
+    return pattern.flags() == that.pattern.flags()
+        && pattern.pattern().equals(that.pattern.pattern());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(pattern.flags(), pattern.pattern(), edgeCases, sized);
+    return Objects.hash(pattern.flags(), pattern.pattern());
   }
 }

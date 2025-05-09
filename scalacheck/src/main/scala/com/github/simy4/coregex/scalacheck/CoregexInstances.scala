@@ -16,13 +16,14 @@
 
 package com.github.simy4.coregex.scalacheck
 
-import com.github.simy4.coregex.core.CoregexParser
+import com.github.simy4.coregex.core.Coregex
 import org.scalacheck.{ Arbitrary, Gen, Shrink }
 
-import java.util.concurrent.ThreadLocalRandom
 import java.util.regex.Pattern
 
 trait CoregexInstances {
+  import scala.jdk.OptionConverters._
+
   type Matching[A <: String, Regex <: String with Singleton] <: A
 
   implicit def arbitraryInputStringMatchingRegexStringWithSingleton[
@@ -35,15 +36,12 @@ trait CoregexInstances {
     A <: String,
     Regex <: String with Singleton
   ](implicit regex: ValueOf[Regex]): Shrink[Matching[A, Regex]] = {
-    val coregex = CoregexParser.getInstance().parse(Pattern.compile(regex.value))
+    val coregex = LazyList
+      .iterate(Coregex.from(Pattern.compile(regex.value)).shrink().toScala)(_.flatMap(_.shrink().toScala))
+      .takeWhile(_.isDefined)
     Shrink.withLazyList { larger =>
-      LazyList.unfold(coregex.minLength()) { remainder =>
-        Option.when(remainder < larger.length) {
-          (
-            coregex.sized(remainder).generate(ThreadLocalRandom.current().nextLong()).asInstanceOf[Matching[A, Regex]],
-            (remainder * 2) + 1
-          )
-        }
+      coregex.collect { case Some(coregex) =>
+        coregex.generate(larger.length.toLong).asInstanceOf[Matching[A, Regex]]
       }
     }
   }

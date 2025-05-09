@@ -74,8 +74,7 @@ class KotestTest extends Assertions {
             "((?i)[a-z]+(?-i)-[A-Z]){3,6}"),
         regexStr -> {
           Pattern regex = Pattern.compile(regexStr);
-          return MapKt.map(
-              new CoregexArbitrary(regex).withSize(1000), coregex -> new Pair<>(regex, coregex));
+          return MapKt.map(new CoregexArbitrary(regex), coregex -> new Pair<>(regex, coregex));
         });
   }
 }

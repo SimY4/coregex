@@ -28,7 +28,6 @@ import java.util.Random;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.runner.RunWith;
 
 @RunWith(JUnitQuickcheck.class)
@@ -57,7 +56,6 @@ public class JunitQuickcheckTest extends Assert {
   }
 
   @Property
-  @Ignore // FIXME re-enable when sized is supported again.
   public void shrinkingTest(
       long seed,
       @Only({
