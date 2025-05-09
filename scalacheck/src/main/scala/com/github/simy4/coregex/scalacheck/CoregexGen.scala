@@ -24,13 +24,9 @@ import java.util.regex.Pattern
 import scala.util.matching.Regex
 
 object CoregexGen {
-  def fromRegex(regex: Regex, size: Option[Int] = None): Gen[String] = fromPattern(regex.pattern, size)
+  def fromRegex(regex: Regex): Gen[String] = fromPattern(regex.pattern)
 
-  def fromPattern(regex: Pattern, size: Option[Int] = None): Gen[String] = apply(Coregex.from(regex), size)
+  def fromPattern(regex: Pattern): Gen[String] = apply(Coregex.from(regex))
 
-  def apply(coregex: Coregex, size: Option[Int] = None): Gen[String] =
-    for {
-      seed <- Gen.long
-      size <- size.fold(Gen.size)(Gen.const)
-    } yield coregex.sized(coregex.minLength() max size).generate(seed)
+  def apply(coregex: Coregex): Gen[String] = Gen.long.map(coregex.generate)
 }

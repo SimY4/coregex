@@ -21,7 +21,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import net.jqwik.api.Arbitrary;
-import net.jqwik.api.constraints.Size;
 import net.jqwik.api.providers.ArbitraryProvider;
 import net.jqwik.api.providers.TypeUsage;
 
@@ -34,11 +33,8 @@ public class CoregexArbitraryProvider implements ArbitraryProvider {
   @Override
   public Set<Arbitrary<?>> provideFor(TypeUsage targetType, SubtypeProvider subtypeProvider) {
     Optional<Regex> optionalRegex = targetType.findAnnotation(Regex.class);
-    Optional<Size> optionalSize = targetType.findAnnotation(Size.class);
     return optionalRegex
         .map(regex -> new CoregexArbitrary(Pattern.compile(regex.value(), regex.flags())))
-        .map(
-            decorator -> optionalSize.map(size -> decorator.withSize(size.max())).orElse(decorator))
         .map(decorator -> Collections.<Arbitrary<?>>singleton(decorator.arbitrary()))
         .orElse(Collections.emptySet());
   }

@@ -22,6 +22,7 @@ import com.github.simy4.coregex.core.Coregex;
 import io.kotest.property.Shrinker;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 
 public class CoregexShrinker implements Shrinker<String> {
@@ -37,11 +38,11 @@ public class CoregexShrinker implements Shrinker<String> {
   @NotNull
   @Override
   public List<String> shrink(String s) {
-    List<String> shinks = new ArrayList<String>();
-    for (int remainder = coregex.minLength();
-        remainder < s.length();
-        remainder = (remainder * 2) + 1) {
-      shinks.add(coregex.sized(remainder).generate(seed));
+    List<String> shinks = new ArrayList<>();
+    for (Optional<Coregex> coregex = this.coregex.shrink();
+        coregex.isPresent();
+        coregex = coregex.flatMap(Coregex::shrink)) {
+      shinks.add(coregex.get().generate(seed));
     }
     return shinks;
   }

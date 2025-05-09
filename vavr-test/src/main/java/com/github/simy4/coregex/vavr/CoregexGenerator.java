@@ -24,15 +24,13 @@ import java.util.regex.Pattern;
 public class CoregexGenerator implements Gen<String> {
 
   private final Coregex coregex;
-  private final int size;
 
-  public CoregexGenerator(Pattern regex, int size) {
+  public CoregexGenerator(Pattern regex) {
     this.coregex = Coregex.from(regex);
-    this.size = Math.max(size, coregex.minLength());
   }
 
   @Override
   public String apply(Random random) {
-    return coregex.sized(size).generate(random.nextLong());
+    return coregex.generate(random.nextLong());
   }
 }

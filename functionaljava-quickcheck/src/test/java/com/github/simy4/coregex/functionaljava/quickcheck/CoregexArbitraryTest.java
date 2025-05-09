@@ -37,14 +37,14 @@ public class CoregexArbitraryTest {
 
   public Property shouldGenerateMatchingUUIDString() {
     return property(
-        CoregexArbitrary.of(
+        CoregexArbitrary.gen(
             "[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}"),
         uuid -> prop(stringEqual.eq(uuid, UUID.fromString(uuid).toString())));
   }
 
   public Property shouldGenerateMatchingIPv4String() {
     return property(
-        CoregexArbitrary.of(
+        CoregexArbitrary.gen(
             "((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])"),
         ipv4 -> {
           String[] expected = ipv4.split("\\.");
@@ -67,7 +67,7 @@ public class CoregexArbitraryTest {
   public Property shouldGenerateMatchingIsoDateString() {
     DateTimeFormatter formatter = DateTimeFormatter.ISO_INSTANT;
     return property(
-        CoregexArbitrary.of(
+        CoregexArbitrary.gen(
             "[12]\\d{3}-(?:0[1-9]|1[012])-(?:0[1-9]|1\\d|2[0-8])T(?:1\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d{2}[1-9])?Z"),
         iso8601Date ->
             prop(stringEqual.eq(iso8601Date, formatter.format(formatter.parse(iso8601Date)))));
@@ -75,7 +75,7 @@ public class CoregexArbitraryTest {
 
   public Property shouldGenerateUniqueStrings() {
     return property(
-        Arbitrary.arbList(CoregexArbitrary.of("[a-zA-Z0-9]{32,}")),
+        Arbitrary.arbList(CoregexArbitrary.gen("[a-zA-Z0-9]{32,}")),
         strings ->
             strings.foldLeft(
                 (acc, s) ->

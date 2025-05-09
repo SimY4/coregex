@@ -21,6 +21,7 @@ import static java.util.Objects.requireNonNull;
 import java.io.Serializable;
 import java.util.BitSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.function.IntPredicate;
 import java.util.regex.Pattern;
@@ -148,6 +149,14 @@ public final class Set extends Coregex implements IntPredicate, Serializable {
       sample = chars.nextSetBit(sample + 1);
     }
     return OptionalInt.of(sample);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Optional<Coregex> shrink() {
+    BitSet chars = BitSet.valueOf(this.chars.toLongArray());
+    chars.and(SMALLER.get().chars);
+    return chars.isEmpty() ? Optional.empty() : Optional.of(new Set(chars, "~" + description));
   }
 
   /**

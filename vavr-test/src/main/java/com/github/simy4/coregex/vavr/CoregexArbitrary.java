@@ -32,24 +32,13 @@ public class CoregexArbitrary implements Arbitrary<String> {
   }
 
   private final Pattern pattern;
-  private int sized = -1;
 
   public CoregexArbitrary(Pattern pattern) {
     this.pattern = requireNonNull(pattern, "pattern");
   }
 
-  public CoregexArbitrary withSize(int size) {
-    if (size < 0) {
-      throw new IllegalArgumentException("Size must be positive");
-    }
-    this.sized = size;
-    return this;
-  }
-
   @Override
   public Gen<String> apply(int size) {
-    int sized = this.sized;
-    sized = -1 == sized ? size : sized;
-    return new CoregexGenerator(pattern, sized);
+    return new CoregexGenerator(pattern);
   }
 }

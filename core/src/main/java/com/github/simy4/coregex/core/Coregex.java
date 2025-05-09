@@ -116,6 +116,13 @@ public abstract class Coregex implements Serializable {
   abstract void generate(Context ctx);
 
   /**
+   * Converts this coregex into one that produce "smaller" values.
+   *
+   * @return smaller coregex or empty if this coregex is already the smallest possible.
+   */
+  public abstract Optional<Coregex> shrink();
+
+  /**
    * Samples one random string that matches this regex.
    *
    * @param seed random seed to use for sampling
@@ -168,6 +175,20 @@ public abstract class Coregex implements Serializable {
       do {
         chunk.generate(ctx);
       } while (i < rest.length && (chunk = rest[i++]) != null);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Optional<Coregex> shrink() {
+      Coregex[] rest = new Coregex[this.rest.length];
+      for (int i = 0; i < this.rest.length; i++) {
+        Optional<Coregex> shrink = this.rest[i].shrink();
+        if (!shrink.isPresent()) {
+          return Optional.empty();
+        }
+        rest[i] = shrink.get();
+      }
+      return first.shrink().map(first -> new Concat(first, rest));
     }
 
     /**
@@ -352,6 +373,23 @@ public abstract class Coregex implements Serializable {
       }
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public Optional<Coregex> shrink() {
+      switch (type) {
+        case NON_CAPTURING:
+        case ATOMIC:
+          return group.shrink().map(group -> new Group(type, group));
+        case LOOKAHEAD:
+        case LOOKBEHIND:
+        case NEGATIVE_LOOKAHEAD:
+        case NEGATIVE_LOOKBEHIND:
+          return Optional.of(this);
+        default:
+          return group.shrink().map(group -> new Group(type, name, group));
+      }
+    }
+
     /**
      * @return group type
      */
@@ -506,6 +544,23 @@ public abstract class Coregex implements Serializable {
       }
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public Optional<Coregex> shrink() {
+      return this.quantified
+          .shrink()
+          .map(
+              quantified -> {
+                if (min == max) {
+                  return new Quantified(quantified, min, max, type);
+                }
+                if (-1 == max) {
+                  return new Quantified(quantified, min, min + 128, type);
+                }
+                return new Quantified(quantified, min, Math.max(min, max / 2));
+              });
+    }
+
     /**
      * @return quantified regex
      */
@@ -632,6 +687,12 @@ public abstract class Coregex implements Serializable {
       ctx.append(ctx.ref(ref).toString());
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public Optional<Coregex> shrink() {
+      return Optional.of(this);
+    }
+
     public Serializable ref() {
       return ref;
     }
@@ -680,6 +741,20 @@ public abstract class Coregex implements Serializable {
     void generate(Context ctx) {
       int index = ctx.rng.nextInt(rest.length + 1);
       (index < rest.length ? rest[index] : first).generate(ctx);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Optional<Coregex> shrink() {
+      Coregex[] rest = new Coregex[this.rest.length];
+      for (int i = 0; i < this.rest.length; i++) {
+        Optional<Coregex> shrink = this.rest[i].shrink();
+        if (!shrink.isPresent()) {
+          return Optional.empty();
+        }
+        rest[i] = shrink.get();
+      }
+      return first.shrink().map(first -> new Union(first, rest));
     }
 
     /**
