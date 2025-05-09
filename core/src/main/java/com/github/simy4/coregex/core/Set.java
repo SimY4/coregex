@@ -122,6 +122,14 @@ public final class Set extends Coregex implements IntPredicate, Serializable {
     return new Set(chars, "^" + description);
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public Optional<Coregex> shrink() {
+    BitSet chars = BitSet.valueOf(this.chars.toLongArray());
+    chars.and(SMALLER.get().chars);
+    return chars.isEmpty() ? Optional.empty() : Optional.of(new Set(chars, "~" + description));
+  }
+
   /**
    * Checks if given character is included in this set.
    *
@@ -149,14 +157,6 @@ public final class Set extends Coregex implements IntPredicate, Serializable {
       sample = chars.nextSetBit(sample + 1);
     }
     return OptionalInt.of(sample);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public Optional<Coregex> shrink() {
-    BitSet chars = BitSet.valueOf(this.chars.toLongArray());
-    chars.and(SMALLER.get().chars);
-    return chars.isEmpty() ? Optional.empty() : Optional.of(new Set(chars, "~" + description));
   }
 
   /**
