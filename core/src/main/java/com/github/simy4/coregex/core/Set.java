@@ -101,26 +101,12 @@ public final class Set extends Coregex implements IntPredicate, Serializable {
     this.description = description;
   }
 
-  /** {@inheritDoc} */
   @Override
-  void apply(Context ctx) {
-    ctx.ensureCapacity(minLength());
+  void generate(Context ctx) {
     OptionalInt sample = sample(ctx.rng.nextLong());
     if (sample.isPresent()) {
       ctx.append((char) sample.getAsInt());
     }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public int maxLength() {
-    return 1;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public int minLength() {
-    return 1;
   }
 
   /**
@@ -165,15 +151,15 @@ public final class Set extends Coregex implements IntPredicate, Serializable {
   }
 
   /**
-   * @param ch shrinks the given character.
+   * @param larger shrinks the given character.
    * @return a stream of characters that are considered as "smaller" then given character.
    */
-  public IntStream shrink(int ch) {
+  public IntStream shrink(int larger) {
     Set smaller = SMALLER.get();
-    if (smaller.test(ch)) {
+    if (smaller.test(larger)) {
       return IntStream.empty();
     }
-    return smaller.chars.stream().filter(this).filter(c -> ch != c);
+    return smaller.chars.stream().filter(this);
   }
 
   @Override
