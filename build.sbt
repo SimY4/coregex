@@ -25,7 +25,7 @@ inThisBuild(
 )
 
 lazy val scala213               = "2.13.16"
-lazy val scala3                 = "3.3.5"
+lazy val scala3                 = "3.3.6"
 lazy val supportedScalaVersions = List(scala213, scala3)
 
 def javaLibSettings(release: Int) = Seq(
