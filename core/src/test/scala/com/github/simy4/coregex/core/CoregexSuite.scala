@@ -19,8 +19,6 @@ package com.github.simy4.coregex.core
 import munit.ScalaCheckSuite
 import org.scalacheck.Prop._
 
-import scala.util.Using.{ resource => using }
-
 class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
   property("quantified zero times should give empty") {
     forAll { (coregex: Coregex, `type`: Coregex.Quantified.Type, seed: Long) =>
@@ -52,18 +50,11 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
     }
   }
 
-  property("generated should be concat of individual components") {
-    forAll { (fst: Coregex, snd: Coregex, seed: Long) =>
-      val generated = using(new Coregex.Context(seed)) { ctx =>
-        new Coregex.Concat(fst, snd).generate(ctx)
-        ctx.toString
-      }
-      val concat = using(new Coregex.Context(seed)) { ctx =>
-        fst.generate(ctx)
-        snd.generate(ctx)
-        ctx.toString
-      }
-      (generated ?= concat) :| s"$generated == $concat"
+  property("concat is associative") {
+    forAll { (fst: Coregex, snd: Coregex, trd: Coregex, seed: Long) =>
+      val left  = new Coregex.Concat(new Coregex.Concat(fst, snd), trd).generate(seed)
+      val right = new Coregex.Concat(fst, new Coregex.Concat(snd, trd)).generate(seed)
+      (left ?= right) :| s"$left == $right"
     }
   }
   // endregion
@@ -87,5 +78,12 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
   // endregion
 
   // region Union
+  property("generated should be in union") {
+    forAll { (fst: String, snd: String, trd: String, seed: Long) =>
+      val generated =
+        new Coregex.Union(Coregex.literal(fst, 0), Coregex.literal(snd, 0), Coregex.literal(trd, 0)).generate(seed)
+      ((generated ?= fst) || (generated ?= snd) || (generated ?= trd)) :| s"$generated in ($fst|$snd|$trd)"
+    }
+  }
   // endregion
 }
