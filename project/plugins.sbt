@@ -1,4 +1,4 @@
-addSbtPlugin("ch.epfl.scala"        % "sbt-bloop"             % "2.0.9")
+addSbtPlugin("ch.epfl.scala"        % "sbt-bloop"             % "2.0.10")
 addSbtPlugin("com.github.sbt"       % "sbt-ci-release"        % "1.9.3")
 addSbtPlugin("com.github.sbt"       % "sbt-release"           % "1.4.0")
 addSbtPlugin("com.github.sbt"       % "sbt-java-formatter"    % "0.10.0")
