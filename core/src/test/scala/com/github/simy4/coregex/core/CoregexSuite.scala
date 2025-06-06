@@ -54,7 +54,7 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
 
   property("double quantified should multiply quantification") {
     forAll { (coregex: Coregex, first: QuantifyRange, second: QuantifyRange, rng: RNG) =>
-      val quantified = coregex.quantify(first.min * second.min, first.min * second.min, first.`type`)
+      val quantified       = coregex.quantify(first.min * second.min, first.min * second.min, first.`type`)
       val doubleQuantified =
         coregex.quantify(first.min, first.min, first.`type`).quantify(second.min, second.min, second.`type`)
       quantified.generate(rng) ?= doubleQuantified.generate(rng)
@@ -80,7 +80,7 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
       val sizedMinLengthCheck = (coregex.minLength() ?= sized
         .minLength()) :| s"$coregex.minLength(${coregex.minLength()}) == $sized.minLength(${sized.minLength()})"
       val sizedMaxLengthCheck = (-1 < coregex.maxLength()) ==> (coregex.maxLength() min size ?= sized.maxLength())
-      val sizedLength =
+      val sizedLength         =
         (sized.minLength() <= generated.length() && generated.length <= size) :| s"$sized.minLength(${sized
             .minLength()}) <= $generated.length(${generated.length}) <= $size"
 
@@ -160,7 +160,7 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
     forAll { (union: Coregex.Union, rng: RNG) =>
       val generated = union.generate(rng)
 
-      val nextRng = rng.genLong().getFirst
+      val nextRng    = rng.genLong().getFirst
       val inSetCheck = union
         .union()
         .stream()

@@ -25,7 +25,7 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
   property("sampled should be in range") {
     forAll { (ch1: Char, ch2: Char, seed: Long) =>
       val start = ch1 min ch2
-      val end = {
+      val end   = {
         val end = ch1 max ch2
         if (start == end) (end + 1).asInstanceOf[Char] else end
       }

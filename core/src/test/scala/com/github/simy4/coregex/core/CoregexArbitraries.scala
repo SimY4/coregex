@@ -27,9 +27,9 @@ trait CoregexArbitraries {
 
   type Flags <: Int
   implicit val arbitraryFlags: Arbitrary[Flags] = Arbitrary(genFlags)
-  def genFlags: Gen[Flags] =
+  def genFlags: Gen[Flags]                      =
     for {
-      n <- Gen.choose(0, 9)
+      n     <- Gen.choose(0, 9)
       flags <- Gen.listOfN(
         n,
         Gen.oneOf(
@@ -46,7 +46,7 @@ trait CoregexArbitraries {
       )
     } yield flags.foldLeft(0)(_ | _).asInstanceOf[Flags]
 
-  implicit val arbitraryCoregex: Arbitrary[Coregex] = Arbitrary(genCoregex())
+  implicit val arbitraryCoregex: Arbitrary[Coregex]                   = Arbitrary(genCoregex())
   def genCoregex(charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex] =
     for {
       single <- Gen.sized { height =>
@@ -66,7 +66,7 @@ trait CoregexArbitraries {
       )
     } yield coregex
 
-  implicit val arbitraryCoregexConcat: Arbitrary[Coregex.Concat] = Arbitrary(genCoregexConcat())
+  implicit val arbitraryCoregexConcat: Arbitrary[Coregex.Concat]                   = Arbitrary(genCoregexConcat())
   def genCoregexConcat(charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex.Concat] =
     for {
       first <- Gen.sized(h => Gen.resize(h / 4, genCoregex(charGen)))
@@ -74,7 +74,7 @@ trait CoregexArbitraries {
       rest  <- Gen.listOfN(size % 10, Gen.resize(size / 4, genCoregex(charGen)))
     } yield new Coregex.Concat(first, rest: _*)
 
-  implicit val arbitraryCoregexLiteral: Arbitrary[Coregex.Literal] = Arbitrary(genCoregexLiteral())
+  implicit val arbitraryCoregexLiteral: Arbitrary[Coregex.Literal]                   = Arbitrary(genCoregexLiteral())
   def genCoregexLiteral(charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex.Literal] =
     for (literal <- Gen.stringOf(charGen); flags <- genFlags) yield new Coregex.Literal(literal, flags)
   implicit def shrinkCoregexLiteral(implicit shrinkLiteral: Shrink[String]): Shrink[Coregex.Literal] =
@@ -85,7 +85,7 @@ trait CoregexArbitraries {
   def genCoregexSet(charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex.Set] = genSet(charGen).map(new Coregex.Set(_))
   def shrinkCoregexSet(set: Coregex.Set): LazyList[Coregex.Set] = shrinkSet(set.set()).map(new Coregex.Set(_))
 
-  implicit val arbitraryCoregexUnion: Arbitrary[Coregex.Union] = Arbitrary(genCoregexUnion())
+  implicit val arbitraryCoregexUnion: Arbitrary[Coregex.Union]                   = Arbitrary(genCoregexUnion())
   def genCoregexUnion(charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex.Union] =
     for {
       first <- Gen.sized(h => Gen.resize(h / 4, genCoregex(charGen)))
@@ -96,8 +96,8 @@ trait CoregexArbitraries {
   implicit val arbitraryRNG: Arbitrary[RNG] = Arbitrary(genRNG)
   def genRNG: Gen[RNG]                      = Gen.long.map(new RandomRNG(_))
 
-  implicit val arbitrarySet: Arbitrary[Set] = Arbitrary(genSet())
-  implicit val shrinkSet: Shrink[Set]       = Shrink.withLazyList(shrinkSet(_))
+  implicit val arbitrarySet: Arbitrary[Set]                         = Arbitrary(genSet())
+  implicit val shrinkSet: Shrink[Set]                               = Shrink.withLazyList(shrinkSet(_))
   def genSet(charGen: Gen[Char] = Gen.asciiPrintableChar): Gen[Set] = Gen.recursive[Set] { fix =>
     Gen.oneOf(
       for (flags <- genFlags; ch <- charGen; rest <- Gen.stringOf(charGen))
