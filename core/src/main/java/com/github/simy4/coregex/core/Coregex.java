@@ -129,7 +129,8 @@ public abstract class Coregex implements Serializable {
    * @return sampled string
    */
   public final String generate(long seed) {
-    try (Context ctx = new Context(seed)) {
+    Random rng = new Random(seed);
+    try (Context ctx = new Context(rng)) {
       generate(ctx);
       return ctx.toString();
     }
@@ -240,11 +241,11 @@ public abstract class Coregex implements Serializable {
 
     final Random rng;
 
-    Context(long seed) {
+    Context(Random rng) {
       this.parent = null;
       this.index = 0;
       this.name = null;
-      this.rng = new Random(seed);
+      this.rng = rng;
       this.groups = new HashMap<>();
     }
 
