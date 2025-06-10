@@ -95,9 +95,9 @@ lazy val jqwik = (project in file("jqwik"))
     description   := "JQwik bindings for coregex library.",
     headerEndYear := Some(2025),
     libraryDependencies ++= Seq(
-      "net.jqwik"            % "jqwik-api"         % "1.9.2"                          % Provided,
-      "net.jqwik"            % "jqwik-engine"      % "1.9.2"                          % Test,
-      "net.jqwik"            % "jqwik-testing"     % "1.9.2"                          % Test,
+      "net.jqwik"            % "jqwik-api"         % "1.9.3"                          % Provided,
+      "net.jqwik"            % "jqwik-engine"      % "1.9.3"                          % Test,
+      "net.jqwik"            % "jqwik-testing"     % "1.9.3"                          % Test,
       "com.github.sbt.junit" % "jupiter-interface" % JupiterKeys.jupiterVersion.value % Test
     ),
     Test / parallelExecution := false,
