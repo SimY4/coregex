@@ -21,18 +21,21 @@ import static java.util.Objects.requireNonNull;
 import java.io.Serializable;
 import java.util.BitSet;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.function.IntPredicate;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 /**
  * Data representation of a set of characters AKA regular expression's char classes.
  *
+ * @see Coregex
  * @see Set.Builder
  * @author Alex Simkin
  * @since 0.1.0
  */
-public final class Set implements IntPredicate, Serializable {
+public final class Set extends Coregex implements IntPredicate, Serializable {
+
   private static final long serialVersionUID = 1L;
 
   static final Lazy<Set> ALL =
@@ -59,6 +62,9 @@ public final class Set implements IntPredicate, Serializable {
             chars.set(Character.MIN_VALUE, Character.MIN_SURROGATE);
             return new Set(chars, ".");
           });
+  static final Lazy<Set> SMALLER =
+      new Lazy<>(
+          () -> builder().range('0', '9').range('a', 'z').range('A', 'Z').single('_').build());
 
   /**
    * Creates an instance of {@link Set} builder.
@@ -95,6 +101,37 @@ public final class Set implements IntPredicate, Serializable {
     this.description = description;
   }
 
+  @Override
+  void generate(Context ctx) {
+    OptionalInt sample = sample(ctx.rng.nextLong());
+    if (sample.isPresent()) {
+      ctx.append((char) sample.getAsInt());
+    }
+  }
+
+  /**
+   * Negates this set.
+   *
+   * @return new negated set instance.
+   */
+  @Override
+  public Set negate() {
+    BitSet chars = BitSet.valueOf(this.chars.toLongArray());
+    chars.flip(0, chars.size());
+    return new Set(chars, "^" + description);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Optional<Coregex> shrink() {
+    BitSet chars = BitSet.valueOf(this.chars.toLongArray());
+    chars.and(SMALLER.get().chars);
+    if (chars.isEmpty() || chars.equals(this.chars)) {
+      return Optional.empty();
+    }
+    return Optional.of(new Set(chars, "~" + description));
+  }
+
   /**
    * Checks if given character is included in this set.
    *
@@ -106,36 +143,16 @@ public final class Set implements IntPredicate, Serializable {
     return chars.get(value);
   }
 
-  /**
-   * Randomly selects one character in this set based on provided seed.
-   *
-   * @param seed seed to use for random selection
-   * @return selected character
-   */
-  public char sample(long seed) {
+  OptionalInt sample(long seed) {
     if (chars.isEmpty()) {
-      throw new IllegalStateException("empty set: " + description);
+      return OptionalInt.empty();
     }
     long skip = Math.abs(seed % chars.cardinality());
     int sample = chars.nextSetBit(0);
     while (skip-- > 0) {
       sample = chars.nextSetBit(sample + 1);
     }
-    return (char) sample;
-  }
-
-  /**
-   * @return partitions this set into chunks.
-   */
-  public Stream<Set> shrink() {
-    int partitionSize = chars.size() / 2;
-    if (partitionSize < 64) {
-      return Stream.empty();
-    }
-    return Stream.of(
-            new Set(chars.get(0, partitionSize), description + "~"),
-            new Set(chars.get(partitionSize, chars.size()), "~" + description))
-        .filter(set -> !set.chars.isEmpty());
+    return OptionalInt.of(sample);
   }
 
   @Override
@@ -157,7 +174,7 @@ public final class Set implements IntPredicate, Serializable {
 
   @Override
   public String toString() {
-    return description;
+    return 1 == chars.cardinality() ? description : "[" + description + ']';
   }
 
   /**
@@ -168,9 +185,10 @@ public final class Set implements IntPredicate, Serializable {
    * @since 0.1.0
    */
   public static final class Builder {
+
     private final int flags;
     private final BitSet chars;
-    private final StringBuilder description = new StringBuilder("[");
+    private final StringBuilder description = new StringBuilder();
 
     private Builder(int flags, int size) {
       this.flags = flags;
@@ -216,11 +234,6 @@ public final class Set implements IntPredicate, Serializable {
         single(ch);
       }
       return this;
-    }
-
-    @Deprecated
-    public Builder set(Set set) {
-      return union(set);
     }
 
     /**
@@ -274,7 +287,7 @@ public final class Set implements IntPredicate, Serializable {
      */
     public Builder negate() {
       chars.flip(0, chars.size());
-      description.insert(1, '^');
+      description.insert(0, '^');
       return this;
     }
 
@@ -282,7 +295,7 @@ public final class Set implements IntPredicate, Serializable {
      * @return compiled set
      */
     public Set build() {
-      return new Set(chars, description.append(']').toString());
+      return new Set(chars, description.toString());
     }
   }
 }

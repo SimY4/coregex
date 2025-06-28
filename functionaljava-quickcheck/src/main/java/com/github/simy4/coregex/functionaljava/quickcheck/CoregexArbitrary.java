@@ -17,22 +17,42 @@
 package com.github.simy4.coregex.functionaljava.quickcheck;
 
 import com.github.simy4.coregex.core.Coregex;
-import com.github.simy4.coregex.core.rng.RandomRNG;
+import fj.data.Option;
+import fj.data.Stream;
 import fj.test.Gen;
+import fj.test.Shrink;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 public final class CoregexArbitrary {
-  public static Gen<String> of(String regex) {
-    return of(regex, 0);
+
+  public static Gen<String> gen(String regex) {
+    return gen(regex, 0);
   }
 
-  public static Gen<String> of(String regex, int flags) {
+  public static Gen<String> gen(String regex, int flags) {
     Coregex coregex = Coregex.from(Pattern.compile(regex, flags));
-    return Gen.gen(
-        size -> {
-          Coregex sized = coregex.sized(Math.max(size, coregex.minLength()));
-          return rand -> sized.generate(new RandomRNG(rand.choose(Long.MIN_VALUE, Long.MAX_VALUE)));
-        });
+    return Gen.gen(size -> rand -> coregex.generate(rand.choose(Long.MIN_VALUE, Long.MAX_VALUE)));
+  }
+
+  public static Shrink<String> shrink(String regex) {
+    return shrink(regex, 0);
+  }
+
+  public static Shrink<String> shrink(String regex, int flags) {
+    Option<Stream<Coregex>> shrinks =
+        Stream.sequenceOption(
+            Stream.iterate(
+                    opt -> opt.bind(coregex -> fromOptional(coregex.shrink())),
+                    fromOptional(Coregex.from(Pattern.compile(regex, flags)).shrink()))
+                .takeWhile(Option::isSome));
+    return Shrink.shrink(
+        str -> shrinks.orSome(Stream.nil()).map(coregex -> coregex.generate(str.length())));
+  }
+
+  @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+  private static Option<Coregex> fromOptional(Optional<Coregex> coregex) {
+    return coregex.map(Option::some).orElseGet(Option::none);
   }
 
   private CoregexArbitrary() {

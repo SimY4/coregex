@@ -17,8 +17,7 @@
 package com.github.simy4.coregex.jqwik;
 
 import com.github.simy4.coregex.core.Coregex;
-import com.github.simy4.coregex.core.RNG;
-import com.github.simy4.coregex.core.rng.RandomRNG;
+import java.util.Optional;
 import java.util.Random;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -27,41 +26,35 @@ import net.jqwik.api.Shrinkable;
 import net.jqwik.api.ShrinkingDistance;
 
 public class CoregexGenerator implements RandomGenerator<String> {
-  private final Coregex coregex;
-  private final int size;
 
-  public CoregexGenerator(Pattern regex, int size) {
+  private final Coregex coregex;
+
+  public CoregexGenerator(Pattern regex) {
     this.coregex = Coregex.from(regex);
-    this.size = Math.max(size, coregex.minLength());
   }
 
   @Override
   public Shrinkable<String> next(Random random) {
-    return new ShrinkableString(coregex, size, random.nextLong());
+    return new ShrinkableString(coregex, random.nextLong());
   }
 }
 
 final class ShrinkableString implements Shrinkable<String> {
+
   private final Coregex coregex;
-  private final int size;
-  private final RNG rng;
+  private final long seed;
 
   private String value;
 
-  ShrinkableString(Coregex coregex, int size, long seed) {
-    this(coregex, size, new RandomRNG(seed));
-  }
-
-  private ShrinkableString(Coregex coregex, int size, RNG rng) {
+  ShrinkableString(Coregex coregex, long seed) {
     this.coregex = coregex;
-    this.size = size;
-    this.rng = rng;
+    this.seed = seed;
   }
 
   @Override
   public String value() {
     if (null == value) {
-      value = coregex.sized(size).generate(rng);
+      value = coregex.generate(seed);
     }
     return value;
   }
@@ -69,16 +62,16 @@ final class ShrinkableString implements Shrinkable<String> {
   @Override
   public Stream<Shrinkable<String>> shrink() {
     Stream.Builder<Shrinkable<String>> shrinks = Stream.builder();
-    for (int remainder = coregex.minLength();
-        remainder < value().length();
-        remainder = (remainder * 2) + 1) {
-      shrinks.add(new ShrinkableString(coregex, remainder, rng));
+    for (Optional<Coregex> coregex = this.coregex.shrink();
+        coregex.isPresent();
+        coregex = coregex.flatMap(Coregex::shrink)) {
+      shrinks.add(new ShrinkableString(coregex.get(), seed));
     }
     return shrinks.build();
   }
 
   @Override
   public ShrinkingDistance distance() {
-    return ShrinkingDistance.of(value().length() - coregex.minLength());
+    return ShrinkingDistance.of(value().length());
   }
 }

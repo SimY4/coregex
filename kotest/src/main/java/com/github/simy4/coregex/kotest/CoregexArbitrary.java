@@ -16,24 +16,23 @@
 
 package com.github.simy4.coregex.kotest;
 
+import static kotlin.LazyKt.lazy;
+
 import com.github.simy4.coregex.core.Coregex;
-import com.github.simy4.coregex.core.RNG;
-import com.github.simy4.coregex.core.rng.RandomRNG;
 import io.kotest.property.Arb;
 import io.kotest.property.Classifier;
-import io.kotest.property.GenKt;
+import io.kotest.property.RTree;
 import io.kotest.property.RandomSource;
 import io.kotest.property.Sample;
-import io.kotest.property.Shrinker;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Pattern;
-import kotlin.collections.CollectionsKt;
+import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CoregexArbitrary extends Arb<String> {
+
   public static CoregexArbitrary of(String pattern) {
     return of(pattern, 0);
   }
@@ -43,8 +42,6 @@ public class CoregexArbitrary extends Arb<String> {
   }
 
   private final Coregex coregex;
-  private final Set<String> edgeCases = new HashSet<>();
-  private int sized = -1;
 
   public CoregexArbitrary(Pattern pattern) {
     this.coregex = Coregex.from(pattern);
@@ -59,33 +56,38 @@ public class CoregexArbitrary extends Arb<String> {
   @Nullable
   @Override
   public String edgecase(@NotNull RandomSource randomSource) {
-    return edgeCases.isEmpty() ? null : CollectionsKt.random(edgeCases, randomSource.getRandom());
+    return null;
   }
 
   @NotNull
   @Override
   public Sample<String> sample(@NotNull RandomSource randomSource) {
-    RNG rng = new RandomRNG(randomSource.getRandom().nextLong());
-    Shrinker<String> shrinker = new CoregexShrinker(coregex, rng);
-    String sample = coregex.sized(sized >= 0 ? sized : Integer.MAX_VALUE - 2).generate(rng);
-    return GenKt.sampleOf(sample, shrinker);
+    long seed = randomSource.getRandom().nextLong();
+    String sample = coregex.generate(seed);
+    return new Sample<>(
+        sample, new RTree<>(() -> sample, lazy(new CoregexShrinker(coregex, seed))));
+  }
+}
+
+final class CoregexShrinker implements Function0<List<RTree<String>>> {
+  private final Coregex coregex;
+  private final long seed;
+
+  public CoregexShrinker(Coregex coregex, long seed) {
+    this.coregex = coregex;
+    this.seed = seed;
   }
 
-  public CoregexArbitrary withSize(int size) {
-    if (size < 0) {
-      throw new IllegalArgumentException("Size must be positive");
-    }
-    sized = size;
-    return this;
-  }
-
-  /**
-   * @deprecated Use {@link io.kotest.property.arbitrary.EdgecasesKt#withEdgecases(Arb, Object[])}
-   *     instead. For removal.
-   */
-  @Deprecated
-  public CoregexArbitrary withEdgeCases(String... edgeCases) {
-    this.edgeCases.addAll(Arrays.asList(edgeCases));
-    return this;
+  @Override
+  public List<RTree<String>> invoke() {
+    return coregex
+        .shrink()
+        .map(
+            coregex -> {
+              String shrink = coregex.generate(seed);
+              return Collections.singletonList(
+                  new RTree<>(() -> shrink, lazy(new CoregexShrinker(coregex, seed))));
+            })
+        .orElse(Collections.emptyList());
   }
 }
