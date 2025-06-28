@@ -17,6 +17,7 @@
 package com.github.simy4.coregex.kotest;
 
 import static io.kotest.property.PropertyTest1Kt.forAll;
+import static kotlinx.coroutines.BuildersKt.runBlocking;
 
 import io.kotest.property.Arb;
 import io.kotest.property.arbitrary.CollectionsKt;
@@ -25,32 +26,31 @@ import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 import kotlin.coroutines.EmptyCoroutineContext;
 import kotlin.sequences.SequencesKt;
-import kotlinx.coroutines.BuildersKt;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 class CoregexArbitraryTest extends Assertions {
   @Test
   void shouldGenerateMatchingUUIDString() throws InterruptedException {
-    BuildersKt.runBlocking(
+    runBlocking(
         EmptyCoroutineContext.INSTANCE,
-        (scope, c1) ->
+        (__, c1) ->
             forAll(
                 CoregexArbitrary.of(
                     "[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}"),
-                (context, uuid, c2) -> uuid.equals(UUID.fromString(uuid).toString()),
+                (___, uuid, c2) -> uuid.equals(UUID.fromString(uuid).toString()),
                 c1));
   }
 
   @Test
   void shouldGenerateMatchingIPv4String() throws InterruptedException {
-    BuildersKt.runBlocking(
+    runBlocking(
         EmptyCoroutineContext.INSTANCE,
-        (scope, c1) ->
+        (__, c1) ->
             forAll(
                 CoregexArbitrary.of(
                     "((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])"),
-                (context, ipv4, c2) -> {
+                (___, ipv4, c2) -> {
                   String[] expected = ipv4.split("\\.");
                   String[] actual =
                       assertDoesNotThrow(() -> InetAddress.getByName(ipv4))
@@ -70,25 +70,25 @@ class CoregexArbitraryTest extends Assertions {
   @Test
   void shouldGenerateMatchingIsoDateString() throws InterruptedException {
     DateTimeFormatter formatter = DateTimeFormatter.ISO_INSTANT;
-    BuildersKt.runBlocking(
+    runBlocking(
         EmptyCoroutineContext.INSTANCE,
-        (scope, c1) ->
+        (__, c1) ->
             forAll(
                 CoregexArbitrary.of(
                     "[12]\\d{3}-(?:0[1-9]|1[012])-(?:0[1-9]|1\\d|2[0-8])T(?:1\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d{2}[1-9])?Z"),
-                (context, iso8601Date, c2) ->
+                (___, iso8601Date, c2) ->
                     iso8601Date.equals(formatter.format(formatter.parse(iso8601Date))),
                 c1));
   }
 
   @Test
   void shouldGenerateUniqueStrings() throws InterruptedException {
-    BuildersKt.runBlocking(
+    runBlocking(
         EmptyCoroutineContext.INSTANCE,
-        (scope, c1) ->
+        (__, c1) ->
             forAll(
                 CollectionsKt.list(Arb.Companion, CoregexArbitrary.of("[a-zA-Z0-9]{32,}")),
-                (context, strings, c2) ->
+                (___, strings, c2) ->
                     strings.stream()
                         .allMatch(
                             s ->

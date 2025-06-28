@@ -181,15 +181,20 @@ public abstract class Coregex implements Serializable {
     /** {@inheritDoc} */
     @Override
     public Optional<Coregex> shrink() {
+      // shrink until every concatenated piece can shrink.
+      Coregex first = this.first.shrink().orElse(null);
       Coregex[] rest = new Coregex[this.rest.length];
-      for (int i = 0; i < this.rest.length; i++) {
-        Optional<Coregex> shrink = this.rest[i].shrink();
-        if (!shrink.isPresent()) {
-          return Optional.empty();
-        }
-        rest[i] = shrink.get();
+      for (int i = 0; i < rest.length; i++) {
+        rest[i] = this.rest[i].shrink().orElse(null);
       }
-      return first.shrink().map(first -> new Concat(first, rest));
+      if (null == first && Arrays.stream(rest).allMatch(Objects::isNull)) {
+        return Optional.empty();
+      }
+      if (null == first) first = this.first;
+      for (int i = 0; i < rest.length; i++) {
+        if (null == rest[i]) rest[i] = this.rest[i];
+      }
+      return Optional.of(new Concat(first, rest));
     }
 
     /**
@@ -548,18 +553,15 @@ public abstract class Coregex implements Serializable {
     /** {@inheritDoc} */
     @Override
     public Optional<Coregex> shrink() {
-      return this.quantified
-          .shrink()
-          .map(
-              quantified -> {
-                if (min == max) {
-                  return new Quantified(quantified, min, max, type);
-                }
-                if (-1 == max) {
-                  return new Quantified(quantified, min, min + 128, type);
-                }
-                return new Quantified(quantified, min, Math.max(min, max / 2));
-              });
+      // reducing size first, only then reducing quantified piece.
+      if (min == max) {
+        return quantified.shrink().map(quantified -> new Quantified(quantified, min, max, type));
+      }
+      if (-1 == max) {
+        return Optional.of(new Quantified(quantified, min, min + 128, type));
+      }
+      int max = Math.max(min, this.max / 2);
+      return Optional.of(new Quantified(quantified, min, Math.max(min, max / 2)));
     }
 
     /**
@@ -747,15 +749,20 @@ public abstract class Coregex implements Serializable {
     /** {@inheritDoc} */
     @Override
     public Optional<Coregex> shrink() {
+      // shrink until every union piece can shrink.
+      Coregex first = this.first.shrink().orElse(null);
       Coregex[] rest = new Coregex[this.rest.length];
-      for (int i = 0; i < this.rest.length; i++) {
-        Optional<Coregex> shrink = this.rest[i].shrink();
-        if (!shrink.isPresent()) {
-          return Optional.empty();
-        }
-        rest[i] = shrink.get();
+      for (int i = 0; i < rest.length; i++) {
+        rest[i] = this.rest[i].shrink().orElse(null);
       }
-      return first.shrink().map(first -> new Union(first, rest));
+      if (null == first && Arrays.stream(rest).allMatch(Objects::isNull)) {
+        return Optional.empty();
+      }
+      if (null == first) first = this.first;
+      for (int i = 0; i < rest.length; i++) {
+        if (null == rest[i]) rest[i] = this.rest[i];
+      }
+      return Optional.of(new Union(first, rest));
     }
 
     /**

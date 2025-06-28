@@ -25,7 +25,6 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.function.IntPredicate;
 import java.util.regex.Pattern;
-import java.util.stream.IntStream;
 
 /**
  * Data representation of a set of characters AKA regular expression's char classes.
@@ -127,7 +126,10 @@ public final class Set extends Coregex implements IntPredicate, Serializable {
   public Optional<Coregex> shrink() {
     BitSet chars = BitSet.valueOf(this.chars.toLongArray());
     chars.and(SMALLER.get().chars);
-    return chars.isEmpty() ? Optional.empty() : Optional.of(new Set(chars, "~" + description));
+    if (chars.isEmpty() || chars.equals(this.chars)) {
+      return Optional.empty();
+    }
+    return Optional.of(new Set(chars, "~" + description));
   }
 
   /**
@@ -141,13 +143,7 @@ public final class Set extends Coregex implements IntPredicate, Serializable {
     return chars.get(value);
   }
 
-  /**
-   * Randomly selects one character in this set based on provided seed.
-   *
-   * @param seed seed to use for random selection
-   * @return selected character
-   */
-  public OptionalInt sample(long seed) {
+  OptionalInt sample(long seed) {
     if (chars.isEmpty()) {
       return OptionalInt.empty();
     }
@@ -157,18 +153,6 @@ public final class Set extends Coregex implements IntPredicate, Serializable {
       sample = chars.nextSetBit(sample + 1);
     }
     return OptionalInt.of(sample);
-  }
-
-  /**
-   * @param larger shrinks the given character.
-   * @return a stream of characters that are considered as "smaller" then given character.
-   */
-  public IntStream shrink(int larger) {
-    Set smaller = SMALLER.get();
-    if (smaller.test(larger)) {
-      return IntStream.empty();
-    }
-    return smaller.chars.stream().filter(this);
   }
 
   @Override

@@ -17,12 +17,13 @@
 package com.github.simy4.coregex.core
 
 import munit.ScalaCheckSuite
-import org.scalacheck.Prop
 import org.scalacheck.Prop._
 
 import java.util.regex.Pattern
 
 class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
+  import scala.jdk.OptionConverters._
+
   property("generated should be in set") {
     forAll { (set: Set, seed: Long) =>
       val generated = set.generate(seed)
@@ -83,17 +84,10 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
   property("shrunk should be in set") {
     forAll { (set: Set, seed: Long) =>
       val generated = set.sample(seed).orElse(-1)
-      set.shrink(generated).allMatch(set) :| s"shrunk $generated in [$set]"
-    }
-  }
-
-  property("shrunk characters all contained within a set") {
-    forAll { (set: Set, seed: Long) =>
-      val sampled = set.sample(seed).orElse(-1)
       set
-        .shrink(sampled)
-        .mapToObj(ch => Prop(set.test(ch)) :| s"$sampled shrunk to $ch is in [$set]")
-        .reduce(Prop(true), _ && _)
+        .shrink()
+        .toScala
+        .forall(shrink => set.test(shrink.generate(seed).codePointAt(0))) :| s"shrunk $generated in [$set]"
     }
   }
 

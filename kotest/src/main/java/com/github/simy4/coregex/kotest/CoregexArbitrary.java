@@ -16,14 +16,18 @@
 
 package com.github.simy4.coregex.kotest;
 
+import static kotlin.LazyKt.lazy;
+
 import com.github.simy4.coregex.core.Coregex;
 import io.kotest.property.Arb;
 import io.kotest.property.Classifier;
-import io.kotest.property.GenKt;
+import io.kotest.property.RTree;
 import io.kotest.property.RandomSource;
 import io.kotest.property.Sample;
-import io.kotest.property.Shrinker;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Pattern;
+import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +63,31 @@ public class CoregexArbitrary extends Arb<String> {
   @Override
   public Sample<String> sample(@NotNull RandomSource randomSource) {
     long seed = randomSource.getRandom().nextLong();
-    Shrinker<String> shrinker = new CoregexShrinker(coregex, seed);
-    return GenKt.sampleOf(coregex.generate(seed), shrinker);
+    String sample = coregex.generate(seed);
+    return new Sample<>(
+        sample, new RTree<>(() -> sample, lazy(new CoregexShrinker(coregex, seed))));
+  }
+}
+
+final class CoregexShrinker implements Function0<List<RTree<String>>> {
+  private final Coregex coregex;
+  private final long seed;
+
+  public CoregexShrinker(Coregex coregex, long seed) {
+    this.coregex = coregex;
+    this.seed = seed;
+  }
+
+  @Override
+  public List<RTree<String>> invoke() {
+    return coregex
+        .shrink()
+        .map(
+            coregex -> {
+              String shrink = coregex.generate(seed);
+              return Collections.singletonList(
+                  new RTree<>(() -> shrink, lazy(new CoregexShrinker(coregex, seed))));
+            })
+        .orElse(Collections.emptyList());
   }
 }
