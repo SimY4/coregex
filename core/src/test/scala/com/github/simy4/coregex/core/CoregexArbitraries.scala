@@ -71,14 +71,14 @@ trait CoregexArbitraries {
     } yield new Coregex.Concat(first, rest: _*)
 
   implicit val arbitraryCoregexRef: Arbitrary[Coregex.Ref] = Arbitrary(genCoregexRef)
-  def genCoregexRef: Gen[Coregex.Ref] =
+  def genCoregexRef: Gen[Coregex.Ref]                      =
     for {
       fst  <- Gen.alphaChar
       size <- Gen.size
       rest <- Gen.listOfN(size % 10, Gen.alphaNumChar)
     } yield new Coregex.Ref(rest.mkString(fst.toString, "", ""))
 
-  implicit val arbitrarySet: Arbitrary[Set] = Arbitrary(genSet())
+  implicit val arbitrarySet: Arbitrary[Set]                         = Arbitrary(genSet())
   def genSet(charGen: Gen[Char] = Gen.asciiPrintableChar): Gen[Set] = Gen.recursive[Set] { fix =>
     Gen.oneOf(
       for (flags <- genFlags; ch <- charGen; rest <- Gen.stringOf(charGen))
@@ -89,7 +89,7 @@ trait CoregexArbitraries {
     )
   }
 
-  implicit val arbitraryCoregexUnion: Arbitrary[Coregex.Union] = Arbitrary(genCoregexUnion())
+  implicit val arbitraryCoregexUnion: Arbitrary[Coregex.Union]                   = Arbitrary(genCoregexUnion())
   def genCoregexUnion(charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex.Union] =
     for {
       first <- Gen.sized(h => Gen.resize(h / 4, genCoregex(charGen)))
