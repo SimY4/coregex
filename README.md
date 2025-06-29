@@ -30,8 +30,10 @@ Use the provided `CoregexArbirary` class to generate a string that would match t
 ```java
 @RunWith(PropertyTestRunner.class)
 public class MyTest {
+  private static final Pattern PATTERN = Pattern.compile("[a-zA-Z]{3}");
+
   public Property myProperty() {
-    return property(CoregexArbitrary.of("[a-zA-Z]{3}"), str -> prop(3 == str.length()));
+    return property(CoregexArbitrary.gen(PATTERN), CoregexArbitrary.shrink(PATTERN), str -> prop(3 == str.length()));
   }
 }
 ```

@@ -9,7 +9,6 @@ import fj.test.Gen;
 import fj.test.Property;
 import fj.test.Rand;
 import fj.test.runner.PropertyTestRunner;
-import java.util.Random;
 import java.util.regex.Pattern;
 import org.junit.runner.RunWith;
 
@@ -20,11 +19,10 @@ public class FunctionJavaQuickcheckTest {
     return property(
         arbitraryRegex(),
         Arbitrary.arbInteger,
-        Arbitrary.arbLong.map(Random::new),
-        (regex, size, random) -> {
-          String sample =
-              CoregexArbitrary.gen(regex.pattern(), regex.flags()).gen(size, Rand.standard);
-          return CoregexArbitrary.shrink(regex.pattern(), regex.flags())
+        Arbitrary.arbLong,
+        (regex, size, seed) -> {
+          String sample = CoregexArbitrary.gen(regex).gen(size, Rand.standard.reseed(seed));
+          return CoregexArbitrary.shrink(regex)
               .shrink(sample)
               .map(shrink -> prop(regex.matcher(shrink).matches()))
               .foldLeft(Property::and, prop(true));
