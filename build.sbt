@@ -138,7 +138,7 @@ lazy val kotest = (project in file("kotest"))
     ),
     testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v")
   )
-  .settings(javaLibSettings(8))
+  .settings(javaLibSettings(11))
   .settings(jacocoSettings)
   .dependsOn(core)
 

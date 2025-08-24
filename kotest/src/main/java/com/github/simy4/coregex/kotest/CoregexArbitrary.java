@@ -55,15 +55,15 @@ public class CoregexArbitrary extends Arb<String> {
 
   @Nullable
   @Override
-  public String edgecase(@NotNull RandomSource randomSource) {
+  public Sample<String> edgecase(@NotNull RandomSource randomSource) {
     return null;
   }
 
   @NotNull
   @Override
   public Sample<String> sample(@NotNull RandomSource randomSource) {
-    long seed = randomSource.getRandom().nextLong();
-    String sample = coregex.generate(seed);
+    var seed = randomSource.getRandom().nextLong();
+    var sample = coregex.generate(seed);
     return new Sample<>(
         sample, new RTree<>(() -> sample, lazy(new CoregexShrinker(coregex, seed))));
   }
@@ -84,7 +84,7 @@ final class CoregexShrinker implements Function0<List<RTree<String>>> {
         .shrink()
         .map(
             coregex -> {
-              String shrink = coregex.generate(seed);
+              var shrink = coregex.generate(seed);
               return Collections.singletonList(
                   new RTree<>(() -> shrink, lazy(new CoregexShrinker(coregex, seed))));
             })

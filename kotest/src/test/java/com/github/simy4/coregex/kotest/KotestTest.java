@@ -22,11 +22,9 @@ import static kotlinx.coroutines.BuildersKt.runBlocking;
 
 import io.kotest.property.Arb;
 import io.kotest.property.RTree;
-import io.kotest.property.Sample;
 import io.kotest.property.arbitrary.CollectionsKt;
 import java.util.ArrayDeque;
 import java.util.Collections;
-import java.util.Queue;
 import java.util.regex.Pattern;
 import kotlin.Unit;
 import kotlin.coroutines.EmptyCoroutineContext;
@@ -42,13 +40,13 @@ class KotestTest extends Assertions {
             checkAll(
                 regexes(),
                 (context, regex, c2) -> {
-                  Arb<String> coregexArbitrary = new CoregexArbitrary(regex);
-                  Sample<String> sample = coregexArbitrary.sample(context.randomSource());
-                  Queue<RTree<String>> shrinks = Collections.asLifoQueue(new ArrayDeque<>());
+                  var coregexArbitrary = new CoregexArbitrary(regex);
+                  var sample = coregexArbitrary.sample(context.randomSource());
+                  var shrinks = Collections.asLifoQueue(new ArrayDeque<RTree<String>>());
                   shrinks.add(sample.getShrinks());
                   while (!shrinks.isEmpty()) {
-                    RTree<String> shrink = shrinks.remove();
-                    String shrinkValue = shrink.getValue().invoke();
+                    var shrink = shrinks.remove();
+                    var shrinkValue = shrink.getValue().invoke();
                     assertTrue(regex.matcher(shrinkValue).matches());
                     shrinks.addAll(shrink.getChildren().getValue());
                   }
