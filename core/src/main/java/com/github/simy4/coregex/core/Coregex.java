@@ -21,7 +21,10 @@ import static java.util.Objects.requireNonNull;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -115,6 +118,8 @@ public abstract class Coregex implements Serializable {
 
   abstract void generate(Context ctx);
 
+  abstract String[] match(String input, Context ctx);
+
   /**
    * Converts this coregex into one that produce "smaller" values.
    *
@@ -134,6 +139,16 @@ public abstract class Coregex implements Serializable {
       generate(ctx);
       return ctx.toString();
     }
+  }
+
+  final boolean matches(String input, Context ctx) {
+    String[] matches = match(input, ctx);
+    for (String match : matches) {
+      if (match.isEmpty()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -176,6 +191,20 @@ public abstract class Coregex implements Serializable {
       do {
         chunk.generate(ctx);
       } while (i < rest.length && (chunk = rest[i++]) != null);
+    }
+
+    @Override
+    String[] match(String input, Context ctx) {
+      Collection<String> match = Arrays.asList(first.match(input, ctx));
+      for (int i = 0; i < rest.length && !match.isEmpty(); i++) {
+        Collection<String> nextMatch = new HashSet<>(match.size() * (rest.length - i));
+        Coregex coregex = rest[i];
+        for (String tail : match) {
+          nextMatch.addAll(Arrays.asList(coregex.match(tail, ctx)));
+        }
+        match = nextMatch;
+      }
+      return match.toArray(new String[0]);
     }
 
     /** {@inheritDoc} */
@@ -379,6 +408,24 @@ public abstract class Coregex implements Serializable {
       }
     }
 
+    @Override
+    String[] match(String input, Context ctx) {
+      switch (type) {
+        case NON_CAPTURING:
+        case ATOMIC:
+          return group.match(input, ctx);
+        case LOOKAHEAD:
+        case LOOKBEHIND:
+        case NEGATIVE_LOOKAHEAD:
+        case NEGATIVE_LOOKBEHIND:
+          return new String[] {input};
+        default:
+          try (Context childCtx = new Context(ctx, name)) {
+            return group.match(input, childCtx);
+          }
+      }
+    }
+
     /** {@inheritDoc} */
     @Override
     public Optional<Coregex> shrink() {
@@ -550,6 +597,28 @@ public abstract class Coregex implements Serializable {
       }
     }
 
+    @Override
+    String[] match(String input, Context ctx) {
+      int quantifier = 0;
+      java.util.Set<String> match = Collections.singleton(input);
+      for (; quantifier < min && !match.isEmpty(); quantifier++) {
+        java.util.Set<String> nextMatch = new HashSet<>(match.size() * (min - quantifier));
+        for (String tail : match) {
+          nextMatch.addAll(Arrays.asList(quantified.match(tail, ctx)));
+        }
+        match = nextMatch;
+      }
+      int max = -1 == this.max ? Integer.MAX_VALUE : this.max;
+      while (quantifier++ < max && !match.isEmpty() && !match.equals(Collections.singleton(""))) {
+        java.util.Set<String> nextMatch = new HashSet<>(match.size() * (quantifier - min));
+        for (String tail : match) {
+          nextMatch.addAll(Arrays.asList(quantified.match(tail, ctx)));
+        }
+        match = nextMatch;
+      }
+      return match.toArray(new String[0]);
+    }
+
     /** {@inheritDoc} */
     @Override
     public Optional<Coregex> shrink() {
@@ -690,6 +759,12 @@ public abstract class Coregex implements Serializable {
       ctx.append(ctx.ref(ref).toString());
     }
 
+    @Override
+    String[] match(String input, Context ctx) {
+      String ref = ctx.ref(this.ref).toString();
+      return input.startsWith(ref) ? new String[] {input.substring(ref.length())} : new String[0];
+    }
+
     /** {@inheritDoc} */
     @Override
     public Optional<Coregex> shrink() {
@@ -744,6 +819,16 @@ public abstract class Coregex implements Serializable {
     void generate(Context ctx) {
       int index = ctx.rng.nextInt(rest.length + 1);
       (index < rest.length ? rest[index] : first).generate(ctx);
+    }
+
+    @Override
+    String[] match(String input, Context ctx) {
+      Collection<String> match = new HashSet<>(rest.length + 1);
+      match.addAll(Arrays.asList(first.match(input, ctx)));
+      for (Coregex coregex : rest) {
+        match.addAll(Arrays.asList(coregex.match(input, ctx)));
+      }
+      return match.toArray(new String[0]);
     }
 
     /** {@inheritDoc} */
