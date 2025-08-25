@@ -407,7 +407,7 @@ public final class CoregexParser {
         case '-':
           ctx.match('-');
           negate = true;
-        // fallthrough
+        // fall through
         default:
           int flags = ctx.flags;
           ctx.flags = negate ? flags & ~flags(ctx) : flags | flags(ctx);

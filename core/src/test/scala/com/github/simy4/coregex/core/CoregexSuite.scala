@@ -26,13 +26,19 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
 
   property("quantified zero times should give empty") {
     forAll { (coregex: Coregex, `type`: Quantified.Type, seed: Long) =>
-      coregex.quantify(0, 0, `type`).generate(seed).isEmpty
+      coregex.quantify(0, 0, `type`).generate(seed) ?= ""
     }
   }
 
   property("empty quantified should give empty") {
     forAll { (range: QuantifyRange, seed: Long) =>
-      Coregex.empty().quantify(range.min, range.max, range.`type`).generate(seed).isEmpty
+      Coregex.empty().quantify(range.min, range.max, range.`type`).generate(seed) ?= ""
+    }
+  }
+
+  property("literal should match self") {
+    forAll { (literal: String, flags: Int) =>
+      Coregex.literal(literal, flags).matches(literal, null) :| s"$literal match self"
     }
   }
 
@@ -61,6 +67,13 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
       (left ?= right) :| s"$left == $right"
     }
   }
+
+  test("concat should match self") {
+    forAll { (concat: Coregex.Concat, seed: Long) =>
+      val generated = concat.generate(seed)
+      concat.matches(generated, null) :| s"$generated in $concat"
+    }
+  }
   // endregion
 
   // region Ref
@@ -79,6 +92,13 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
       (generated + generated ?= re) :| s"$generated$generated == $re"
     }
   }
+
+//  property("ref should match referred group") {
+//    forAll { (group: Coregex, ref: Coregex.Ref, seed: Long) =>
+//      val re        = group.generate(seed)
+//      ref.matches(re, new Coregex.Context()) :| s"$generated$generated == $re"
+//    }
+//  }
   // endregion
 
   // region Union
@@ -86,6 +106,13 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
     forAll { (fst: String, snd: String, trd: String, seed: Long) =>
       val generated = new Union(literal(fst, 0), literal(snd, 0), literal(trd, 0)).generate(seed)
       ((generated ?= fst) || (generated ?= snd) || (generated ?= trd)) :| s"$generated in ($fst|$snd|$trd)"
+    }
+  }
+
+  test("union should match self") {
+    forAll { (union: Coregex.Union, seed: Long) =>
+      val generated = union.generate(seed)
+      union.matches(generated, null) :| s"$generated in ($union)"
     }
   }
 

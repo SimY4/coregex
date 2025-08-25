@@ -39,7 +39,7 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
   property("quantified generated should be in set") {
     forAll { (set: Set, range: QuantifyRange, `type`: Coregex.Quantified.Type, seed: Long) =>
       val quantified = set.quantify(range.min, range.max, `type`)
-      val generated = quantified.generate(seed)
+      val generated  = quantified.generate(seed)
 
       quantified.matches(generated, null) :| s"$generated in $set"
     }
