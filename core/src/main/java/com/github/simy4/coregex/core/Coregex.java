@@ -171,11 +171,10 @@ public abstract class Coregex implements Serializable {
 
     @Override
     void generate(Context ctx) {
-      int i = 0;
-      Coregex chunk = first;
-      do {
-        chunk.generate(ctx);
-      } while (i < rest.length && (chunk = rest[i++]) != null);
+      first.generate(ctx);
+      for (Coregex coregex : rest) {
+        coregex.generate(ctx);
+      }
     }
 
     /** {@inheritDoc} */
