@@ -120,7 +120,7 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
         fail(s"should throw error for: ${pattern.pattern()}")
       } catch {
         case _: UnsupportedOperationException =>
-        case NonFatal(ex) => fail(s"should throw UnsupportedOperationException for: ${pattern.pattern()}", ex)
+        case ex if NonFatal(ex) => fail(s"should throw UnsupportedOperationException for: ${pattern.pattern()}", ex)
       }
     }
   }
