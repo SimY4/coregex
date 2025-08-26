@@ -20,8 +20,12 @@ import munit.ScalaCheckSuite
 import org.scalacheck.Prop._
 
 class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
+  import Coregex._
+
+  import scala.jdk.CollectionConverters._
+
   property("quantified zero times should give empty") {
-    forAll { (coregex: Coregex, `type`: Coregex.Quantified.Type, seed: Long) =>
+    forAll { (coregex: Coregex, `type`: Quantified.Type, seed: Long) =>
       coregex.quantify(0, 0, `type`).generate(seed).isEmpty
     }
   }
@@ -44,16 +48,16 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
   // region Concat
   property("concat with empty should be identity") {
     forAll { (coregex: Coregex, seed: Long) =>
-      val concat1 = new Coregex.Concat(coregex, Coregex.empty())
-      val concat2 = new Coregex.Concat(Coregex.empty(), coregex)
+      val concat1 = new Concat(coregex, Coregex.empty())
+      val concat2 = new Concat(Coregex.empty(), coregex)
       (coregex.generate(seed) ?= concat1.generate(seed)) && (coregex.generate(seed) ?= concat2.generate(seed))
     }
   }
 
   property("concat is associative") {
     forAll { (fst: Coregex, snd: Coregex, trd: Coregex, seed: Long) =>
-      val left  = new Coregex.Concat(new Coregex.Concat(fst, snd), trd).generate(seed)
-      val right = new Coregex.Concat(fst, new Coregex.Concat(snd, trd)).generate(seed)
+      val left  = new Concat(new Concat(fst, snd), trd).generate(seed)
+      val right = new Concat(fst, new Concat(snd, trd)).generate(seed)
       (left ?= right) :| s"$left == $right"
     }
   }
@@ -61,8 +65,8 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
 
   // region Ref
   property("generated ref by name should return group second time") {
-    forAll { (group: Coregex, ref: Coregex.Ref, seed: Long) =>
-      val re        = new Coregex.Concat(new Coregex.Group(ref.ref().toString, group), ref).generate(seed)
+    forAll { (group: Coregex, ref: Ref, seed: Long) =>
+      val re        = new Concat(new Group(ref.ref().toString, group), ref).generate(seed)
       val generated = group.generate(seed)
       (generated + generated ?= re) :| s"$generated$generated == $re"
     }
@@ -70,7 +74,7 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
 
   property("generated ref by index should return group second time") {
     forAll { (group: Coregex, seed: Long) =>
-      val re        = new Coregex.Concat(new Coregex.Group(group), new Coregex.Ref(1)).generate(seed)
+      val re        = new Concat(new Group(group), new Ref(1)).generate(seed)
       val generated = group.generate(seed)
       (generated + generated ?= re) :| s"$generated$generated == $re"
     }
@@ -80,9 +84,25 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
   // region Union
   property("generated should be in union") {
     forAll { (fst: String, snd: String, trd: String, seed: Long) =>
-      val generated =
-        new Coregex.Union(Coregex.literal(fst, 0), Coregex.literal(snd, 0), Coregex.literal(trd, 0)).generate(seed)
+      val generated = new Union(literal(fst, 0), literal(snd, 0), literal(trd, 0)).generate(seed)
       ((generated ?= fst) || (generated ?= snd) || (generated ?= trd)) :| s"$generated in ($fst|$snd|$trd)"
+    }
+  }
+
+  property("shrink should eliminate options") {
+    forAll { (fst: Byte, snd: Byte) =>
+      val union = new Union(literal(fst.toString, 0), literal(snd.toString, 0))
+
+      union
+        .shrink()
+        .iterator()
+        .asScala
+        .map { shrunk =>
+          (shrunk == new Union(literal(fst.toString, 0)) || shrunk == new Union(
+            literal(snd.toString, 0)
+          )) :| s"$union was not shrunk to segments: $shrunk"
+        }
+        .reduce(_ && _)
     }
   }
   // endregion

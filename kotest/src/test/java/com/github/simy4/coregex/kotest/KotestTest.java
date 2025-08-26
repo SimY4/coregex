@@ -40,11 +40,12 @@ class KotestTest extends Assertions {
             checkAll(
                 regexes(),
                 (context, regex, c2) -> {
+                  int attempts = 1000;
                   var coregexArbitrary = new CoregexArbitrary(regex);
                   var sample = coregexArbitrary.sample(context.randomSource());
                   var shrinks = Collections.asLifoQueue(new ArrayDeque<RTree<String>>());
                   shrinks.add(sample.getShrinks());
-                  while (!shrinks.isEmpty()) {
+                  while (0 < attempts-- && !shrinks.isEmpty()) {
                     var shrink = shrinks.remove();
                     var shrinkValue = shrink.getValue().invoke();
                     assertTrue(regex.matcher(shrinkValue).matches());

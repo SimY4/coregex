@@ -22,7 +22,7 @@ import org.scalacheck.Prop._
 import java.util.regex.Pattern
 
 class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
-  import scala.jdk.OptionConverters._
+  import scala.jdk.CollectionConverters._
 
   property("generated should be in set") {
     forAll { (set: Set, seed: Long) =>
@@ -86,7 +86,8 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
       val generated = set.sample(seed).orElse(-1)
       set
         .shrink()
-        .toScala
+        .iterator()
+        .asScala
         .forall(shrink => set.test(shrink.generate(seed).codePointAt(0))) :| s"shrunk $generated in [$set]"
     }
   }

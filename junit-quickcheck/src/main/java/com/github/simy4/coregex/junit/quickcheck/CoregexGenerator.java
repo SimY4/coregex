@@ -21,10 +21,9 @@ import com.pholser.junit.quickcheck.generator.GenerationStatus;
 import com.pholser.junit.quickcheck.generator.Generator;
 import com.pholser.junit.quickcheck.random.SourceOfRandomness;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class CoregexGenerator extends Generator<String> {
 
@@ -60,13 +59,11 @@ public class CoregexGenerator extends Generator<String> {
 
   @Override
   public List<String> doShrink(SourceOfRandomness random, String larger) {
-    List<String> shrinks = new ArrayList<>();
-    for (Optional<Coregex> coregex = this.coregex.shrink();
-        coregex.isPresent();
-        coregex = coregex.flatMap(Coregex::shrink)) {
-      shrinks.add(coregex.get().generate(random.nextLong()));
-    }
-    return shrinks;
+    return coregex
+        .shrink()
+        .map(coregex -> coregex.generate(random.nextLong()))
+        .filter(shrink -> shrink.length() < larger.length())
+        .collect(Collectors.toList());
   }
 
   @Override

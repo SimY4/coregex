@@ -21,10 +21,10 @@ import static java.util.Objects.requireNonNull;
 import java.io.Serializable;
 import java.util.BitSet;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.function.IntPredicate;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 /**
  * Data representation of a set of characters AKA regular expression's char classes.
@@ -123,13 +123,13 @@ public final class Set extends Coregex implements IntPredicate, Serializable {
 
   /** {@inheritDoc} */
   @Override
-  public Optional<Coregex> shrink() {
+  public Stream<Set> shrink() {
     BitSet chars = BitSet.valueOf(this.chars.toLongArray());
     chars.and(SMALLER.get().chars);
     if (chars.isEmpty() || chars.equals(this.chars)) {
-      return Optional.empty();
+      return Stream.empty();
     }
-    return Optional.of(new Set(chars, "~" + description));
+    return Stream.of(new Set(chars, "~" + description));
   }
 
   /**

@@ -22,7 +22,7 @@ import org.scalacheck.{ Arbitrary, Gen, Shrink }
 import java.util.regex.Pattern
 
 trait CoregexInstances {
-  import scala.jdk.OptionConverters._
+  import scala.jdk.CollectionConverters._
 
   type Matching[A <: String, Regex <: String with Singleton] <: A
 
@@ -36,13 +36,11 @@ trait CoregexInstances {
     A <: String,
     Regex <: String with Singleton
   ](implicit regex: ValueOf[Regex]): Shrink[Matching[A, Regex]] = {
-    val coregex = LazyList
-      .iterate(Coregex.from(Pattern.compile(regex.value)).shrink().toScala)(_.flatMap(_.shrink().toScala))
-      .takeWhile(_.isDefined)
+    val shrinks = LazyList.from(Coregex.from(Pattern.compile(regex.value)).shrink().iterator().asScala)
     Shrink.withLazyList { larger =>
-      coregex.collect { case Some(coregex) =>
-        coregex.generate(larger.length.toLong).asInstanceOf[Matching[A, Regex]]
-      }
+      shrinks
+        .map(coregex => coregex.generate(larger.length.toLong).asInstanceOf[Matching[A, Regex]])
+        .filter(string => string.length < larger.length)
     }
   }
 }
