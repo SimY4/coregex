@@ -387,15 +387,23 @@ public final class CoregexParser {
           group = new Coregex.Group(Coregex.Group.Type.ATOMIC, RE(ctx));
           break;
         case '=':
+          ctx.match('=');
+          group = new Coregex.Group(Coregex.Group.Type.LOOKAHEAD, RE(ctx));
+          break;
         case '!':
-          group = ctx.unsupported("look-aheads are not supported");
+          ctx.match('!');
+          group = new Coregex.Group(Coregex.Group.Type.NEGATIVE_LOOKAHEAD, RE(ctx));
           break;
         case '<':
           ctx.match('<');
           switch (ctx.peek()) {
             case '=':
+              ctx.match('=');
+              group = new Coregex.Group(Coregex.Group.Type.LOOKBEHIND, RE(ctx));
+              break;
             case '!':
-              group = ctx.unsupported("look-behinds are not supported");
+              ctx.match('!');
+              group = new Coregex.Group(Coregex.Group.Type.NEGATIVE_LOOKBEHIND, RE(ctx));
               break;
             default:
               String name = ctx.span(ch -> '>' != ch);

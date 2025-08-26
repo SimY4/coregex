@@ -21,7 +21,6 @@ import org.scalacheck.{ Arbitrary, Gen }
 import org.scalacheck.Prop._
 
 import java.util.regex.Pattern
-import scala.util.control.NonFatal
 
 class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
 
@@ -60,7 +59,8 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
       Pattern.compile("((?i)[a-z]+(?-i)-[A-Z]){3,6}"),
       Pattern.compile("[a-z&&[^aeiou]]+[]][a-z&&aeiou&&ei]"),
       Pattern.compile("^(?:||)$"),
-      Pattern.compile("<([A-Z][A-Z0-9]*)[^>]*>.*?</\\1>")
+      Pattern.compile("<([A-Z][A-Z0-9]*)[^>]*>.*?</\\1>"),
+      Pattern.compile("(?!=.{10,}).+")
     ) ::: (if (scala.util.Properties.isJavaAtLeast(9)) {
              List(
                Pattern.compile("\\N{WHITE SMILING FACE}")
@@ -103,25 +103,6 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
         clue(expected).matcher(clue(generated)).matches(),
         s"${expected.pattern()} should match generated: $generated"
       )
-    }
-  }
-
-  property("should throw unsupported") {
-    forAll(
-      Gen.oneOf(
-        Pattern.compile("(?!.{255,}).+"),
-        Pattern.compile("(?=[a-z]+).+"),
-        Pattern.compile(".+(?<=[a-z]+)"),
-        Pattern.compile(".+(?<!.{255,})")
-      )
-    ) { pattern =>
-      try {
-        Coregex.from(pattern)
-        fail(s"should throw error for: ${pattern.pattern()}")
-      } catch {
-        case _: UnsupportedOperationException =>
-        case ex if NonFatal(ex) => fail(s"should throw UnsupportedOperationException for: ${pattern.pattern()}", ex)
-      }
     }
   }
 }
