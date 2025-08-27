@@ -552,7 +552,7 @@ public abstract class Coregex implements Serializable {
     /** {@inheritDoc} */
     @Override
     public Stream<Quantified> shrink() {
-      // reducing size and shinking quantified piece.
+      // reducing size and shrinking quantified piece.
       int min = this.min, max = this.max;
       return Stream.concat(
           IntStream.of(0, 1, 2, 3, 5, 8, 13)
