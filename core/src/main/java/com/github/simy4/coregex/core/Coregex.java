@@ -433,14 +433,8 @@ public abstract class Coregex implements Serializable {
           positive = false;
         // fall through
         case LOOKAHEAD:
-          String generated = ctx.toString(true);
-          Coregex fullLookbehind = new Concat(literal(generated, 0), group);
-          Predicate<Context> lookbehind =
-              root -> {
-                String fullGenerated = root.toString(true);
-                return generated.length() == fullGenerated.length()
-                    || fullLookbehind.matches(fullGenerated, root);
-              };
+          Coregex fullLookbehind = new Concat(literal(ctx.toString(true), 0), group);
+          Predicate<Context> lookbehind = root -> fullLookbehind.matches(root.toString(true), root);
           ctx.finalizeWithLookbehind(positive ? lookbehind : lookbehind.negate());
           break;
         default:

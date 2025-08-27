@@ -21,6 +21,7 @@ import org.scalacheck.{ Arbitrary, Gen }
 import org.scalacheck.Prop._
 
 import java.util.regex.Pattern
+import scala.util.control.NonFatal
 
 class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
 
@@ -103,6 +104,25 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
         clue(expected).matcher(clue(generated)).matches(),
         s"${expected.pattern()} should match generated: $generated"
       )
+    }
+  }
+
+  property("should fail to generate strings") {
+    forAll(
+      Gen.oneOf(
+        Pattern.compile("\\d+(?= dollars)"),
+        Pattern.compile("(?<=[a-z0-9])(?=[A-Z])")
+      ),
+      Gen.long
+    ) { (pattern, seed) =>
+      try {
+        val coregex = Coregex.from(pattern)
+        val _       = coregex.generate(seed)
+        fail(s"should throw error for: ${pattern.pattern()}")
+      } catch {
+        case _: IllegalStateException =>
+        case ex if NonFatal(ex)       => fail(s"should throw IllegalStateException for: ${pattern.pattern()}", ex)
+      }
     }
   }
 }
