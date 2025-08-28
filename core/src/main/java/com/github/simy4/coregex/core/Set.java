@@ -20,11 +20,10 @@ import static java.util.Objects.requireNonNull;
 
 import java.io.Serializable;
 import java.util.BitSet;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.function.IntPredicate;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 /**
  * Data representation of a set of characters AKA regular expression's char classes.
@@ -62,9 +61,6 @@ public final class Set extends Coregex implements IntPredicate, Serializable {
             chars.set(Character.MIN_VALUE, Character.MIN_SURROGATE);
             return new Set(chars, ".");
           });
-  static final Lazy<Set> SMALLER =
-      new Lazy<>(
-          () -> builder().range('0', '9').range('a', 'z').range('A', 'Z').single('_').build());
 
   /**
    * Creates an instance of {@link Set} builder.
@@ -123,13 +119,21 @@ public final class Set extends Coregex implements IntPredicate, Serializable {
 
   /** {@inheritDoc} */
   @Override
-  public Optional<Coregex> shrink() {
-    BitSet chars = BitSet.valueOf(this.chars.toLongArray());
-    chars.and(SMALLER.get().chars);
-    if (chars.isEmpty() || chars.equals(this.chars)) {
-      return Optional.empty();
+  public Stream<Set> shrink() {
+    Stream.Builder<Set> builder = Stream.builder();
+    Set.Builder smaller = builder().range('0', '9').intersect(this);
+    if (!smaller.chars.isEmpty() && !smaller.chars.equals(this.chars)) {
+      builder.add(smaller.build());
     }
-    return Optional.of(new Set(chars, "~" + description));
+    smaller = builder(0).range('0', '9').range('a', 'z').intersect(this);
+    if (!smaller.chars.isEmpty() && !smaller.chars.equals(this.chars)) {
+      builder.add(smaller.build());
+    }
+    smaller = builder(0).range('0', '9').range('a', 'z').range('A', 'Z').intersect(this);
+    if (!smaller.chars.isEmpty() && !smaller.chars.equals(this.chars)) {
+      builder.add(smaller.build());
+    }
+    return builder.build();
   }
 
   /**
@@ -164,12 +168,12 @@ public final class Set extends Coregex implements IntPredicate, Serializable {
       return false;
     }
     Set set = (Set) o;
-    return chars.equals(set.chars) && description.equals(set.description);
+    return chars.equals(set.chars);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(chars, description);
+    return chars.hashCode();
   }
 
   @Override

@@ -19,11 +19,9 @@ package com.github.simy4.coregex.functionaljava.quickcheck;
 import com.github.simy4.coregex.core.Coregex;
 import fj.P;
 import fj.P2;
-import fj.data.Option;
 import fj.data.Stream;
 import fj.test.Gen;
 import fj.test.Shrink;
-import java.util.Optional;
 import java.util.regex.Pattern;
 
 public final class CoregexArbitrary {
@@ -38,19 +36,14 @@ public final class CoregexArbitrary {
   }
 
   public static Shrink<String> shrink(Pattern pattern) {
-    Option<Stream<Coregex>> shrinks =
-        Stream.sequenceOption(
-            Stream.iterate(
-                    opt -> opt.bind(coregex -> fromOptional(coregex.shrink())),
-                    fromOptional(Coregex.from(pattern).shrink()))
-                .takeWhile(Option::isSome));
+    Stream<? extends Coregex> shrinks =
+        Stream.iteratorStream(
+            com.github.simy4.coregex.core.Coregex.from(pattern).shrink().iterator());
     return Shrink.shrink(
-        str -> shrinks.orSome(Stream.nil()).map(coregex -> coregex.generate(str.length())));
-  }
-
-  @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-  private static Option<Coregex> fromOptional(Optional<Coregex> coregex) {
-    return coregex.map(Option::some).orElseGet(Option::none);
+        larger ->
+            shrinks
+                .map(coregex -> coregex.generate(larger.length()))
+                .filter(string -> string.length() < larger.length()));
   }
 
   private CoregexArbitrary() {

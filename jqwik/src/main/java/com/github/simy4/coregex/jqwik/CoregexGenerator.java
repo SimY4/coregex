@@ -17,7 +17,6 @@
 package com.github.simy4.coregex.jqwik;
 
 import com.github.simy4.coregex.core.Coregex;
-import java.util.Optional;
 import java.util.Random;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -61,13 +60,7 @@ final class ShrinkableString implements Shrinkable<String> {
 
   @Override
   public Stream<Shrinkable<String>> shrink() {
-    Stream.Builder<Shrinkable<String>> shrinks = Stream.builder();
-    for (Optional<Coregex> coregex = this.coregex.shrink();
-        coregex.isPresent();
-        coregex = coregex.flatMap(Coregex::shrink)) {
-      shrinks.add(new ShrinkableString(coregex.get(), seed));
-    }
-    return shrinks.build();
+    return coregex.shrink().map(coregex -> new ShrinkableString(coregex, seed));
   }
 
   @Override

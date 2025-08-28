@@ -22,7 +22,7 @@ import org.scalacheck.Prop._
 import java.util.regex.Pattern
 
 class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
-  import scala.jdk.OptionConverters._
+  import scala.jdk.CollectionConverters._
 
   property("generated should be in set") {
     forAll { (set: Set, seed: Long) =>
@@ -60,7 +60,7 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
     forAll { (first: Char, rest: String, seed: Long) =>
       val set       = Set.builder().set(first, rest.toCharArray: _*).build()
       val generated = set.sample(seed).orElse(-1)
-      rest.map(_.toInt =? generated).foldLeft(first.toInt =? generated)(_ || _) :| s"$generated in [$set]"
+      rest.map(_.toInt =? generated).foldLeft(first.toInt =? generated)(_ || _) :| s"$generated in $set"
     }
   }
 
@@ -68,7 +68,7 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
     forAll { (left: Set, right: Set, seed: Long) =>
       val union     = Set.builder().union(left).union(right).build()
       val generated = union.sample(seed).orElse(-1)
-      (left.test(generated) || right.test(generated)) :| s"$generated in [$union]"
+      (left.test(generated) || right.test(generated)) :| s"$generated in $union"
     }
   }
 
@@ -77,17 +77,22 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
       val leftWithCommon = Set.builder().union(left).single(right.sample(seed1).orElse(-1).toChar).build()
       val intersection   = Set.builder().union(leftWithCommon).intersect(right).build()
       val generated      = intersection.sample(seed2).orElse(-1)
-      (leftWithCommon.test(generated) && right.test(generated)) :| s"$generated in [$intersection]"
+      (leftWithCommon.test(generated) && right.test(generated)) :| s"$generated in $intersection"
     }
   }
 
+  test("empty set should not shrink") {
+    !Set.builder().build().shrink().iterator().hasNext :| "empty set should not shrink"
+  }
+
   property("shrunk should be in set") {
-    forAll { (set: Set, seed: Long) =>
-      val generated = set.sample(seed).orElse(-1)
+    forAll { (set: Set) =>
       set
         .shrink()
-        .toScala
-        .forall(shrink => set.test(shrink.generate(seed).codePointAt(0))) :| s"shrunk $generated in [$set]"
+        .iterator()
+        .asScala
+        .map(shrink => Set.builder().union(set).union(shrink).build().equals(set) :| s"shrunk $shrink in $set")
+        .foldLeft(passed)(_ && _)
     }
   }
 
@@ -100,8 +105,8 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
   }
 
   property("double negation") {
-    forAll { (set: Set, seed: Long) =>
-      set.sample(seed) ?= Set.builder().union(set).negate().negate().build().sample(seed)
+    forAll { (set: Set) =>
+      set ?= Set.builder().union(set).negate().negate().build()
     }
   }
 

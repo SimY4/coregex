@@ -24,9 +24,9 @@ import io.kotest.property.Classifier;
 import io.kotest.property.RTree;
 import io.kotest.property.RandomSource;
 import io.kotest.property.Sample;
-import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,9 +85,8 @@ final class CoregexShrinker implements Function0<List<RTree<String>>> {
         .map(
             coregex -> {
               var shrink = coregex.generate(seed);
-              return Collections.singletonList(
-                  new RTree<>(() -> shrink, lazy(new CoregexShrinker(coregex, seed))));
+              return new RTree<>(() -> shrink, lazy(new CoregexShrinker(coregex, seed)));
             })
-        .orElse(Collections.emptyList());
+        .collect(Collectors.toList());
   }
 }

@@ -29,6 +29,8 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.StringJoiner;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * Data representation of regex language.
@@ -116,11 +118,11 @@ public abstract class Coregex implements Serializable {
   abstract void generate(Context ctx);
 
   /**
-   * Converts this coregex into one that produce "smaller" values.
+   * Converts this coregex into ones that produce "smaller" values.
    *
-   * @return smaller coregex or empty if this coregex is already the smallest possible.
+   * @return smaller coregexes or empty if this coregex is already the smallest possible.
    */
-  public abstract Optional<Coregex> shrink();
+  public abstract Stream<? extends Coregex> shrink();
 
   /**
    * Samples one random string that matches this regex.
@@ -179,21 +181,22 @@ public abstract class Coregex implements Serializable {
 
     /** {@inheritDoc} */
     @Override
-    public Optional<Coregex> shrink() {
-      // shrink until every concatenated piece can shrink.
-      Coregex first = this.first.shrink().orElse(null);
-      Coregex[] rest = new Coregex[this.rest.length];
-      for (int i = 0; i < rest.length; i++) {
-        rest[i] = this.rest[i].shrink().orElse(null);
-      }
-      if (null == first && Arrays.stream(rest).allMatch(Objects::isNull)) {
-        return Optional.empty();
-      }
-      if (null == first) first = this.first;
-      for (int i = 0; i < rest.length; i++) {
-        if (null == rest[i]) rest[i] = this.rest[i];
-      }
-      return Optional.of(new Concat(first, rest));
+    public Stream<Concat> shrink() {
+      // shrinking until every concatenated piece can shrink.
+      return Stream.concat(
+          first.shrink().map(chunk -> new Concat(chunk, rest)),
+          IntStream.range(0, rest.length)
+              .boxed()
+              .flatMap(
+                  i ->
+                      rest[i]
+                          .shrink()
+                          .map(
+                              chunk -> {
+                                Coregex[] rest = Arrays.copyOf(this.rest, this.rest.length);
+                                rest[i] = chunk;
+                                return new Concat(first, rest);
+                              })));
     }
 
     /**
@@ -380,16 +383,13 @@ public abstract class Coregex implements Serializable {
 
     /** {@inheritDoc} */
     @Override
-    public Optional<Coregex> shrink() {
+    public Stream<Group> shrink() {
       switch (type) {
-        case NON_CAPTURING:
-        case ATOMIC:
-          return group.shrink().map(group -> new Group(type, group));
         case LOOKAHEAD:
         case LOOKBEHIND:
         case NEGATIVE_LOOKAHEAD:
         case NEGATIVE_LOOKBEHIND:
-          return Optional.of(this);
+          return Stream.empty();
         default:
           return group.shrink().map(group -> new Group(type, name, group));
       }
@@ -539,28 +539,25 @@ public abstract class Coregex implements Serializable {
 
     @Override
     void generate(Context ctx) {
-      int quantifier = 0;
+      int quantifier = 0, min = this.min, max = this.max;
       for (; quantifier < min; quantifier++) {
         quantified.generate(ctx);
       }
-      int max = -1 == this.max ? Integer.MAX_VALUE : this.max;
-      while (quantifier++ < max && 0 != ctx.rng.nextInt(4)) {
+      while ((-1 == max || quantifier++ < max) && 0 != ctx.rng.nextInt(4)) {
         quantified.generate(ctx);
       }
     }
 
     /** {@inheritDoc} */
     @Override
-    public Optional<Coregex> shrink() {
-      // reducing size first, only then reducing quantified piece.
-      if (min == max) {
-        return quantified.shrink().map(quantified -> new Quantified(quantified, min, max, type));
-      }
-      if (-1 == max) {
-        return Optional.of(new Quantified(quantified, min, min + 128, type));
-      }
-      int max = Math.max(min, this.max / 2);
-      return Optional.of(new Quantified(quantified, min, Math.max(min, max / 2)));
+    public Stream<Quantified> shrink() {
+      // reducing size and shrinking quantified piece.
+      int min = this.min, max = this.max;
+      return Stream.concat(
+          IntStream.of(0, 1, 2, 3, 5, 8, 13)
+              .filter(i -> -1 == max || min + i < max)
+              .mapToObj(i -> new Quantified(quantified, min, min + i, type)),
+          quantified.shrink().map(quantified -> new Quantified(quantified, min, max, type)));
     }
 
     /**
@@ -691,8 +688,8 @@ public abstract class Coregex implements Serializable {
 
     /** {@inheritDoc} */
     @Override
-    public Optional<Coregex> shrink() {
-      return Optional.of(this);
+    public Stream<Ref> shrink() {
+      return Stream.empty();
     }
 
     public Serializable ref() {
@@ -747,21 +744,31 @@ public abstract class Coregex implements Serializable {
 
     /** {@inheritDoc} */
     @Override
-    public Optional<Coregex> shrink() {
-      // shrink until every union piece can shrink.
-      Coregex first = this.first.shrink().orElse(null);
-      Coregex[] rest = new Coregex[this.rest.length];
-      for (int i = 0; i < rest.length; i++) {
-        rest[i] = this.rest[i].shrink().orElse(null);
-      }
-      if (null == first && Arrays.stream(rest).allMatch(Objects::isNull)) {
-        return Optional.empty();
-      }
-      if (null == first) first = this.first;
-      for (int i = 0; i < rest.length; i++) {
-        if (null == rest[i]) rest[i] = this.rest[i];
-      }
-      return Optional.of(new Union(first, rest));
+    public Stream<Union> shrink() {
+      // reducing and shrinking choices until every union piece can shrink or ran out of choices.
+      return Stream.concat(
+          IntStream.range(0, rest.length)
+              .mapToObj(
+                  i -> {
+                    Coregex[] rest = new Coregex[this.rest.length - 1];
+                    System.arraycopy(this.rest, 0, rest, 0, i);
+                    System.arraycopy(this.rest, i + 1, rest, i, this.rest.length - i - 1);
+                    return new Union(first, rest);
+                  }),
+          Stream.concat(
+              first.shrink().map(chunk -> new Union(chunk, rest)),
+              IntStream.range(0, rest.length)
+                  .boxed()
+                  .flatMap(
+                      i ->
+                          rest[i]
+                              .shrink()
+                              .map(
+                                  chunk -> {
+                                    Coregex[] rest = Arrays.copyOf(this.rest, this.rest.length);
+                                    rest[i] = chunk;
+                                    return new Union(first, rest);
+                                  }))));
     }
 
     /**
