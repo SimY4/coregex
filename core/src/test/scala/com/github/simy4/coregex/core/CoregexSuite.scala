@@ -36,6 +36,12 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
     }
   }
 
+  property("literal don't shrink") {
+    forAll { (str: String) =>
+      !literal(str, 0).shrink().iterator().hasNext :| s"literals don't shrink: $str"
+    }
+  }
+
   property("literal should match self") {
     forAll { (literal: String, flags: Int) =>
       Coregex.literal(literal, flags).matches(literal, null) :| s"$literal match self"
@@ -68,8 +74,8 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
     }
   }
 
-  test("concat should match self") {
-    forAll { (concat: Coregex.Concat, seed: Long) =>
+  property("concat should match self") {
+    forAll { (concat: Concat, seed: Long) =>
       val generated = concat.generate(seed)
       concat.matches(generated, null) :| s"$generated in $concat"
     }
@@ -93,12 +99,15 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
     }
   }
 
-//  property("ref should match referred group") {
-//    forAll { (group: Coregex, ref: Coregex.Ref, seed: Long) =>
-//      val re        = group.generate(seed)
-//      ref.matches(re, new Coregex.Context()) :| s"$generated$generated == $re"
-//    }
-//  }
+  property("ref don't shrink") {
+    forAll { (ref: Int Either String) =>
+      !ref
+        .fold(new Ref(_), new Ref(_))
+        .shrink()
+        .iterator()
+        .hasNext :| s"refs don't shrink: ${ref.fold(_.toString, identity)}"
+    }
+  }
   // endregion
 
   // region Union
@@ -109,14 +118,14 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
     }
   }
 
-  test("union should match self") {
-    forAll { (union: Coregex.Union, seed: Long) =>
+  property("union should match self") {
+    forAll { (union: Union, seed: Long) =>
       val generated = union.generate(seed)
       union.matches(generated, null) :| s"$generated in ($union)"
     }
   }
 
-  property("shrink should eliminate options") {
+  property("union shrink should eliminate options") {
     forAll { (fst: Byte, snd: Byte) =>
       val union = new Union(literal(fst.toString, 0), literal(snd.toString, 0))
 
