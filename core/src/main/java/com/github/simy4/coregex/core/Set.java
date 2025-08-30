@@ -21,7 +21,6 @@ import static java.util.Objects.requireNonNull;
 import java.io.Serializable;
 import java.util.BitSet;
 import java.util.OptionalInt;
-import java.util.function.IntPredicate;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -33,7 +32,7 @@ import java.util.stream.Stream;
  * @author Alex Simkin
  * @since 0.1.0
  */
-public final class Set extends Coregex implements IntPredicate, Serializable {
+public final class Set extends Coregex implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
@@ -105,16 +104,11 @@ public final class Set extends Coregex implements IntPredicate, Serializable {
     }
   }
 
-  /**
-   * Negates this set.
-   *
-   * @return new negated set instance.
-   */
   @Override
-  public Set negate() {
-    BitSet chars = BitSet.valueOf(this.chars.toLongArray());
-    chars.flip(0, chars.size());
-    return new Set(chars, "^" + description);
+  String[] match(String input, Context ctx) {
+    return !input.isEmpty() && chars.get(input.charAt(0))
+        ? new String[] {input.substring(1)}
+        : new String[0];
   }
 
   /** {@inheritDoc} */
@@ -134,17 +128,6 @@ public final class Set extends Coregex implements IntPredicate, Serializable {
       builder.add(smaller.build());
     }
     return builder.build();
-  }
-
-  /**
-   * Checks if given character is included in this set.
-   *
-   * @param value character to check
-   * @return {@code true} if given character is included in this set, {@code false} otherwise
-   */
-  @Override
-  public boolean test(int value) {
-    return chars.get(value);
   }
 
   OptionalInt sample(long seed) {

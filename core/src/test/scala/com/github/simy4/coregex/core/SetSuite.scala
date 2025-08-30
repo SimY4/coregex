@@ -19,6 +19,7 @@ package com.github.simy4.coregex.core
 import munit.ScalaCheckSuite
 import org.scalacheck.Prop._
 
+import java.util.Locale
 import java.util.regex.Pattern
 
 class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
@@ -28,7 +29,7 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
     forAll { (set: Set, seed: Long) =>
       val generated = set.generate(seed)
 
-      val inSetCheck  = generated.chars().allMatch(set) :| s"$generated in $set"
+      val inSetCheck  = set.matches(generated, null) :| s"$generated in $set"
       val lengthCheck = (generated.length ?= 1) :| s"$generated.length == 1"
 
       inSetCheck && lengthCheck
@@ -37,9 +38,10 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
 
   property("quantified generated should be in set") {
     forAll { (set: Set, range: QuantifyRange, `type`: Coregex.Quantified.Type, seed: Long) =>
-      val generated = set.quantify(range.min, range.max, `type`).generate(seed)
+      val quantified = set.quantify(range.min, range.max, `type`)
+      val generated  = quantified.generate(seed)
 
-      generated.chars().allMatch(set) :| s"$generated in $set"
+      quantified.matches(generated, null) :| s"$generated in $set"
     }
   }
 
@@ -67,8 +69,8 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
   property("sampled should be in union") {
     forAll { (left: Set, right: Set, seed: Long) =>
       val union     = Set.builder().union(left).union(right).build()
-      val generated = union.sample(seed).orElse(-1)
-      (left.test(generated) || right.test(generated)) :| s"$generated in $union"
+      val generated = union.generate(seed)
+      (left.matches(generated, null) || right.matches(generated, null)) :| s"$generated in $union"
     }
   }
 
@@ -76,8 +78,8 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
     forAll { (left: Set, right: Set, seed1: Long, seed2: Long) =>
       val leftWithCommon = Set.builder().union(left).single(right.sample(seed1).orElse(-1).toChar).build()
       val intersection   = Set.builder().union(leftWithCommon).intersect(right).build()
-      val generated      = intersection.sample(seed2).orElse(-1)
-      (leftWithCommon.test(generated) && right.test(generated)) :| s"$generated in $intersection"
+      val generated      = intersection.generate(seed2)
+      (leftWithCommon.matches(generated, null) && right.matches(generated, null)) :| s"$generated in $intersection"
     }
   }
 
@@ -116,10 +118,9 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
         .builder(Pattern.CASE_INSENSITIVE)
         .union(set)
         .build()
-        .sample(seed)
-        .orElse(-1)
+        .generate(seed)
 
-      set.test(Character.toLowerCase(result)) || set.test(Character.toUpperCase(result))
+      set.matches(result.toLowerCase(Locale.ENGLISH), null) || set.matches(result.toUpperCase(Locale.ENGLISH), null)
     }
   }
 
