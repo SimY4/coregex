@@ -78,7 +78,7 @@ lazy val functionaljavaQuickcheck = (project in file("functionaljava-quickcheck"
     description   := "Functionaljava quickcheck bindings for coregex library.",
     headerEndYear := Some(2025),
     libraryDependencies ++= Seq(
-      "org.functionaljava" % "functionaljava-quickcheck" % "5.0"    % Provided exclude("junit", "junit"),
+      "org.functionaljava" % "functionaljava-quickcheck" % "5.0"    % Provided exclude ("junit", "junit"),
       "com.github.sbt"     % "junit-interface"           % "0.13.3" % Test
     ),
     testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v")
@@ -113,7 +113,7 @@ lazy val junitQuickcheck = (project in file("junit-quickcheck"))
     description   := "JUnit Quickcheck bindings for coregex library.",
     headerEndYear := Some(2025),
     libraryDependencies ++= Seq(
-      "com.pholser"    % "junit-quickcheck-core"       % "1.0"    % Provided exclude("junit", "junit"),
+      "com.pholser"    % "junit-quickcheck-core"       % "1.0"    % Provided exclude ("junit", "junit"),
       "com.pholser"    % "junit-quickcheck-generators" % "1.0"    % Test,
       "org.slf4j"      % "slf4j-simple"                % "1.7.25" % Test,
       "com.github.sbt" % "junit-interface"             % "0.13.3" % Test
@@ -131,7 +131,7 @@ lazy val kotest = (project in file("kotest"))
     description   := "Kotest bindings for coregex library.",
     headerEndYear := Some(2025),
     libraryDependencies ++= Seq(
-      "io.kotest"            % "kotest-property-jvm" % "6.0.0"                          % Provided,
+      "io.kotest"            % "kotest-property-jvm" % "6.0.1"                          % Provided,
       "com.github.sbt.junit" % "jupiter-interface"   % JupiterKeys.jupiterVersion.value % Test
     ),
     testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v")
