@@ -36,6 +36,10 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
     }
   }
 
+  test("empty should match empty") {
+    assert(Coregex.empty().matches("", null))
+  }
+
   property("literal don't shrink") {
     forAll { (str: String) =>
       !literal(str, 0).shrink().iterator().hasNext :| s"literals don't shrink: $str"

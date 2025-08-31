@@ -117,6 +117,19 @@ public abstract class Coregex implements Serializable {
     return new Concat(first, rest);
   }
 
+  public static Coregex wordBoundary(int flags, boolean positive) {
+    Set word =
+        Set.builder(flags).range('a', 'z').range('A', 'Z').range('0', '9').single('_').build();
+    Set notWord = Set.builder(flags).union(word).negate().build();
+    Group.Type lookbehind = positive ? Group.Type.LOOKBEHIND : Group.Type.NEGATIVE_LOOKBEHIND;
+    Group.Type lookahead = positive ? Group.Type.LOOKAHEAD : Group.Type.NEGATIVE_LOOKAHEAD;
+    return new Union(
+        new Concat(new Group(lookbehind, empty()), new Group(lookahead, word)),
+        new Concat(new Group(lookbehind, word), new Group(lookahead, empty())),
+        new Concat(new Group(lookbehind, word), new Group(lookahead, notWord)),
+        new Concat(new Group(lookbehind, notWord), new Group(lookahead, word)));
+  }
+
   Coregex() {}
 
   abstract void generate(Context ctx) throws RewindException;
@@ -147,7 +160,7 @@ public abstract class Coregex implements Serializable {
       }
     } while (++attempt < Context.maxAttempts);
     throw new IllegalStateException(
-        "Cannot generate string after " + Context.maxAttempts + " attempts");
+        "Cannot generate string for " + this + " after " + Context.maxAttempts + " attempts");
   }
 
   final boolean matches(String input, Context ctx) {
@@ -326,6 +339,13 @@ public abstract class Coregex implements Serializable {
       return parent.index();
     }
 
+    int length(boolean full) {
+      if (!full || null == parent) {
+        return buffer.length();
+      }
+      return parent.length(true) + buffer.length();
+    }
+
     String ref(Serializable ref) {
       return groups.get(ref);
     }
@@ -426,16 +446,19 @@ public abstract class Coregex implements Serializable {
         // fall through
         case LOOKBEHIND:
           if (positive == group.matches(ctx.toString(true), ctx)) {
-            throw new RewindException();
+            break;
           }
-          break;
+          throw new RewindException();
         case NEGATIVE_LOOKAHEAD:
           positive = false;
         // fall through
         case LOOKAHEAD:
-          Coregex fullLookbehind = new Concat(literal(ctx.toString(true), 0), group);
-          Predicate<Context> lookbehind = root -> fullLookbehind.matches(root.toString(true), root);
-          ctx.finalizeWithLookbehind(positive ? lookbehind : lookbehind.negate());
+          int length = ctx.length(true);
+          Coregex fullLookbehind =
+              new Concat(any().quantify(length, length, Quantified.Type.GREEDY), group);
+          final boolean pos = positive;
+          ctx.finalizeWithLookbehind(
+              root -> pos == fullLookbehind.matches(root.toString(true), root));
           break;
         default:
           try (Context childCtx = new Context(ctx, name)) {
