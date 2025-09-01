@@ -26,13 +26,29 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
 
   property("quantified zero times should give empty") {
     forAll { (coregex: Coregex, `type`: Quantified.Type, seed: Long) =>
-      coregex.quantify(0, 0, `type`).generate(seed).isEmpty
+      coregex.quantify(0, 0, `type`).generate(seed) ?= ""
     }
   }
 
   property("empty quantified should give empty") {
     forAll { (range: QuantifyRange, seed: Long) =>
-      Coregex.empty().quantify(range.min, range.max, range.`type`).generate(seed).isEmpty
+      Coregex.empty().quantify(range.min, range.max, range.`type`).generate(seed) ?= ""
+    }
+  }
+
+  test("empty should match empty") {
+    assert(Coregex.empty().matches("", null))
+  }
+
+  property("literal don't shrink") {
+    forAll { (str: String) =>
+      !literal(str, 0).shrink().iterator().hasNext :| s"literals don't shrink: $str"
+    }
+  }
+
+  property("literal should match self") {
+    forAll { (literal: String, flags: Int) =>
+      Coregex.literal(literal, flags).matches(literal, null) :| s"$literal match self"
     }
   }
 
@@ -61,6 +77,13 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
       (left ?= right) :| s"$left == $right"
     }
   }
+
+  property("concat should match self") {
+    forAll { (concat: Concat, seed: Long) =>
+      val generated = concat.generate(seed)
+      concat.matches(generated, null) :| s"$generated in $concat"
+    }
+  }
   // endregion
 
   // region Ref
@@ -79,6 +102,16 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
       (generated + generated ?= re) :| s"$generated$generated == $re"
     }
   }
+
+  property("ref don't shrink") {
+    forAll { (ref: Int Either String) =>
+      !ref
+        .fold(new Ref(_), new Ref(_))
+        .shrink()
+        .iterator()
+        .hasNext :| s"refs don't shrink: ${ref.fold(_.toString, identity)}"
+    }
+  }
   // endregion
 
   // region Union
@@ -89,7 +122,14 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
     }
   }
 
-  property("shrink should eliminate options") {
+  property("union should match self") {
+    forAll { (union: Union, seed: Long) =>
+      val generated = union.generate(seed)
+      union.matches(generated, null) :| s"$generated in ($union)"
+    }
+  }
+
+  property("union shrink should eliminate options") {
     forAll { (fst: Byte, snd: Byte) =>
       val union = new Union(literal(fst.toString, 0), literal(snd.toString, 0))
 

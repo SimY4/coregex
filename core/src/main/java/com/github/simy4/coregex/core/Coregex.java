@@ -21,13 +21,17 @@ import static java.util.Objects.requireNonNull;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.StringJoiner;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -113,9 +117,24 @@ public abstract class Coregex implements Serializable {
     return new Concat(first, rest);
   }
 
+  public static Coregex wordBoundary(int flags, boolean positive) {
+    Set word =
+        Set.builder(flags).range('a', 'z').range('A', 'Z').range('0', '9').single('_').build();
+    Set notWord = Set.builder(flags).union(word).negate().build();
+    Group.Type lookbehind = positive ? Group.Type.LOOKBEHIND : Group.Type.NEGATIVE_LOOKBEHIND;
+    Group.Type lookahead = positive ? Group.Type.LOOKAHEAD : Group.Type.NEGATIVE_LOOKAHEAD;
+    return new Union(
+        new Concat(new Group(lookbehind, empty()), new Group(lookahead, word)),
+        new Concat(new Group(lookbehind, word), new Group(lookahead, empty())),
+        new Concat(new Group(lookbehind, word), new Group(lookahead, notWord)),
+        new Concat(new Group(lookbehind, notWord), new Group(lookahead, word)));
+  }
+
   Coregex() {}
 
-  abstract void generate(Context ctx);
+  abstract void generate(Context ctx) throws RewindException;
+
+  abstract String[] match(String input, Context ctx);
 
   /**
    * Converts this coregex into ones that produce "smaller" values.
@@ -132,10 +151,26 @@ public abstract class Coregex implements Serializable {
    */
   public final String generate(long seed) {
     Random rng = new Random(seed);
-    try (Context ctx = new Context(rng)) {
-      generate(ctx);
-      return ctx.toString();
+    int attempt = 0;
+    do {
+      try (Context ctx = new Context(rng)) {
+        generate(ctx);
+        return ctx.toString(true);
+      } catch (RewindException ignored) {
+      }
+    } while (++attempt < Context.maxAttempts);
+    throw new IllegalStateException(
+        "Cannot generate string for " + this + " after " + Context.maxAttempts + " attempts");
+  }
+
+  final boolean matches(String input, Context ctx) {
+    String[] matches = match(input, ctx);
+    for (String match : matches) {
+      if (match.isEmpty()) {
+        return true;
+      }
     }
+    return false;
   }
 
   /**
@@ -177,6 +212,20 @@ public abstract class Coregex implements Serializable {
       for (Coregex coregex : rest) {
         coregex.generate(ctx);
       }
+    }
+
+    @Override
+    String[] match(String input, Context ctx) {
+      Collection<String> match = Arrays.asList(first.match(input, ctx));
+      for (int i = 0; i < rest.length && !match.isEmpty(); i++) {
+        Collection<String> nextMatch = new HashSet<>(match.size());
+        Coregex coregex = rest[i];
+        for (String tail : match) {
+          nextMatch.addAll(Arrays.asList(coregex.match(tail, ctx)));
+        }
+        match = nextMatch;
+      }
+      return match.toArray(new String[0]);
     }
 
     /** {@inheritDoc} */
@@ -240,11 +289,15 @@ public abstract class Coregex implements Serializable {
   }
 
   static final class Context implements Appendable, AutoCloseable {
+    static final int maxAttempts = 100;
+
     private final Context parent;
     private final int index;
     private final String name;
     private final StringBuilder buffer = new StringBuilder();
-    private final Map<Serializable, Context> groups;
+    private final Map<Serializable, String> groups;
+
+    private Predicate<Context> lookbehind = null;
 
     final Random rng;
 
@@ -282,32 +335,46 @@ public abstract class Coregex implements Serializable {
       return this;
     }
 
-    int index() {
-      return parent.index();
+    int length(boolean full) {
+      if (!full || null == parent) {
+        return buffer.length();
+      }
+      return parent.length(true) + buffer.length();
     }
 
-    Context ref(Serializable ref) {
+    String ref(Serializable ref) {
       return groups.get(ref);
     }
 
-    @Override
-    public void close() {
-      Context parent = this.parent;
-      if (null == parent) {
-        return;
-      }
-      parent.append(this.buffer);
-      if (0 < index) {
-        parent.groups.put(index, this);
-      }
-      if (null != name) {
-        parent.groups.put(name, this);
-      }
+    void finalizeWithLookbehind(Predicate<Context> lookbehind) {
+      Predicate<Context> oldLookbehind = this.lookbehind;
+      this.lookbehind = null == oldLookbehind ? lookbehind : oldLookbehind.and(lookbehind);
     }
 
     @Override
-    public String toString() {
-      return buffer.toString();
+    public void close() throws RewindException {
+      Context parent = this.parent;
+      if (null == parent) {
+        if (null != lookbehind && !lookbehind.test(this)) {
+          throw new RewindException();
+        }
+      } else {
+        parent.append(this.buffer);
+        if (0 < index) {
+          parent.groups.put(index, toString(false));
+        }
+        if (null != name) {
+          parent.groups.put(name, toString(false));
+        }
+        parent.finalizeWithLookbehind(lookbehind);
+      }
+    }
+
+    String toString(boolean full) {
+      if (!full || null == parent) {
+        return buffer.toString();
+      }
+      return parent.toString(true) + buffer;
     }
   }
 
@@ -362,21 +429,54 @@ public abstract class Coregex implements Serializable {
     }
 
     @Override
-    void generate(Context ctx) {
+    @SuppressWarnings("fallthrough")
+    void generate(Context ctx) throws RewindException {
+      boolean positive = true;
       switch (type) {
         case NON_CAPTURING:
         case ATOMIC:
           group.generate(ctx);
           break;
-        case LOOKAHEAD:
-        case LOOKBEHIND:
-        case NEGATIVE_LOOKAHEAD:
         case NEGATIVE_LOOKBEHIND:
-          // FIXME
+          positive = false;
+        // fall through
+        case LOOKBEHIND:
+          if (positive == group.matches(ctx.toString(true), ctx)) {
+            break;
+          }
+          throw new RewindException();
+        case NEGATIVE_LOOKAHEAD:
+          positive = false;
+        // fall through
+        case LOOKAHEAD:
+          int length = ctx.length(true);
+          Coregex fullLookbehind =
+              new Concat(any().quantify(length, length, Quantified.Type.GREEDY), group);
+          final boolean pos = positive;
+          ctx.finalizeWithLookbehind(
+              root -> pos == fullLookbehind.matches(root.toString(true), root));
           break;
         default:
           try (Context childCtx = new Context(ctx, name)) {
             group.generate(childCtx);
+          }
+      }
+    }
+
+    @Override
+    String[] match(String input, Context ctx) {
+      switch (type) {
+        case NON_CAPTURING:
+        case ATOMIC:
+          return group.match(input, ctx);
+        case LOOKAHEAD:
+        case LOOKBEHIND:
+        case NEGATIVE_LOOKAHEAD:
+        case NEGATIVE_LOOKBEHIND:
+          return new String[] {input};
+        default:
+          try (Context childCtx = new Context(ctx, name)) {
+            return group.match(input, childCtx);
           }
       }
     }
@@ -538,14 +638,37 @@ public abstract class Coregex implements Serializable {
     }
 
     @Override
-    void generate(Context ctx) {
+    void generate(Context ctx) throws RewindException {
       int quantifier = 0, min = this.min, max = this.max;
       for (; quantifier < min; quantifier++) {
         quantified.generate(ctx);
       }
-      while ((-1 == max || quantifier++ < max) && 0 != ctx.rng.nextInt(4)) {
+      for (; (-1 == max || quantifier < max) && 0 != ctx.rng.nextInt(4); quantifier++) {
         quantified.generate(ctx);
       }
+    }
+
+    @Override
+    String[] match(String input, Context ctx) {
+      int quantifier = 0, min = this.min, max = this.max;
+      java.util.Set<String> match = new HashSet<>(Collections.singleton(input));
+      for (; quantifier < min && !match.isEmpty(); quantifier++) {
+        java.util.Set<String> nextMatch = new HashSet<>(match.size());
+        for (String tail : match) {
+          nextMatch.addAll(Arrays.asList(quantified.match(tail, ctx)));
+        }
+        match = nextMatch;
+      }
+      for (; (-1 == max || quantifier < max) && !match.isEmpty(); quantifier++) {
+        java.util.Set<String> nextMatch = new HashSet<>(match.size());
+        for (String tail : match) {
+          nextMatch.addAll(Arrays.asList(quantified.match(tail, ctx)));
+        }
+        if (!match.addAll(nextMatch)) {
+          break;
+        }
+      }
+      return match.toArray(new String[0]);
     }
 
     /** {@inheritDoc} */
@@ -683,7 +806,13 @@ public abstract class Coregex implements Serializable {
 
     @Override
     void generate(Context ctx) {
-      ctx.append(ctx.ref(ref).toString());
+      ctx.append(ctx.ref(ref));
+    }
+
+    @Override
+    String[] match(String input, Context ctx) {
+      String ref = ctx.ref(this.ref);
+      return input.startsWith(ref) ? new String[] {input.substring(ref.length())} : new String[0];
     }
 
     /** {@inheritDoc} */
@@ -737,9 +866,19 @@ public abstract class Coregex implements Serializable {
     }
 
     @Override
-    void generate(Context ctx) {
+    void generate(Context ctx) throws RewindException {
       int index = ctx.rng.nextInt(rest.length + 1);
       (index < rest.length ? rest[index] : first).generate(ctx);
+    }
+
+    @Override
+    String[] match(String input, Context ctx) {
+      Collection<String> match = new HashSet<>(rest.length + 1);
+      match.addAll(Arrays.asList(first.match(input, ctx)));
+      for (Coregex coregex : rest) {
+        match.addAll(Arrays.asList(coregex.match(input, ctx)));
+      }
+      return match.toArray(new String[0]);
     }
 
     /** {@inheritDoc} */

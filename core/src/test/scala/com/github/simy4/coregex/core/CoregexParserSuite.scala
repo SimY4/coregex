@@ -60,7 +60,8 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
       Pattern.compile("((?i)[a-z]+(?-i)-[A-Z]){3,6}"),
       Pattern.compile("[a-z&&[^aeiou]]+[]][a-z&&aeiou&&ei]"),
       Pattern.compile("^(?:||)$"),
-      Pattern.compile("<([A-Z][A-Z0-9]*)[^>]*>.*?</\\1>")
+      Pattern.compile("<([A-Z][A-Z0-9]*)[^>]*>.*?</\\1>"),
+      Pattern.compile("(?!=.{10,}).+")
     ) ::: (if (scala.util.Properties.isJavaAtLeast(9)) {
              List(
                Pattern.compile("\\N{WHITE SMILING FACE}")
@@ -106,21 +107,21 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
     }
   }
 
-  property("should throw unsupported") {
+  property("should fail to generate strings") {
     forAll(
       Gen.oneOf(
-        Pattern.compile("(?!.{255,}).+"),
-        Pattern.compile("(?=[a-z]+).+"),
-        Pattern.compile(".+(?<=[a-z]+)"),
-        Pattern.compile(".+(?<!.{255,})")
-      )
-    ) { pattern =>
+        Pattern.compile("\\d+(?= dollars)"),
+        Pattern.compile("(?<=[a-z0-9])(?=[A-Z])")
+      ),
+      Gen.long
+    ) { (pattern, seed) =>
       try {
-        Coregex.from(pattern)
+        val coregex = Coregex.from(pattern)
+        val _       = coregex.generate(seed)
         fail(s"should throw error for: ${pattern.pattern()}")
       } catch {
-        case _: UnsupportedOperationException =>
-        case NonFatal(ex) => fail(s"should throw UnsupportedOperationException for: ${pattern.pattern()}", ex)
+        case _: IllegalStateException =>
+        case ex if NonFatal(ex)       => fail(s"should throw IllegalStateException for: ${pattern.pattern()}", ex)
       }
     }
   }

@@ -183,11 +183,11 @@ public final class CoregexParser {
         break;
       case '^':
         ctx.match('^');
-        elementaryRE = Coregex.empty();
+        elementaryRE = new Coregex.Group(Coregex.Group.Type.LOOKBEHIND, Coregex.empty());
         break;
       case '$':
         ctx.match('$');
-        elementaryRE = Coregex.empty();
+        elementaryRE = new Coregex.Group(Coregex.Group.Type.LOOKAHEAD, Coregex.empty());
         break;
       case '\\':
         ctx.match('\\');
@@ -196,12 +196,39 @@ public final class CoregexParser {
           case 'Q':
             elementaryRE = Coregex.literal(quoted(ctx), 0);
             break;
-          case 'b':
-          case 'B':
           case 'A':
-          case 'G':
-          case 'Z':
+            ctx.match('A');
+            elementaryRE = new Coregex.Group(Coregex.Group.Type.LOOKBEHIND, Coregex.empty());
+            break;
+          case 'b':
+            ctx.match('b');
+            elementaryRE = Coregex.wordBoundary(ctx.flags, true);
+            break;
+          case 'B':
+            ctx.match('B');
+            elementaryRE = Coregex.wordBoundary(ctx.flags, false);
+            break;
+          case 'R':
+            ctx.match('R');
+            elementaryRE =
+                new Coregex.Union(
+                    Coregex.literal("\r\n", 0),
+                    Set.builder()
+                        .set('\n', '\u000B', '\u000C', '\r', '\u0085', '\u2028', '\u2029')
+                        .build());
+            break;
           case 'z':
+            ctx.match('z');
+            elementaryRE = new Coregex.Group(Coregex.Group.Type.LOOKAHEAD, Coregex.empty());
+            break;
+          case 'Z':
+            ctx.match('Z');
+            elementaryRE =
+                new Coregex.Group(
+                    Coregex.Group.Type.LOOKAHEAD,
+                    new Coregex.Union(Coregex.empty(), Coregex.literal("\n", 0)));
+            break;
+          case 'G':
             elementaryRE = ctx.unsupported("metacharacter \\" + ch + " is not supported");
             break;
           case 'k':
@@ -387,15 +414,23 @@ public final class CoregexParser {
           group = new Coregex.Group(Coregex.Group.Type.ATOMIC, RE(ctx));
           break;
         case '=':
+          ctx.match('=');
+          group = new Coregex.Group(Coregex.Group.Type.LOOKAHEAD, RE(ctx));
+          break;
         case '!':
-          group = ctx.unsupported("look-aheads are not supported");
+          ctx.match('!');
+          group = new Coregex.Group(Coregex.Group.Type.NEGATIVE_LOOKAHEAD, RE(ctx));
           break;
         case '<':
           ctx.match('<');
           switch (ctx.peek()) {
             case '=':
+              ctx.match('=');
+              group = new Coregex.Group(Coregex.Group.Type.LOOKBEHIND, RE(ctx));
+              break;
             case '!':
-              group = ctx.unsupported("look-behinds are not supported");
+              ctx.match('!');
+              group = new Coregex.Group(Coregex.Group.Type.NEGATIVE_LOOKBEHIND, RE(ctx));
               break;
             default:
               String name = ctx.span(ch -> '>' != ch);
@@ -407,7 +442,7 @@ public final class CoregexParser {
         case '-':
           ctx.match('-');
           negate = true;
-        // fallthrough
+        // fall through
         default:
           int flags = ctx.flags;
           ctx.flags = negate ? flags & ~flags(ctx) : flags | flags(ctx);
