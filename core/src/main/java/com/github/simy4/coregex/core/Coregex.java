@@ -335,10 +335,6 @@ public abstract class Coregex implements Serializable {
       return this;
     }
 
-    int index() {
-      return parent.index();
-    }
-
     int length(boolean full) {
       if (!full || null == parent) {
         return buffer.length();
