@@ -18,6 +18,24 @@ A handy utility for generating strings that match given regular expression crite
 - [vavr-test](https://github.com/vavr-io/vavr-test)
 
 # Usage
+
+You can use this library directly by compiling an instance of coregex from any given regular expression pattern:
+
+```java
+var pattern = Pattern.compile("[a-zA-Z]{3}");
+
+var coregex = Coregex.from(pattern);
+```
+
+Having an instance of coregex, you can ask it to generate a string matching original regular expression. At any given time
+this should be true:
+
+```java
+var seed = ThreadLocalRandom.current().nextLong();
+
+assert pattern.matcher(coregex.generate(seed)).matches();
+```
+
 ## Functionaljava Quickcheck
 Include the following dependency into your project:
 
