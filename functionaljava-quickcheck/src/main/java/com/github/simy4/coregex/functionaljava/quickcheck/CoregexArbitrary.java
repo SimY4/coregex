@@ -37,8 +37,7 @@ public final class CoregexArbitrary {
 
   public static Shrink<String> shrink(Pattern pattern) {
     Stream<? extends Coregex> shrinks =
-        Stream.iteratorStream(
-            com.github.simy4.coregex.core.Coregex.from(pattern).shrink().iterator());
+        Stream.iteratorStream(Coregex.from(pattern).shrink().iterator());
     return Shrink.shrink(
         larger ->
             shrinks

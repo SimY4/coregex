@@ -36,6 +36,9 @@ var seed = ThreadLocalRandom.current().nextLong();
 assert pattern.matcher(coregex.generate(seed)).matches();
 ```
 
+Given the library is primarily intended to be used in property based testing, it comes with a set of integrations for popular
+property based testing frameworks.
+
 ## Functionaljava Quickcheck
 Include the following dependency into your project:
 
