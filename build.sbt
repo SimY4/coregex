@@ -55,7 +55,7 @@ lazy val root = (project in file("."))
     name           := "coregex-parent",
     publish / skip := true
   )
-  .aggregate(core, functionaljavaQuickcheck, jqwik, junitQuickcheck, kotest, scalacheck, vavrTest)
+  .aggregate(core, functionaljavaQuickcheck, jqwik, junitQuickcheck, kotest, scalacheck, vavrTest, zioTest)
 
 lazy val core = (project in file("core"))
   .settings(
@@ -168,6 +168,21 @@ lazy val vavrTest = (project in file("vavr-test"))
     testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v")
   )
   .settings(javaLibSettings(8))
+  .settings(jacocoSettings)
+  .dependsOn(core)
+
+lazy val zioTest = (project in file("zio-test"))
+  .settings(
+    name          := "zio-test",
+    moduleName    := "coregex-zio-test",
+    description   := "zio-test bindings for coregex library.",
+    headerEndYear := Some(2025),
+    libraryDependencies ++= Seq(
+      "dev.zio" %% "zio-test" % "2.1.21" % Provided,
+      "dev.zio" %% "zio-test-sbt" % "2.1.21" % Test
+    ),
+    crossScalaVersions := supportedScalaVersions
+  )
   .settings(jacocoSettings)
   .dependsOn(core)
 

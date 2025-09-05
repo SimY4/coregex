@@ -154,3 +154,24 @@ class MyTest {
   }
 }
 ```
+
+## ZIO test
+Include the following dependency into your project:
+
+```groovy
+testImplementation "com.github.simy4.coregex:coregex-zio-test"
+```
+
+Use the provided `CoregexGen` class to generate a string that would match the regular expression predicate:
+
+```scala
+object MySpec extends ZIOSpecDefault {
+  def spec = suite("my spec")(
+    test("my property") {
+      check(CoregexGen.from(Pattern.compile("[a-zA-Z]{3}"))) { str => 
+        assertTrue(str.length == 3)
+      }
+    }
+  )
+}
+```
