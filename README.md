@@ -128,7 +128,7 @@ Use the provided `CoregexInstances` trait to constrain string arbitraries:
 
 ```scala
 object MySpecification extends Properties("MySpecification") with CoregexInstances {
-  property("my property") = forAll { (str: String Matching "[a-zA-Z]{3}") =>
+  property("my property") = forAll { (str: StringMatching["[a-zA-Z]{3}"]) =>
     3 == str.length  
   }
 }
