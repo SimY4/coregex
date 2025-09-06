@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package com.github.simy4.coregex.scalacheck
+package com.github.simy4.coregex
+package scalacheck
 
-import com.github.simy4.coregex.core.Coregex
+import core.Coregex
 import org.scalacheck.{ Arbitrary, Gen, Shrink }
 
 import java.util.regex.Pattern
@@ -24,22 +25,20 @@ import java.util.regex.Pattern
 trait CoregexInstances {
   import scala.jdk.CollectionConverters._
 
-  type Matching[A <: String, Regex <: String with Singleton] <: A
+  type StringMatching[Regex <: String with Singleton] <: String
 
-  implicit def arbitraryInputStringMatchingRegexStringWithSingleton[
-    A <: String,
-    Regex <: String with Singleton
-  ](implicit regex: ValueOf[Regex]): Arbitrary[Matching[A, Regex]] =
-    Arbitrary(CoregexGen.fromPattern(Pattern.compile(regex.value)).asInstanceOf[Gen[Matching[A, Regex]]])
+  implicit def arbitraryStringMatchingRegexStringWithSingleton[
+    Regex <: String with Singleton: ValueOf
+  ]: Arbitrary[StringMatching[Regex]] =
+    Arbitrary(CoregexGen.fromPattern(Pattern.compile(valueOf[Regex])).asInstanceOf[Gen[StringMatching[Regex]]])
 
-  implicit def shrinkInputStringMatchingRegexStringWithSingleton[
-    A <: String,
-    Regex <: String with Singleton
-  ](implicit regex: ValueOf[Regex]): Shrink[Matching[A, Regex]] = {
-    val shrinks = LazyList.from(Coregex.from(Pattern.compile(regex.value)).shrink().iterator().asScala)
+  implicit def shrinkStringMatchingRegexStringWithSingleton[
+    Regex <: String with Singleton: ValueOf
+  ]: Shrink[StringMatching[Regex]] = {
+    val shrinks = Coregex.from(Pattern.compile(valueOf[Regex])).shrink().iterator().asScala.to(LazyList)
     Shrink.withLazyList { larger =>
       shrinks
-        .map(coregex => coregex.generate(larger.length.toLong).asInstanceOf[Matching[A, Regex]])
+        .map(coregex => coregex.generate(larger.length.toLong).asInstanceOf[StringMatching[Regex]])
         .filter(string => string.length < larger.length)
     }
   }

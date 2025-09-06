@@ -24,9 +24,10 @@ inThisBuild(
   )
 )
 
+lazy val scala212               = "2.12.20"
 lazy val scala213               = "2.13.16"
 lazy val scala3                 = "3.3.6"
-lazy val supportedScalaVersions = List(scala213, scala3)
+lazy val supportedScalaVersions = List(scala212, scala213, scala3)
 
 def javaLibSettings(release: Int) = Seq(
   crossPaths       := false,
@@ -146,10 +147,16 @@ lazy val scalacheck = (project in file("scalacheck"))
     moduleName    := "coregex-scalacheck",
     description   := "ScalaCheck bindings for coregex library.",
     headerEndYear := Some(2025),
-    libraryDependencies ++= Seq(
-      "org.scalacheck" %% "scalacheck" % "1.18.1" % Provided
-    ),
+    libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.18.1" % Provided,
     crossScalaVersions := supportedScalaVersions,
+    Compile / unmanagedSourceDirectories ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 13) | (3, _)) => Seq("scala-2.13+")
+      case Some((2, 12)) => Seq.empty
+    }).map(baseDirectory.value / "src" / "main" / _),
+    Test / unmanagedSourceDirectories ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 13) | (3, _)) => Seq("scala-2.13+")
+      case Some((2, 12)) => Seq("scala-2.12")
+    }).map(baseDirectory.value / "src" / "test" / _),
     Test / tpolecatExcludeOptions += org.typelevel.scalacoptions.ScalacOptions.warnNonUnitStatement
   )
   .settings(jacocoSettings)
