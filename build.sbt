@@ -132,7 +132,7 @@ lazy val kotest = (project in file("kotest"))
     description   := "Kotest bindings for coregex library.",
     headerEndYear := Some(2025),
     libraryDependencies ++= Seq(
-      "io.kotest"            % "kotest-property-jvm" % "6.0.1"                          % Provided,
+      "io.kotest"            % "kotest-property-jvm" % "6.0.2"                          % Provided,
       "com.github.sbt.junit" % "jupiter-interface"   % JupiterKeys.jupiterVersion.value % Test
     ),
     testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v")
@@ -143,19 +143,19 @@ lazy val kotest = (project in file("kotest"))
 
 lazy val scalacheck = (project in file("scalacheck"))
   .settings(
-    name          := "scalacheck",
-    moduleName    := "coregex-scalacheck",
-    description   := "ScalaCheck bindings for coregex library.",
-    headerEndYear := Some(2025),
+    name                                    := "scalacheck",
+    moduleName                              := "coregex-scalacheck",
+    description                             := "ScalaCheck bindings for coregex library.",
+    headerEndYear                           := Some(2025),
     libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.18.1" % Provided,
-    crossScalaVersions := supportedScalaVersions,
+    crossScalaVersions                      := supportedScalaVersions,
     Compile / unmanagedSourceDirectories ++= (CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, 13) | (3, _)) => Seq("scala-2.13+")
-      case Some((2, 12)) => Seq.empty
+      case Some((2, 12))          => Seq.empty
     }).map(baseDirectory.value / "src" / "main" / _),
     Test / unmanagedSourceDirectories ++= (CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, 13) | (3, _)) => Seq("scala-2.13+")
-      case Some((2, 12)) => Seq("scala-2.12")
+      case Some((2, 12))          => Seq("scala-2.12")
     }).map(baseDirectory.value / "src" / "test" / _),
     Test / tpolecatExcludeOptions += org.typelevel.scalacoptions.ScalacOptions.warnNonUnitStatement
   )
@@ -185,7 +185,7 @@ lazy val zioTest = (project in file("zio-test"))
     description   := "zio-test bindings for coregex library.",
     headerEndYear := Some(2025),
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio-test" % "2.1.21" % Provided,
+      "dev.zio" %% "zio-test"     % "2.1.21" % Provided,
       "dev.zio" %% "zio-test-sbt" % "2.1.21" % Test
     ),
     crossScalaVersions := supportedScalaVersions
