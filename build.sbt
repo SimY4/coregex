@@ -88,6 +88,22 @@ lazy val functionaljavaQuickcheck = (project in file("functionaljava-quickcheck"
   .settings(jacocoSettings)
   .dependsOn(core)
 
+lazy val hedgehog = (project in file("hedgehog"))
+  .settings(
+    name          := "hedgehog",
+    moduleName    := "coregex-hedgehog",
+    description   := "hedgehog bindings for coregex library.",
+    headerEndYear := Some(2025),
+    libraryDependencies ++= Seq(
+      "qa.hedgehog" %% "hedgehog-core"   % "0.13.0" % Provided,
+      "qa.hedgehog" %% "hedgehog-runner" % "0.13.0" % Test,
+      "qa.hedgehog" %% "hedgehog-sbt"    % "0.13.0" % Test
+    ),
+    crossScalaVersions := supportedScalaVersions
+  )
+  .settings(jacocoSettings)
+  .dependsOn(core)
+
 lazy val jqwik = (project in file("jqwik"))
   .settings(
     name          := "jqwik",

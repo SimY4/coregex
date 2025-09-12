@@ -96,6 +96,27 @@ public class MyTest {
 }
 ```
 
+## hedgehog-scala
+Include the following dependency into your project:
+
+```scala
+libraryDependencies ++= Seq("com.github.simy4.coregex" %% "coregex-hedgehog" % Test)
+```
+
+Use the provided `CoregexGen` class to generate a string that would match the regular expression predicate:
+
+```scala
+object MySpec extends Properties {
+  def tests: List[Test] = List(
+    property("my property", myProperty),
+  )
+
+  def myProperty: Property = for {
+    uuid <- CoregexGen.fromRegex("[a-zA-Z]{3}".r).forAll
+  } yield Result.assert(str.length ==== 3)
+}
+```
+
 ## Kotest
 Include the following dependency into your project:
 
