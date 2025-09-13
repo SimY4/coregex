@@ -17,12 +17,19 @@
 package com.github.simy4.coregex.core
 
 import munit.ScalaCheckSuite
+import org.scalacheck.{ Arbitrary, Gen }
 import org.scalacheck.Prop._
 
 class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
   import Coregex._
 
   import scala.jdk.CollectionConverters._
+
+  final private class Simple(val value: Coregex)
+
+  implicit private def arbSimple(implicit coregex: Arbitrary[Coregex]): Arbitrary[Simple] = Arbitrary(
+    Gen.resize(0, coregex.arbitrary.map(new Simple(_)))
+  )
 
   property("quantified zero times should give empty") {
     forAll { (coregex: Coregex, `type`: Quantified.Type, seed: Long) =>
@@ -79,7 +86,8 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
   }
 
   property("concat should match self") {
-    forAll { (concat: Concat, seed: Long) =>
+    forAll { (head: Simple, tail: Seq[Simple], seed: Long) =>
+      val concat    = new Concat(head.value, tail.map(_.value): _*)
       val generated = concat.generate(seed)
       concat.matches(generated, null) :| s"$generated in $concat"
     }
@@ -123,7 +131,8 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
   }
 
   property("union should match self") {
-    forAll { (union: Union, seed: Long) =>
+    forAll { (head: Simple, tail: Seq[Simple], seed: Long) =>
+      val union     = new Union(head.value, tail.map(_.value): _*)
       val generated = union.generate(seed)
       union.matches(generated, null) :| s"$generated in ($union)"
     }

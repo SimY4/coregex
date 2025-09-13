@@ -17,7 +17,6 @@
 package com.github.simy4.coregex.core
 
 import org.scalacheck.{ Arbitrary, Gen, Shrink }
-import org.scalacheck.Arbitrary.arbitrary
 
 import java.util.regex.Pattern
 
@@ -45,8 +44,8 @@ trait CoregexArbitraries {
       )
     } yield flags.foldLeft(0)(_ | _).asInstanceOf[Flags]
 
-  implicit val arbitraryCoregex: Arbitrary[Coregex]                   = Arbitrary(genCoregex())
-  def genCoregex(charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex] =
+  implicit val arbitraryCoregex: Arbitrary[Coregex] = Arbitrary(genCoregex())
+  def genCoregex(charGen: Gen[Char] = Gen.alphaNumChar)(implicit range: Arbitrary[QuantifyRange]): Gen[Coregex] =
     for {
       single <- Gen.sized { height =>
         if (height > 0)
@@ -60,7 +59,7 @@ trait CoregexArbitraries {
       }
       coregex <- Gen.frequency(
         9 -> Gen.const(single),
-        1 -> arbitrary[QuantifyRange].map(r => single.quantify(r.min, r.max, r.`type`))
+        1 -> range.arbitrary.map(r => single.quantify(r.min, r.max, r.`type`))
       )
     } yield coregex
 
