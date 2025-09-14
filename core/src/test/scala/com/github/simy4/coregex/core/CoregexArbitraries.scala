@@ -44,14 +44,16 @@ trait CoregexArbitraries {
       )
     } yield flags.foldLeft(0)(_ | _).asInstanceOf[Flags]
 
-  implicit val arbitraryCoregex: Arbitrary[Coregex] = Arbitrary(genCoregex())
-  def genCoregex(charGen: Gen[Char] = Gen.alphaNumChar)(implicit range: Arbitrary[QuantifyRange]): Gen[Coregex] =
+  implicit def arbitraryCoregex(implicit range: Arbitrary[QuantifyRange]): Arbitrary[Coregex] = Arbitrary(
+    genCoregex(range.arbitrary)
+  )
+  def genCoregex(range: Gen[QuantifyRange], charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex] =
     for {
       single <- Gen.sized { height =>
         if (height > 0)
           Gen.oneOf(
-            genCoregexConcat(charGen),
-            genCoregexUnion(charGen),
+            genCoregexConcat(range, charGen),
+            genCoregexUnion(range, charGen),
             genSet(charGen),
             Gen.const(Coregex.empty())
           )
@@ -59,16 +61,18 @@ trait CoregexArbitraries {
       }
       coregex <- Gen.frequency(
         9 -> Gen.const(single),
-        1 -> range.arbitrary.map(r => single.quantify(r.min, r.max, r.`type`))
+        1 -> range.map(r => single.quantify(r.min, r.max, r.`type`))
       )
     } yield coregex
 
-  implicit val arbitraryCoregexConcat: Arbitrary[Coregex.Concat]                   = Arbitrary(genCoregexConcat())
-  def genCoregexConcat(charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex.Concat] =
+  implicit def arbitraryCoregexConcat(implicit range: Arbitrary[QuantifyRange]): Arbitrary[Coregex.Concat] = Arbitrary(
+    genCoregexConcat(range.arbitrary)
+  )
+  def genCoregexConcat(range: Gen[QuantifyRange], charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex.Concat] =
     for {
-      first <- Gen.sized(h => Gen.resize(h / 4, genCoregex(charGen)))
+      first <- Gen.sized(h => Gen.resize(h / 4, genCoregex(range, charGen)))
       size  <- Gen.size
-      rest  <- Gen.listOfN(size % 10, Gen.resize(size / 4, genCoregex(charGen)))
+      rest  <- Gen.listOfN(size % 10, Gen.resize(size / 4, genCoregex(range, charGen)))
     } yield new Coregex.Concat(first, rest: _*)
 
   implicit val arbitraryCoregexRef: Arbitrary[Coregex.Ref] = Arbitrary(genCoregexRef)
@@ -90,12 +94,14 @@ trait CoregexArbitraries {
     )
   }
 
-  implicit val arbitraryCoregexUnion: Arbitrary[Coregex.Union]                   = Arbitrary(genCoregexUnion())
-  def genCoregexUnion(charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex.Union] =
+  implicit def arbitraryCoregexUnion(implicit range: Arbitrary[QuantifyRange]): Arbitrary[Coregex.Union] = Arbitrary(
+    genCoregexUnion(range.arbitrary)
+  )
+  def genCoregexUnion(range: Gen[QuantifyRange], charGen: Gen[Char] = Gen.alphaNumChar): Gen[Coregex.Union] =
     for {
-      first <- Gen.sized(h => Gen.resize(h / 4, genCoregex(charGen)))
+      first <- Gen.sized(h => Gen.resize(h / 4, genCoregex(range, charGen)))
       size  <- Gen.size
-      rest  <- Gen.listOfN(size % 10, Gen.resize(size / 4, genCoregex(charGen)))
+      rest  <- Gen.listOfN(size % 10, Gen.resize(size / 4, genCoregex(range, charGen)))
     } yield new Coregex.Union(first, rest: _*)
 
   implicit def coregexShrink[C <: Coregex]: Shrink[C] = Shrink.withLazyList { larger =>
