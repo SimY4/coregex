@@ -104,7 +104,8 @@ public final class CoregexParser {
 
   /*
    * <pre>{@code
-   * basicRE ::= elementaryRE, ['+' | '*' | '?' | '+', '+' | '?', '?' | '{', times, '}' | '{', times, ',', '}' | '{', times, ',', times, '}']
+   * basicRE ::= elementaryRE, [ '+' | '*' | '?' | quantifier, [ '+' | '?' ] ]
+   * quantifier ::= '{', times, [ ',', [ times ] ], '}'
    * times ::= digit, {digit}
    * }</pre>
    */
@@ -165,7 +166,7 @@ public final class CoregexParser {
 
   /*
    * <pre>{@code
-   * elementaryRE ::= '.' | set | group | '^' | '$' | quoted | '\', metachar | literal
+   * elementaryRE ::= '.' | set | group | '^' | '$' | 'b' | 'B' | 'A' | 'R' | 'G' | 'z' | 'Z' | 'k' | quoted | '\', metachar | literal
    * }</pre>
    */
   private Coregex elementaryRE(Context ctx) {
@@ -508,7 +509,7 @@ public final class CoregexParser {
 
   /*
    * <pre>{@code
-   * metachar ::= 't' | 'r' | 'n' | 'd' | 'D' | 'w' | 'W' | 's' | 'p', '{', ? posix ?, '}' | 'S' | 'b' | 'B' | 'A' | 'G' | 'z' | 'k' | digit | single
+   * metachar ::= 't' | 'r' | 'n' | 'd' | 'D' | 'w' | 'W' | 's' | 'p', '{', ? posix ?, '}' | 'S' | digit | single
    * }</pre>
    */
   @SuppressWarnings("fallthrough")
