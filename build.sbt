@@ -66,7 +66,7 @@ lazy val core = (project in file("core"))
     headerEndYear := Some(2025),
     libraryDependencies ++= Seq(
       "org.scalameta" %% "munit"            % "1.1.1" % Test,
-      "org.scalameta" %% "munit-scalacheck" % "1.1.0" % Test
+      "org.scalameta" %% "munit-scalacheck" % "1.2.0" % Test
     )
   )
   .settings(javaLibSettings(8))
