@@ -104,8 +104,9 @@ public final class CoregexParser {
 
   /*
    * <pre>{@code
-   * basicRE ::= elementaryRE, [ '+' | '*' | '?' | quantifier, [ '+' | '?' ] ]
-   * quantifier ::= '{', times, [ ',', [ times ] ], '}'
+   * basicRE ::= elementaryRE, [ quantifier, [ '+' | '?' ] ]
+   * quantifier ::= '+' | '*' | '?' | range
+   * range ::=  '{', times, [ ',', [ times ] ], '}'
    * times ::= digit, {digit}
    * }</pre>
    */
