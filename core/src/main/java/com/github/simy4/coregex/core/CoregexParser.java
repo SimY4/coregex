@@ -472,8 +472,8 @@ public final class CoregexParser {
    */
   private int flags(Context ctx) {
     int flags = 0;
-    char ch = ctx.peek();
-    do {
+    while(true) {
+      char ch = ctx.peek();
       switch (ch) {
         case 'd':
           ctx.match('d');
@@ -506,8 +506,7 @@ public final class CoregexParser {
         default:
           return flags;
       }
-      ch = ctx.peek();
-    } while (true);
+    }
   }
 
   /*
