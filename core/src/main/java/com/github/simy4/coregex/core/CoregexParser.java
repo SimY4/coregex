@@ -472,7 +472,7 @@ public final class CoregexParser {
    */
   private int flags(Context ctx) {
     int flags = 0;
-    while(true) {
+    while (true) {
       char ch = ctx.peek();
       switch (ch) {
         case 'd':
