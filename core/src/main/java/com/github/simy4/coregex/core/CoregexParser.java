@@ -106,8 +106,7 @@ public final class CoregexParser {
    * <pre>{@code
    * basicRE ::= elementaryRE, [ quantifier, [ '+' | '?' ] ]
    * quantifier ::= '+' | '*' | '?' | range
-   * range ::=  '{', times, [ ',', [ times ] ], '}'
-   * times ::= digit, {digit}
+   * range ::=  '{', numeric, [ ',', [ numeric ] ], '}'
    * }</pre>
    */
   private Coregex basicRE(Context ctx) {
@@ -132,12 +131,10 @@ public final class CoregexParser {
         break;
       case '{':
         ctx.match('{');
-        String times = ctx.span(this::isDigit);
-        quantifierMin = times.isEmpty() ? 0 : Integer.parseInt(times);
+        quantifierMin = Math.max(0, numeric(ctx));
         if (',' == ctx.peek()) {
           ctx.match(',');
-          String end = ctx.span(this::isDigit);
-          quantifierMax = end.isEmpty() ? -1 : Integer.parseInt(end);
+          quantifierMax = numeric(ctx);
         } else {
           quantifierMax = quantifierMin;
         }
@@ -167,7 +164,9 @@ public final class CoregexParser {
 
   /*
    * <pre>{@code
-   * elementaryRE ::= '.' | set | group | '^' | '$' | 'b' | 'B' | 'A' | 'R' | 'G' | 'z' | 'Z' | 'k' | quoted | '\', metachar | literal
+   * elementaryRE ::= '.' | set | group | '^' | '$' | '\', quoted | '\', 'A' | '\', 'b' | '\', 'B' | '\', 'R'
+   *                      | '\', 'z' | '\', 'Z' | '\', 'G' | '\', 'k', '<', literal ,'>' | '\', numeric
+   *                      | '\', metachar | literal
    * }</pre>
    */
   private Coregex elementaryRE(Context ctx) {
@@ -241,9 +240,8 @@ public final class CoregexParser {
             elementaryRE = new Coregex.Ref(name);
             break;
           default:
-            if (isDigit(ch)) {
-              String n = ctx.span(this::isDigit);
-              elementaryRE = new Coregex.Ref(Integer.parseInt(n));
+            if (((ch - '0') | ('9' - ch)) >= 0) {
+              elementaryRE = new Coregex.Ref(numeric(ctx));
             } else {
               elementaryRE = metachar(ctx);
             }
@@ -259,7 +257,7 @@ public final class CoregexParser {
 
   /*
    * <pre>{@code
-   * quoted ::= '\', 'Q', ? quoted ?, '\', 'E'
+   * quoted ::= 'Q', ? quoted ?, '\', 'E'
    * }</pre>
    */
   private String quoted(Context ctx) {
@@ -396,7 +394,9 @@ public final class CoregexParser {
 
   /*
    * <pre>{@code
-   * group ::= '(', [ '?', ( ':' | '>' | '=' | '!' | '<', [ '=' | '!' | literal, '>' ] | flags ) ], re, ')'
+   * group ::= group-with-body | group-without-body
+   * group-with-body ::= '(', [ '?', ':' | '>' | '=' | '!' | '<', '=' | '!' | literal, '>' | [ '-' ], flags, ':' ], re, ')'
+   * group-without-body ::= '(', '?', [ '-' ], flags, ')'
    * }</pre>
    */
   @SuppressWarnings("fallthrough")
@@ -452,6 +452,7 @@ public final class CoregexParser {
             group = Coregex.empty();
             break;
           }
+          ctx.match(':');
           group = new Coregex.Group(RE(ctx));
           ctx.flags = flags;
           break;
@@ -465,7 +466,8 @@ public final class CoregexParser {
 
   /*
    * <pre>{@code
-   * flags ::= 'd' | 'i' | 'm' | 's' | 'u' | 'U' | 'x'
+   * flags ::= flag, {flag}
+   * flag ::= 'd' | 'i' | 'm' | 's' | 'u' | 'U' | 'x'
    * }</pre>
    */
   private int flags(Context ctx) {
@@ -502,15 +504,15 @@ public final class CoregexParser {
           flags |= Pattern.COMMENTS;
           break;
         default:
-          return ctx.unsupported("unknown flag");
+          return flags;
       }
-    } while (')' != (ch = ctx.peek()));
-    return flags;
+      ch = ctx.peek();
+    } while (true);
   }
 
   /*
    * <pre>{@code
-   * metachar ::= 't' | 'r' | 'n' | 'd' | 'D' | 'w' | 'W' | 's' | 'p', '{', ? posix ?, '}' | 'S' | digit | single
+   * metachar ::= 't' | 'r' | 'n' | 'd' | 'D' | 'w' | 'W' | 's' | 'p', '{', ? posix ?, '}' | 'S' | quoted | single
    * }</pre>
    */
   @SuppressWarnings("fallthrough")
@@ -548,7 +550,7 @@ public final class CoregexParser {
         break;
       case 's':
         ctx.match('s');
-        metachar.set(' ', '\t');
+        metachar.set('\r', '\n', '\t', '\f', ' ');
         break;
       case 'S':
         ctx.match('S');
@@ -643,11 +645,22 @@ public final class CoregexParser {
 
   /*
    * <pre>{@code
+   * numeric ::= digit, {digit}
    * digit ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
    * }</pre>
    */
-  private boolean isDigit(int ch) {
-    return ((ch - '0') | ('9' - ch)) >= 0;
+  private int numeric(Context ctx) {
+    char ch = ctx.peek();
+    if (((ch - '0') | ('9' - ch)) < 0) {
+      return -1;
+    }
+    int numeric = 0;
+    do {
+      ctx.match(ch);
+      numeric = numeric * 10 + (ch - '0');
+      ch = ctx.peek();
+    } while (((ch - '0') | ('9' - ch)) >= 0);
+    return numeric;
   }
 
   private static final class Context {
