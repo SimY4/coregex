@@ -201,8 +201,8 @@ lazy val zioTest = (project in file("zio-test"))
     description   := "zio-test bindings for coregex library.",
     headerEndYear := Some(2025),
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio-test"     % "2.1.21" % Provided,
-      "dev.zio" %% "zio-test-sbt" % "2.1.21" % Test
+      "dev.zio" %% "zio-test"     % "2.1.22" % Provided,
+      "dev.zio" %% "zio-test-sbt" % "2.1.22" % Test
     ),
     crossScalaVersions := supportedScalaVersions
   )
