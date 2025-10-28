@@ -159,12 +159,19 @@ lazy val kotest = (project in file("kotest"))
 
 lazy val scalacheck = (project in file("scalacheck"))
   .settings(
-    name                                    := "scalacheck",
-    moduleName                              := "coregex-scalacheck",
-    description                             := "ScalaCheck bindings for coregex library.",
-    headerEndYear                           := Some(2025),
-    libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.19.0" % Provided,
-    crossScalaVersions                      := supportedScalaVersions,
+    name          := "scalacheck",
+    moduleName    := "coregex-scalacheck",
+    description   := "ScalaCheck bindings for coregex library.",
+    headerEndYear := Some(2025),
+    libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 13) | (3, _)) => Seq("org.scalacheck" %% "scalacheck" % "1.19.0" % Provided)
+      case Some((2, 12))          =>
+        Seq(
+          "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2",
+          "org.scalacheck"         %% "scalacheck"         % "1.19.0" % Provided
+        )
+    }),
+    crossScalaVersions := supportedScalaVersions,
     Compile / unmanagedSourceDirectories ++= (CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, 13) | (3, _)) => Seq("scala-2.13+")
       case Some((2, 12))          => Seq.empty

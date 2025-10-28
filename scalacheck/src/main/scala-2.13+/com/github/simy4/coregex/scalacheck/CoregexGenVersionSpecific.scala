@@ -18,15 +18,15 @@ package com.github.simy4.coregex
 package scalacheck
 
 import core.Coregex
-import org.scalacheck.Gen
+import org.scalacheck.Shrink
 
-import java.util.regex.Pattern
-import scala.util.matching.Regex
+private[scalacheck] trait CoregexGenVersionSpecific {
+  import scala.jdk.StreamConverters._
 
-object CoregexGen extends CoregexGenVersionSpecific {
-  def fromRegex(regex: Regex): Gen[String] = fromPattern(regex.pattern)
-
-  def fromPattern(regex: Pattern): Gen[String] = apply(Coregex.from(regex))
-
-  def apply(coregex: Coregex): Gen[String] = Gen.long.map(coregex.generate)
+  def shrinkFor(coregex: Coregex): Shrink[String] = {
+    val shrinks = coregex.shrink().toScala(LazyList)
+    Shrink.withLazyList { larger =>
+      shrinks.map(coregex => coregex.generate(larger.length.toLong)).filter(_.length < larger.length)
+    }
+  }
 }
