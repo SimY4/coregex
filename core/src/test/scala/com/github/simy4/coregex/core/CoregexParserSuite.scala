@@ -57,6 +57,9 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
       Pattern.compile(
         "^arn:(?<partition>\\w+):(?<service>\\w+):(?<region>[\\w-]+):(?<accountID>\\d{12}):(?<ignore>(?<resourceType>[\\w-]+)[:\\/])?(?<resource>[\\w.-]+)$"
       ),
+      Pattern.compile(
+        "^(?<major>0|[1-9]\\d*)\\.(?<minor>0|[1-9]\\d*)\\.(?<patch>0|[1-9]\\d*)(?:-(?<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
+      ),
       Pattern.compile("((?i)[a-z]+(?-i)-[A-Z]){3,6}"),
       Pattern.compile("[a-z&&[^aeiou]]+[]][a-z&&aeiou&&ei]"),
       Pattern.compile("^(?:||)$"),
