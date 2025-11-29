@@ -11,11 +11,14 @@ A handy utility for generating strings that match given regular expression crite
 # Supported generators
 
 - [functionaljava-quickcheck](https://github.com/functionaljava/functionaljava) 
+- [hedgehog](https://hedgehogqa.github.io/scala-hedgehog/)
+- [jetCheck](https://hedgehogqa.github.io/scala-hedgehog/)
 - [Jqwik](https://jqwik.net/) 
 - [JUnit Quickcheck](https://pholser.github.io/junit-quickcheck)
 - [Kotest](https://kotest.io/)
 - [scalacheck](https://scalacheck.org/)
 - [vavr-test](https://github.com/vavr-io/vavr-test)
+- [zio-test](https://zio.dev/reference/test/)
 
 # Usage
 
@@ -59,6 +62,40 @@ public class MyTest {
 }
 ```
 
+## hedgehog-scala
+Include the following dependency into your project:
+
+```scala
+libraryDependencies ++= Seq("com.github.simy4.coregex" %% "coregex-hedgehog" % Test)
+```
+
+Use the provided `CoregexGen` class to generate a string that would match the regular expression predicate:
+
+```scala
+object MySpec extends Properties {
+  def tests: List[Test] = List(
+    property("my property", myProperty),
+  )
+
+  def myProperty: Property = for {
+    str <- CoregexGen.fromRegex("[a-zA-Z]{3}".r).forAll
+  } yield Result.assert(str.length ==== 3)
+}
+```
+
+## jetCheck
+Include the following dependency into your project:
+
+```groovy
+testImplementation "com.github.simy4.coregex:coregex-jetCheck"
+```
+
+Use the provided `CoregexGenerator` class to generate a string that would match the regular expression predicate:
+
+```java
+PropertyChecker.forAll(CoregexGenerator.of("[a-zA-Z]{3}"), str -> 3 == str.length());
+```
+
 ## Jqwik
 Include the following dependency into your project:
 
@@ -93,27 +130,6 @@ public class MyTest {
   public void myProperty(@Regex("[a-zA-Z]{3}") String str) {
     assertThat(str).hasLength(3);
   }
-}
-```
-
-## hedgehog-scala
-Include the following dependency into your project:
-
-```scala
-libraryDependencies ++= Seq("com.github.simy4.coregex" %% "coregex-hedgehog" % Test)
-```
-
-Use the provided `CoregexGen` class to generate a string that would match the regular expression predicate:
-
-```scala
-object MySpec extends Properties {
-  def tests: List[Test] = List(
-    property("my property", myProperty),
-  )
-
-  def myProperty: Property = for {
-    uuid <- CoregexGen.fromRegex("[a-zA-Z]{3}".r).forAll
-  } yield Result.assert(str.length ==== 3)
 }
 ```
 
@@ -165,22 +181,17 @@ testImplementation "com.github.simy4.coregex:coregex-vavr-test"
 Use the provided `CoregexArbirary` class to generate a string that would match the regular expression predicate:
 
 ```java
-class MyTest {
-  @Test
-  void myProperty() {
-    Property.def("my property")
-        .forAll(CoregexArbitrary.of("[a-zA-Z]{3}"))
-        .suchThat(str -> 3 == str.length())
-        .check();
-  }
-}
+Property.def("my property")
+    .forAll(CoregexArbitrary.of("[a-zA-Z]{3}"))
+    .suchThat(str -> 3 == str.length())
+    .check();
 ```
 
 ## ZIO test
 Include the following dependency into your project:
 
-```groovy
-testImplementation "com.github.simy4.coregex:coregex-zio-test"
+```scala
+libraryDependencies ++= Seq("com.github.simy4.coregex" %% "coregex-zio-test" % Test)
 ```
 
 Use the provided `CoregexGen` class to generate a string that would match the regular expression predicate:

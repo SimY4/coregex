@@ -25,7 +25,7 @@ inThisBuild(
 )
 
 lazy val scala212               = "2.12.20"
-lazy val scala213               = "2.13.17"
+lazy val scala213               = "2.13.18"
 lazy val scala3                 = "3.3.7"
 lazy val supportedScalaVersions = List(scala212, scala213, scala3)
 
@@ -56,7 +56,18 @@ lazy val root = (project in file("."))
     name           := "coregex-parent",
     publish / skip := true
   )
-  .aggregate(core, functionaljavaQuickcheck, jqwik, junitQuickcheck, kotest, scalacheck, vavrTest, zioTest)
+  .aggregate(
+    core,
+    functionaljavaQuickcheck,
+    hedgehog,
+    jetCheck,
+    jqwik,
+    junitQuickcheck,
+    kotest,
+    scalacheck,
+    vavrTest,
+    zioTest
+  )
 
 lazy val core = (project in file("core"))
   .settings(
@@ -101,6 +112,22 @@ lazy val hedgehog = (project in file("hedgehog"))
     ),
     crossScalaVersions := supportedScalaVersions
   )
+  .settings(jacocoSettings)
+  .dependsOn(core)
+
+lazy val jetCheck = (project in file("jetCheck"))
+  .settings(
+    name          := "jetCheck",
+    moduleName    := "coregex-jetCheck",
+    description   := "jetCheck bindings for coregex library.",
+    headerEndYear := Some(2025),
+    libraryDependencies ++= Seq(
+      "org.jetbrains"        % "jetCheck"          % "0.2.3"                          % Provided,
+      "com.github.sbt.junit" % "jupiter-interface" % JupiterKeys.jupiterVersion.value % Test
+    ),
+    testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v")
+  )
+  .settings(javaLibSettings(8))
   .settings(jacocoSettings)
   .dependsOn(core)
 
