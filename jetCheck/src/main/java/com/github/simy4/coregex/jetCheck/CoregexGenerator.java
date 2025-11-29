@@ -20,7 +20,7 @@ import com.github.simy4.coregex.core.Coregex;
 import java.util.regex.Pattern;
 import org.jetbrains.jetCheck.Generator;
 
-public class CoregexGenerator {
+public final class CoregexGenerator {
   public static Generator<String> of(String regex) {
     return of(Pattern.compile(regex));
   }
@@ -35,4 +35,6 @@ public class CoregexGenerator {
         generationEnvironment ->
             coregex.generate(generationEnvironment.generate(Generator.integers())));
   }
+
+  private CoregexGenerator() {}
 }
