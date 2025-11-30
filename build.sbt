@@ -109,7 +109,13 @@ lazy val hedgehog = (project in file("hedgehog"))
       "qa.hedgehog" %% "hedgehog-core"   % "0.13.0" % Provided,
       "qa.hedgehog" %% "hedgehog-runner" % "0.13.0" % Test,
       "qa.hedgehog" %% "hedgehog-sbt"    % "0.13.0" % Test
-    ),
+    ) ++ CrossVersion.partialVersion(scalaBinaryVersion.value).collect { case (2, 12) =>
+      "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2"
+    },
+    Compile / unmanagedSourceDirectories ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 13) | (3, _)) => Seq("scala-2.13+")
+      case Some((2, 12))          => Seq("scala-2.12")
+    }).map(baseDirectory.value / "src" / "main" / _),
     crossScalaVersions := supportedScalaVersions
   )
   .settings(jacocoSettings)
@@ -190,18 +196,15 @@ lazy val scalacheck = (project in file("scalacheck"))
     moduleName    := "coregex-scalacheck",
     description   := "ScalaCheck bindings for coregex library.",
     headerEndYear := Some(2025),
-    libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, 13) | (3, _)) => Seq("org.scalacheck" %% "scalacheck" % "1.19.0" % Provided)
-      case Some((2, 12))          =>
-        Seq(
-          "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2",
-          "org.scalacheck"         %% "scalacheck"         % "1.19.0" % Provided
-        )
-    }),
+    libraryDependencies ++= Seq("org.scalacheck" %% "scalacheck" % "1.19.0" % Provided) ++ CrossVersion
+      .partialVersion(scalaVersion.value)
+      .collect { case (2, 12) =>
+        "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2"
+      },
     crossScalaVersions := supportedScalaVersions,
     Compile / unmanagedSourceDirectories ++= (CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, 13) | (3, _)) => Seq("scala-2.13+")
-      case Some((2, 12))          => Seq.empty
+      case Some((2, 12))          => Seq("scala-2.12")
     }).map(baseDirectory.value / "src" / "main" / _),
     Test / unmanagedSourceDirectories ++= (CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, 13) | (3, _)) => Seq("scala-2.13+")

@@ -24,7 +24,7 @@ import java.util.regex.Pattern
 import scala.util.matching.Regex
 
 object CoregexGen {
-  import scala.jdk.CollectionConverters._
+  import scala.compat.java8.StreamConverters._
 
   def fromRegex[M[_]: MonadGen](regex: Regex): M[String] = fromPattern(regex.pattern)
 
@@ -36,8 +36,7 @@ object CoregexGen {
         Gen.constant(coregex.generate(seed)).shrink { str =>
           coregex
             .shrink()
-            .iterator()
-            .asScala
+            .toScala[Stream]
             .map(_.generate(seed))
             .filter(_.length < str.length)
             .toList
