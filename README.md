@@ -12,7 +12,7 @@ A handy utility for generating strings that match given regular expression crite
 
 - [functionaljava-quickcheck](https://github.com/functionaljava/functionaljava) 
 - [hedgehog](https://hedgehogqa.github.io/scala-hedgehog/)
-- [jetCheck](https://hedgehogqa.github.io/scala-hedgehog/)
+- [jetCheck](https://github.com/JetBrains/jetCheck)
 - [Jqwik](https://jqwik.net/) 
 - [JUnit Quickcheck](https://pholser.github.io/junit-quickcheck)
 - [Kotest](https://kotest.io/)
