@@ -20,7 +20,8 @@ inThisBuild(
     ),
     releaseNotesURL := Some(url("https://github.com/SimY4/coregex/releases")),
     versionScheme   := Some("early-semver"),
-    startYear       := Some(2021)
+    startYear       := Some(2021),
+    headerEndYear := Some(2026),
   )
 )
 
@@ -74,7 +75,6 @@ lazy val core = (project in file("core"))
     name          := "core",
     moduleName    := "coregex-core",
     description   := "A handy utility for generating strings that match given regular expression criteria.",
-    headerEndYear := Some(2025),
     libraryDependencies ++= Seq(
       "org.scalameta" %% "munit"            % "1.2.1" % Test,
       "org.scalameta" %% "munit-scalacheck" % "1.2.0" % Test
@@ -88,7 +88,6 @@ lazy val functionaljavaQuickcheck = (project in file("functionaljava-quickcheck"
     name          := "functionaljava-quickcheck",
     moduleName    := "coregex-functionaljava-quickcheck",
     description   := "Functionaljava quickcheck bindings for coregex library.",
-    headerEndYear := Some(2025),
     libraryDependencies ++= Seq(
       "org.functionaljava" % "functionaljava-quickcheck" % "5.0"    % Provided exclude ("junit", "junit"),
       "com.github.sbt"     % "junit-interface"           % "0.13.3" % Test
@@ -104,7 +103,6 @@ lazy val hedgehog = (project in file("hedgehog"))
     name          := "hedgehog",
     moduleName    := "coregex-hedgehog",
     description   := "hedgehog bindings for coregex library.",
-    headerEndYear := Some(2025),
     libraryDependencies ++= Seq(
       "qa.hedgehog" %% "hedgehog-core"   % "0.13.0" % Provided,
       "qa.hedgehog" %% "hedgehog-runner" % "0.13.0" % Test,
@@ -126,7 +124,6 @@ lazy val jetCheck = (project in file("jetCheck"))
     name          := "jetCheck",
     moduleName    := "coregex-jetCheck",
     description   := "jetCheck bindings for coregex library.",
-    headerEndYear := Some(2025),
     libraryDependencies ++= Seq(
       "org.jetbrains"        % "jetCheck"          % "0.2.3"                          % Provided,
       "com.github.sbt.junit" % "jupiter-interface" % JupiterKeys.jupiterVersion.value % Test
@@ -142,7 +139,6 @@ lazy val jqwik = (project in file("jqwik"))
     name          := "jqwik",
     moduleName    := "coregex-jqwik",
     description   := "JQwik bindings for coregex library.",
-    headerEndYear := Some(2025),
     libraryDependencies ++= Seq(
       "net.jqwik"            % "jqwik-api"         % "1.9.3"                          % Provided,
       "net.jqwik"            % "jqwik-engine"      % "1.9.3"                          % Test,
@@ -161,7 +157,6 @@ lazy val junitQuickcheck = (project in file("junit-quickcheck"))
     name          := "junit-quickcheck",
     moduleName    := "coregex-junit-quickcheck",
     description   := "JUnit Quickcheck bindings for coregex library.",
-    headerEndYear := Some(2025),
     libraryDependencies ++= Seq(
       "com.pholser"    % "junit-quickcheck-core"       % "1.0"    % Provided exclude ("junit", "junit"),
       "com.pholser"    % "junit-quickcheck-generators" % "1.0"    % Test,
@@ -179,7 +174,6 @@ lazy val kotest = (project in file("kotest"))
     name          := "kotest",
     moduleName    := "coregex-kotest",
     description   := "Kotest bindings for coregex library.",
-    headerEndYear := Some(2025),
     libraryDependencies ++= Seq(
       "io.kotest"            % "kotest-property-jvm" % "6.0.7"                          % Provided,
       "com.github.sbt.junit" % "jupiter-interface"   % JupiterKeys.jupiterVersion.value % Test
@@ -195,7 +189,6 @@ lazy val scalacheck = (project in file("scalacheck"))
     name          := "scalacheck",
     moduleName    := "coregex-scalacheck",
     description   := "ScalaCheck bindings for coregex library.",
-    headerEndYear := Some(2025),
     libraryDependencies ++= Seq("org.scalacheck" %% "scalacheck" % "1.19.0" % Provided) ++ CrossVersion
       .partialVersion(scalaVersion.value)
       .collect { case (2, 12) =>
@@ -220,7 +213,6 @@ lazy val vavrTest = (project in file("vavr-test"))
     name          := "vavr-test",
     moduleName    := "coregex-vavr-test",
     description   := "VAVR Test bindings for coregex library.",
-    headerEndYear := Some(2025),
     libraryDependencies ++= Seq(
       "io.vavr"              % "vavr-test"         % "0.10.7"                         % Provided,
       "com.github.sbt.junit" % "jupiter-interface" % JupiterKeys.jupiterVersion.value % Test
@@ -236,7 +228,6 @@ lazy val zioTest = (project in file("zio-test"))
     name          := "zio-test",
     moduleName    := "coregex-zio-test",
     description   := "zio-test bindings for coregex library.",
-    headerEndYear := Some(2025),
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio-test"     % "2.1.24" % Provided,
       "dev.zio" %% "zio-test-sbt" % "2.1.24" % Test
@@ -246,5 +237,5 @@ lazy val zioTest = (project in file("zio-test"))
   .settings(jacocoSettings)
   .dependsOn(core)
 
-addCommandAlias("build", ";javafmtCheckAll;scalafmtCheckAll;headerCheck;jacoco")
-addCommandAlias("fmt", ";javafmtAll;scalafmtAll;scalafmtSbt;headerCreate")
+addCommandAlias("build", ";javafmtCheckAll;scalafmtCheckAll;headerCheckAll;jacoco")
+addCommandAlias("fmt", ";javafmtAll;scalafmtAll;scalafmtSbt;headerCreateAll")
