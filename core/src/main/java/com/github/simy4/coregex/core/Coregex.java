@@ -396,7 +396,7 @@ public abstract class Coregex implements Serializable {
      * @param index group index
      * @param group group body
      * @see Group(Type, Coregex)
-     * @see Group(Type, String, Coregex)
+     * @see Group(int, String, Coregex)
      */
     public Group(int index, Coregex group) {
       this(Type.CAPTURING, index, null, requireNonNull(group, "group"));
@@ -410,8 +410,8 @@ public abstract class Coregex implements Serializable {
      *
      * @param type group type
      * @param group group body
-     * @see Group(Coregex)
-     * @see Group(Type, String, Coregex)
+     * @see Group(int, Coregex)
+     * @see Group(int, String, Coregex)
      */
     public Group(Type type, Coregex group) {
       this(requireNonNull(type, "type"), -1, null, requireNonNull(group, "group"));
@@ -423,7 +423,7 @@ public abstract class Coregex implements Serializable {
      * @param index group index
      * @param name group name
      * @param group group body
-     * @see Group(Coregex)
+     * @see Group(int, Coregex)
      * @see Group(Type, Coregex)
      */
     public Group(int index, String name, Coregex group) {
