@@ -97,7 +97,7 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
   // region Ref
   property("generated ref by name should return group second time") {
     forAll { (group: Coregex, ref: Ref, seed: Long) =>
-      val re        = new Concat(new Group(ref.ref().toString, group), ref).generate(seed)
+      val re        = new Concat(new Group(1, ref.ref().toString, group), ref).generate(seed)
       val generated = group.generate(seed)
       (generated + generated ?= re) :| s"$generated$generated == $re"
     }
@@ -105,7 +105,7 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
 
   property("generated ref by index should return group second time") {
     forAll { (group: Coregex, seed: Long) =>
-      val re        = new Concat(new Group(group), new Ref(1)).generate(seed)
+      val re        = new Concat(new Group(1, group), new Ref(1)).generate(seed)
       val generated = group.generate(seed)
       (generated + generated ?= re) :| s"$generated$generated == $re"
     }

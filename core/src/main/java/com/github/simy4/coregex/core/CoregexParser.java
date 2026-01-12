@@ -437,7 +437,7 @@ public final class CoregexParser {
             default:
               String name = ctx.span(ch -> '>' != ch);
               ctx.match('>');
-              group = new Coregex.Group(name, RE(ctx));
+              group = new Coregex.Group(ctx.index(), name, RE(ctx));
               break;
           }
           break;
@@ -453,12 +453,12 @@ public final class CoregexParser {
             break;
           }
           ctx.match(':');
-          group = new Coregex.Group(RE(ctx));
+          group = new Coregex.Group(ctx.index(), RE(ctx));
           ctx.flags = flags;
           break;
       }
     } else {
-      group = new Coregex.Group(RE(ctx));
+      group = new Coregex.Group(ctx.index(), RE(ctx));
     }
     ctx.match(')');
     return group;
@@ -683,7 +683,7 @@ public final class CoregexParser {
 
     private final String regex;
     private final char[] tokens = {SKIP, SKIP, SKIP, SKIP};
-    private int flags, cursor, tokensCursor;
+    private int flags, index, cursor, tokensCursor;
 
     Context(String regex, int flags) {
       this.regex = regex;
@@ -811,6 +811,10 @@ public final class CoregexParser {
       } while (SKIP == ch);
       this.cursor = cursor;
       return ch;
+    }
+
+    int index() {
+      return ++index;
     }
 
     <T> T error(String expected) {

@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Random;
 import java.util.StringJoiner;
 import java.util.function.Predicate;
@@ -309,9 +310,9 @@ public abstract class Coregex implements Serializable {
       this.groups = new HashMap<>();
     }
 
-    Context(Context parent, String name) {
+    Context(Context parent, int index, String name) {
       this.parent = parent;
-      this.index = parent.index + 1;
+      this.index = index;
       this.name = name;
       this.rng = parent.rng;
       this.groups = parent.groups;
@@ -360,11 +361,12 @@ public abstract class Coregex implements Serializable {
         }
       } else {
         parent.append(this.buffer);
+        String group = toString(false);
         if (0 < index) {
-          parent.groups.put(index, toString(false));
+          parent.groups.put(index, group);
         }
         if (null != name) {
-          parent.groups.put(name, toString(false));
+          parent.groups.put(name, group);
         }
         parent.finalizeWithLookbehind(lookbehind);
       }
@@ -381,21 +383,26 @@ public abstract class Coregex implements Serializable {
   /** Regex group. */
   public static final class Group extends Coregex {
 
-    private static final long serialVersionUID = 2L;
+    private static final long serialVersionUID = 3L;
 
     private final Type type;
+    private final int index;
     private final String name;
     private final Coregex group;
 
     /**
      * Unnamed capturing group.
      *
+     * @param index group index
      * @param group group body
      * @see Group(Type, Coregex)
      * @see Group(Type, String, Coregex)
      */
-    public Group(Coregex group) {
-      this(Type.CAPTURING, null, requireNonNull(group, "group"));
+    public Group(int index, Coregex group) {
+      this(Type.CAPTURING, index, null, requireNonNull(group, "group"));
+      if (index < 0) {
+        throw new IllegalArgumentException("index has to be non-negative");
+      }
     }
 
     /**
@@ -407,23 +414,28 @@ public abstract class Coregex implements Serializable {
      * @see Group(Type, String, Coregex)
      */
     public Group(Type type, Coregex group) {
-      this(requireNonNull(type, "type"), null, requireNonNull(group, "group"));
+      this(requireNonNull(type, "type"), -1, null, requireNonNull(group, "group"));
     }
 
     /**
      * Named group.
      *
+     * @param index group index
      * @param name group name
      * @param group group body
      * @see Group(Coregex)
      * @see Group(Type, Coregex)
      */
-    public Group(String name, Coregex group) {
-      this(Type.NAMED, requireNonNull(name, "name"), requireNonNull(group, "group"));
+    public Group(int index, String name, Coregex group) {
+      this(Type.NAMED, index, requireNonNull(name, "name"), requireNonNull(group, "group"));
+      if (index < 0) {
+        throw new IllegalArgumentException("index has to be non-negative");
+      }
     }
 
-    private Group(Type type, String name, Coregex group) {
+    private Group(Type type, int index, String name, Coregex group) {
       this.type = type;
+      this.index = index;
       this.name = name;
       this.group = group;
     }
@@ -457,7 +469,7 @@ public abstract class Coregex implements Serializable {
               root -> pos == fullLookbehind.matches(root.toString(true), root));
           break;
         default:
-          try (Context childCtx = new Context(ctx, name)) {
+          try (Context childCtx = new Context(ctx, index, name)) {
             group.generate(childCtx);
           }
       }
@@ -475,7 +487,7 @@ public abstract class Coregex implements Serializable {
         case NEGATIVE_LOOKBEHIND:
           return new String[] {input};
         default:
-          try (Context childCtx = new Context(ctx, name)) {
+          try (Context childCtx = new Context(ctx, index, name)) {
             return group.match(input, childCtx);
           }
       }
@@ -491,7 +503,7 @@ public abstract class Coregex implements Serializable {
         case NEGATIVE_LOOKBEHIND:
           return Stream.empty();
         default:
-          return group.shrink().map(group -> new Group(type, name, group));
+          return group.shrink().map(group -> new Group(type, index, name, group));
       }
     }
 
@@ -500,6 +512,13 @@ public abstract class Coregex implements Serializable {
      */
     public Type type() {
       return type;
+    }
+
+    /**
+     * @return group index if group is a capturing group
+     */
+    public OptionalInt index() {
+      return index < 0 ? OptionalInt.empty() : OptionalInt.of(index);
     }
 
     /**
