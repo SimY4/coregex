@@ -465,7 +465,9 @@ public abstract class Coregex implements Serializable {
         case LOOKAHEAD:
           int length = ctx.length(true);
           Coregex fullLookbehind =
-              new Concat(any().quantify(length, length, Quantified.Type.GREEDY), group);
+              0 == length
+                  ? group
+                  : new Concat(any().quantify(length, length, Quantified.Type.GREEDY), group);
           final boolean pos = positive;
           ctx.finalizeWithLookbehind(
               root -> pos == fullLookbehind.matches(root.toString(true), root));
