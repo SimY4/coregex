@@ -88,16 +88,13 @@ public final class CoregexParser {
    * }</pre>
    */
   private Coregex simpleRE(Context ctx) {
-    Coregex simpleRE = Coregex.empty();
+    Coregex simpleRE = basicRE(ctx);
     if (ctx.hasMoreElements() && '|' != ctx.peek() && ')' != ctx.peek()) {
-      simpleRE = basicRE(ctx);
-      if (ctx.hasMoreElements() && '|' != ctx.peek() && ')' != ctx.peek()) {
-        List<Coregex> concatenation = new ArrayList<>();
-        while (ctx.hasMoreElements() && '|' != ctx.peek() && ')' != ctx.peek()) {
-          concatenation.add(basicRE(ctx));
-        }
-        simpleRE = new Coregex.Concat(simpleRE, concatenation.toArray(new Coregex[0]));
+      List<Coregex> concatenation = new ArrayList<>();
+      while (ctx.hasMoreElements() && '|' != ctx.peek() && ')' != ctx.peek()) {
+        concatenation.add(basicRE(ctx));
       }
+      simpleRE = new Coregex.Concat(simpleRE, concatenation.toArray(new Coregex[0]));
     }
     return simpleRE;
   }
