@@ -368,7 +368,9 @@ public abstract class Coregex implements Serializable {
         if (null != name) {
           parent.groups.put(name, group);
         }
-        parent.finalizeWithLookbehind(lookbehind);
+        if (null != lookbehind) {
+          parent.finalizeWithLookbehind(lookbehind);
+        }
       }
     }
 
