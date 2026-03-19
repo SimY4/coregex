@@ -195,7 +195,7 @@ lazy val kotest = (project in file("kotest"))
     kotlincJvmTarget := "11",
     testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v")
   )
-  .settings(jacocoSettings)
+  // .settings(jacocoSettings)
   .dependsOn(core)
 
 lazy val scalacheck = (project in file("scalacheck"))
