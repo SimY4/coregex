@@ -1,3 +1,5 @@
+import kotlin.Keys._
+
 inThisBuild(
   Seq(
     organization     := "com.github.simy4.coregex",
@@ -170,17 +172,29 @@ lazy val junitQuickcheck = (project in file("junit-quickcheck"))
   .dependsOn(core)
 
 lazy val kotest = (project in file("kotest"))
+  .enablePlugins(KotlinPlugin)
   .settings(
     name        := "kotest",
     moduleName  := "coregex-kotest",
     description := "Kotest bindings for coregex library.",
     libraryDependencies ++= Seq(
-      "io.kotest"            % "kotest-property-jvm" % "6.1.7"                          % Provided,
-      "com.github.sbt.junit" % "jupiter-interface"   % JupiterKeys.jupiterVersion.value % Test
+      "io.kotest"            % "kotest-property-jvm"  % "6.1.7"                          % Provided,
+      "io.kotest"            % "kotest-runner-junit6" % "6.1.7"                          % Test,
+      "com.github.sbt.junit" % "jupiter-interface"    % JupiterKeys.jupiterVersion.value % Test
     ),
+    crossPaths       := false,
+    autoScalaLibrary := false,
+    kotlinVersion    := "2.2.21",
+    kotlincOptions ++= Seq(
+      "-progressive",
+      "-language-version=2.2",
+      "-api-version=2.2",
+      "-Xexplicit-api=strict",
+      "-Werror"
+    ),
+    kotlincJvmTarget := "11",
     testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v")
   )
-  .settings(javaLibSettings(11))
   .settings(jacocoSettings)
   .dependsOn(core)
 
