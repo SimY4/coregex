@@ -21,7 +21,6 @@ import org.scalacheck.{ Arbitrary, Gen }
 import org.scalacheck.Prop._
 
 import java.util.regex.Pattern
-import scala.util.control.NonFatal
 
 class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
 
@@ -29,6 +28,10 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
     List(
       Pattern.compile("^(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]"),
       Pattern.compile("\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d([+-][0-2]\\d:[0-5]\\d|Z)"),
+      Pattern.compile(
+        "P(\\d+W|\\d+Y(\\d+M)?(\\d+D)?(T(\\d+H)?(\\d+M)?(\\d+([.,]\\d+)?S)?)?|\\d+M(\\d+D)?(T(\\d+H)?(\\d+M)?(\\d+([.,]\\d+)?S)?)?|\\d+D(T(\\d+H)?(\\d+M)?(\\d+([.,]\\d+)?S)?)?|T(\\d+H(\\d+M)?(\\d+([.,]\\d+)?S)?|\\d+M(\\d+([.,]\\d+)?S)?|\\d+([.,]\\d+)?S))"
+      ),
+      Pattern.compile("([0-5]?\\d)\\s([01]?\\d|2[0-3])\\s([0-2]?\\d|3[01])\\s(0?\\d|1[0-2])\\s([0-6])"),
       Pattern.compile("((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])"),
       Pattern.compile(
         """(
@@ -60,10 +63,14 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
       Pattern.compile(
         "^(?<major>0|[1-9]\\d*)\\.(?<minor>0|[1-9]\\d*)\\.(?<patch>0|[1-9]\\d*)(?:-(?<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
       ),
+      Pattern.compile("#([0-9a-fA-F]{3}){1,2}"),
+      Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"),
+      Pattern.compile("4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}"),
+      Pattern.compile("(\\*{1,2})[^*]+\\1"),
+      Pattern.compile("<([A-Z][A-Z0-9]*) [^>]*>.*?</\\1>"),
       Pattern.compile("((?i)[a-z]+(?-i)-[A-Z]){3,6}"),
       Pattern.compile("[a-z&&[^aeiou]]+[]][a-z&&aeiou&&ei]"),
       Pattern.compile("^(?:||)$"),
-      Pattern.compile("<([A-Z][A-Z0-9]*) [^>]*>.*?</\\1>"),
       Pattern.compile("(\\d+) (\\w+) == (\\1) \\2 \\3"),
       Pattern.compile("(?!=.{10,}).+")
     ) ::: (if (scala.util.Properties.isJavaAtLeast(9)) {
@@ -114,18 +121,15 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
   property("should fail to generate strings") {
     forAll(
       Gen.oneOf(
+        Pattern.compile("(?=(abc))"),
         Pattern.compile("\\d+(?= dollars)"),
         Pattern.compile("(?<=[a-z0-9])(?=[A-Z])")
       ),
       Gen.long
     ) { (pattern, seed) =>
-      try {
+      val _ = intercept[IllegalStateException] {
         val coregex = Coregex.from(pattern)
-        val _       = coregex.generate(seed)
-        fail(s"should throw error for: ${pattern.pattern()}")
-      } catch {
-        case _: IllegalStateException =>
-        case ex if NonFatal(ex)       => fail(s"should throw IllegalStateException for: ${pattern.pattern()}", ex)
+        coregex.generate(seed)
       }
     }
   }
