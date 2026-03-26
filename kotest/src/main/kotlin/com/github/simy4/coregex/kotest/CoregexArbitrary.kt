@@ -28,6 +28,8 @@ import kotlin.streams.toList
 public class CoregexArbitrary(private val coregex: Coregex): Arb<String>() {
 
   public companion object {
+    @JvmStatic
+    @JvmOverloads
     public fun of(pattern: String, flags: Int = 0): CoregexArbitrary =
       CoregexArbitrary(Pattern.compile(pattern, flags))
   }
