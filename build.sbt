@@ -1,4 +1,4 @@
-import kotlin.Keys._
+import org.jetbrains.sbt.kotlin.Keys._
 
 inThisBuild(
   Seq(
@@ -178,8 +178,8 @@ lazy val kotest = (project in file("kotest"))
     moduleName  := "coregex-kotest",
     description := "Kotest bindings for coregex library.",
     libraryDependencies ++= Seq(
-      "io.kotest"            % "kotest-property-jvm"  % "6.1.7"                          % Provided,
-      "io.kotest"            % "kotest-runner-junit6" % "6.1.7"                          % Test,
+      "io.kotest"            % "kotest-property-jvm"  % "6.1.9"                          % Provided,
+      "io.kotest"            % "kotest-runner-junit6" % "6.1.9"                          % Test,
       "com.github.sbt.junit" % "jupiter-interface"    % JupiterKeys.jupiterVersion.value % Test
     ),
     crossPaths       := false,
@@ -195,7 +195,7 @@ lazy val kotest = (project in file("kotest"))
     kotlincJvmTarget := "11",
     testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v")
   )
-  // .settings(jacocoSettings)
+  .settings(jacocoSettings)
   .dependsOn(core)
 
 lazy val scalacheck = (project in file("scalacheck"))

@@ -18,22 +18,21 @@ package com.github.simy4.coregex.kotest
 
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.booleans.shouldBeTrue
-import io.kotest.matchers.collections.shouldMatchEach
 import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.should
-import io.kotest.matchers.string.beUUID
 import io.kotest.matchers.string.haveMinLength
 import io.kotest.property.Arb
 import io.kotest.property.arbitrary.list
 import io.kotest.property.checkAll
 import java.net.InetAddress
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 
 public class CoregexArbitraryTest: FunSpec() {
   init {
     test("should generate matching UUID string") {
       checkAll(CoregexArbitrary.of("[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}")) { uuid ->
-        uuid should beUUID()
+        uuid shouldBeEqual UUID.fromString(uuid).toString()
       }
     }
 
@@ -41,9 +40,9 @@ public class CoregexArbitraryTest: FunSpec() {
       checkAll(CoregexArbitrary.of("((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])")) { ipv4 ->
         val expected = ipv4.split('.')
         val actual = InetAddress.getByName(ipv4).hostAddress.split('.')
-        expected.zip(actual).shouldMatchEach({ (expected, actual) ->
+        expected.zip(actual).forEach { (expected, actual) ->
           expected.toInt() shouldBeEqual actual.toInt()
-        })
+        }
       }
     }
 
@@ -56,10 +55,10 @@ public class CoregexArbitraryTest: FunSpec() {
 
     test("should generate unique strings") {
       checkAll(Arb.list(CoregexArbitrary.of("[a-zA-Z0-9]{32,}"))) { strings ->
-        strings.shouldMatchEach({ s ->
+        strings.forEach { s ->
           s should haveMinLength(32)
-          s.toList().shouldMatchEach({ Character.isLetterOrDigit(it).shouldBeTrue() })
-        })
+          s.forEach { Character.isLetterOrDigit(it).shouldBeTrue() }
+        }
       }
     }
   }
