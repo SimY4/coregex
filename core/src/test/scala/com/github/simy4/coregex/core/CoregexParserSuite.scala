@@ -70,6 +70,10 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
       Pattern.compile("<([A-Z][A-Z0-9]*) [^>]*>.*?</\\1>"),
       Pattern.compile("((?i)[a-z]+(?-i)-[A-Z]){3,6}"),
       Pattern.compile("[a-z&&[^aeiou]]+[]][a-z&&aeiou&&ei]"),
+      Pattern.compile("^(a+)+$"),
+      Pattern.compile("^([a-zA-Z]+)*$"),
+      Pattern.compile("^(a|aa)+$"),
+      Pattern.compile("^(a|a?)+$"),
       Pattern.compile("^(?:||)$"),
       Pattern.compile("(\\d+) (\\w+) == (\\1) \\2 \\3"),
       Pattern.compile("(?!=.{10,}).+")
