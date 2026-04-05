@@ -1,6 +1,6 @@
 addSbtPlugin("com.github.sbt"       % "sbt-ci-release"        % "1.11.2")
 addSbtPlugin("com.github.sbt"       % "sbt-release"           % "1.4.0")
-addSbtPlugin("com.github.sbt"       % "sbt-java-formatter"    % "0.10.0")
+addSbtPlugin("com.github.sbt"       % "sbt-java-formatter"    % "0.11.0")
 addSbtPlugin("com.github.sbt"       % "sbt-header"            % "5.11.0")
 addSbtPlugin("com.github.sbt.junit" % "sbt-jupiter-interface" % "0.18.0")
 addSbtPlugin("org.jetbrains.scala"  % "sbt-kotlin-plugin"     % "4.0.0-M1")
