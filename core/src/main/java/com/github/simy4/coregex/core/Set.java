@@ -88,6 +88,29 @@ public final class Set extends Coregex implements Serializable {
     return new Builder(flags, 128);
   }
 
+  /**
+   * Creates a specialized instance of {@link Set} for a single character.
+   *
+   * @param ch character
+   * @return set instance
+   * @see #single(char, int)
+   */
+  public static Set single(char ch) {
+    return single(ch, 0);
+  }
+
+  /**
+   * Creates a specialized instance of {@link Set} for a single character.
+   *
+   * @param ch character
+   * @param flags regex flags
+   * @return set instance
+   * @see #single(char)
+   */
+  public static Set single(char ch, int flags) {
+    return builder(flags).single(ch).build();
+  }
+
   private final BitSet chars;
   private final String description;
 

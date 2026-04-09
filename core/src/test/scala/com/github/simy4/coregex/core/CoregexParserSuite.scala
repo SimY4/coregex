@@ -76,7 +76,8 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
       Pattern.compile("^(a|a?)+$"),
       Pattern.compile("^(?:||)$"),
       Pattern.compile("(\\d+) (\\w+) == (\\1) \\2 \\3"),
-      Pattern.compile("(?!=.{10,}).+")
+      Pattern.compile("(?!=.{10,}).+"),
+      Pattern.compile("")
     ) ::: (if (scala.util.Properties.isJavaAtLeast(9)) {
              List(
                Pattern.compile("\\N{WHITE SMILING FACE}")

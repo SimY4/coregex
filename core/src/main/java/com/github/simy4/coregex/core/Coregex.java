@@ -107,13 +107,13 @@ public abstract class Coregex implements Serializable {
     if (literal.isEmpty()) {
       return empty();
     }
-    Set first = Set.builder(flags).single(literal.charAt(0)).build();
+    Set first = Set.single(literal.charAt(0), flags);
     if (1 == literal.length()) {
       return first;
     }
     Set[] rest = new Set[literal.length() - 1];
     for (int i = 1; i < literal.length(); i++) {
-      rest[i - 1] = Set.builder(flags).single(literal.charAt(i)).build();
+      rest[i - 1] = Set.single(literal.charAt(i), flags);
     }
     return new Concat(first, rest);
   }

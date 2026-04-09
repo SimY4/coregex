@@ -73,10 +73,10 @@ public final class CoregexParser {
     Coregex re = simpleRE(ctx);
     if ('|' == ctx.peek()) {
       List<Coregex> union = new ArrayList<>();
-      while ('|' == ctx.peek()) {
+      do {
         ctx.match('|');
         union.add(simpleRE(ctx));
-      }
+      } while ('|' == ctx.peek());
       re = new Coregex.Union(re, union.toArray(new Coregex[0]));
     }
     return re;
@@ -91,9 +91,9 @@ public final class CoregexParser {
     Coregex simpleRE = basicRE(ctx);
     if (ctx.hasMoreElements() && '|' != ctx.peek() && ')' != ctx.peek()) {
       List<Coregex> concatenation = new ArrayList<>();
-      while (ctx.hasMoreElements() && '|' != ctx.peek() && ')' != ctx.peek()) {
+      do {
         concatenation.add(basicRE(ctx));
-      }
+      } while (ctx.hasMoreElements() && '|' != ctx.peek() && ')' != ctx.peek());
       simpleRE = new Coregex.Concat(simpleRE, concatenation.toArray(new Coregex[0]));
     }
     return simpleRE;
@@ -164,11 +164,13 @@ public final class CoregexParser {
    * elementaryRE ::= '.' | set | group | '^' | '$' | '\', quoted | '\', 'A' | '\', 'b' | '\', 'B' | '\', 'R'
    *                      | '\', 'z' | '\', 'Z' | '\', 'G' | '\', 'k', '<', literal ,'>' | '\', numeric
    *                      | '\', metachar | literal
+   * literal ::= ? not metachar ?
    * }</pre>
    */
   private Coregex elementaryRE(Context ctx) {
+    char ch = ctx.peek();
     Coregex elementaryRE;
-    switch (ctx.peek()) {
+    switch (ch) {
       case '.':
         ctx.match('.');
         elementaryRE = Coregex.any(ctx.flags);
@@ -189,8 +191,7 @@ public final class CoregexParser {
         break;
       case '\\':
         ctx.match('\\');
-        char ch = ctx.peek();
-        switch (ch) {
+        switch (ch = ctx.peek()) {
           case 'Q':
             elementaryRE = Coregex.literal(quoted(ctx), 0);
             break;
@@ -210,7 +211,7 @@ public final class CoregexParser {
             ctx.match('R');
             elementaryRE =
                 new Coregex.Union(
-                    Coregex.literal("\r\n", 0),
+                    new Coregex.Concat(Set.single('\r'), Set.single('\n')),
                     Set.builder()
                         .set('\n', '\u000B', '\u000C', '\r', '\u0085', '\u2028', '\u2029')
                         .build());
@@ -224,7 +225,7 @@ public final class CoregexParser {
             elementaryRE =
                 new Coregex.Group(
                     Coregex.Group.Type.LOOKAHEAD,
-                    new Coregex.Union(Coregex.empty(), Coregex.literal("\n", 0)));
+                    new Coregex.Union(Coregex.empty(), Set.single('\n')));
             break;
           case 'G':
             elementaryRE = ctx.unsupported("metacharacter \\" + ch + " is not supported");
@@ -246,7 +247,12 @@ public final class CoregexParser {
         }
         break;
       default:
-        elementaryRE = literal(ctx);
+        if (ctx.hasMoreElements() && !isREMetachar(ch)) {
+          ctx.match(ch);
+          elementaryRE = Set.single(ch, ctx.flags);
+        } else {
+          elementaryRE = Coregex.empty();
+        }
         break;
     }
     return elementaryRE;
@@ -268,40 +274,6 @@ public final class CoregexParser {
     ctx.flags &= ~Pattern.LITERAL;
     ctx.match('E');
     return literal.toString();
-  }
-
-  /*
-   * <pre>{@code
-   * literal ::= literal-char, {literal-char}
-   * literal-char ::= ? not metachar not followed by quantifier ?
-   * }</pre>
-   */
-  private Coregex literal(Context ctx) {
-    Coregex literal;
-    char ch;
-    if (ctx.hasMoreElements() && !isREMetachar(ch = ctx.peek())) {
-      StringBuilder sb = new StringBuilder();
-      ctx.match(ch);
-      sb.append(ch);
-      loop:
-      while (ctx.hasMoreElements() && !isREMetachar(ch = ctx.peek())) {
-        char next = ctx.peek(2);
-        switch (next) {
-          case '*':
-          case '+':
-          case '?':
-          case '{':
-            break loop;
-          default:
-            ctx.match(ch);
-            sb.append(ch);
-        }
-      }
-      literal = Coregex.literal(sb.toString(), ctx.flags);
-    } else {
-      literal = Coregex.empty();
-    }
-    return literal;
   }
 
   /*
