@@ -88,13 +88,18 @@ public final class CoregexParser {
    * }</pre>
    */
   private Coregex simpleRE(Context ctx) {
-    Coregex simpleRE = basicRE(ctx);
+    Coregex simpleRE;
     if (ctx.hasMoreElements() && '|' != ctx.peek() && ')' != ctx.peek()) {
-      List<Coregex> concatenation = new ArrayList<>();
-      do {
-        concatenation.add(basicRE(ctx));
-      } while (ctx.hasMoreElements() && '|' != ctx.peek() && ')' != ctx.peek());
-      simpleRE = new Coregex.Concat(simpleRE, concatenation.toArray(new Coregex[0]));
+      simpleRE = basicRE(ctx);
+      if (ctx.hasMoreElements() && '|' != ctx.peek() && ')' != ctx.peek()) {
+        List<Coregex> concatenation = new ArrayList<>();
+        do {
+          concatenation.add(basicRE(ctx));
+        } while (ctx.hasMoreElements() && '|' != ctx.peek() && ')' != ctx.peek());
+        simpleRE = new Coregex.Concat(simpleRE, concatenation.toArray(new Coregex[0]));
+      }
+    } else {
+      simpleRE = Coregex.empty();
     }
     return simpleRE;
   }
@@ -138,9 +143,7 @@ public final class CoregexParser {
         ctx.match('}');
         break;
       default:
-        quantifierMin = 1;
-        quantifierMax = 1;
-        break;
+        return basicRE;
     }
     Coregex.Quantified.Type type;
     switch (ctx.peek()) {
@@ -247,12 +250,8 @@ public final class CoregexParser {
         }
         break;
       default:
-        if (ctx.hasMoreElements() && !isREMetachar(ch)) {
-          ctx.match(ch);
-          elementaryRE = Set.single(ch, ctx.flags);
-        } else {
-          elementaryRE = Coregex.empty();
-        }
+        ctx.match(ch);
+        elementaryRE = Set.single(ch, ctx.flags);
         break;
     }
     return elementaryRE;
@@ -591,26 +590,6 @@ public final class CoregexParser {
     return metachar.build();
   }
 
-  private boolean isREMetachar(int ch) {
-    switch (ch) {
-      case '\\':
-      case '|':
-      case '*':
-      case '+':
-      case '?':
-      case '.':
-      case '{':
-      case '[':
-      case '^':
-      case '$':
-      case '(':
-      case ')':
-        return true;
-      default:
-        return false;
-    }
-  }
-
   /*
    * <pre>{@code
    * numeric ::= digit, {digit}
@@ -689,12 +668,10 @@ public final class CoregexParser {
       char ch;
       if (EOF != (ch = peek()) && charPredicate.test(ch)) {
         StringBuilder span = new StringBuilder();
-        match(ch);
-        span.append(ch);
-        while (EOF != (ch = peek()) && charPredicate.test(ch)) {
+        do {
           match(ch);
           span.append(ch);
-        }
+        } while (EOF != (ch = peek()) && charPredicate.test(ch));
         return span.toString();
       } else {
         return "";
