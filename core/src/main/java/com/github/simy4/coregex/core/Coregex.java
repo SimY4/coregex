@@ -222,7 +222,7 @@ public abstract class Coregex implements Serializable {
         Collection<String> nextMatch = new HashSet<>(match.size());
         Coregex coregex = rest[i];
         for (String tail : match) {
-          nextMatch.addAll(Arrays.asList(coregex.match(tail, ctx)));
+          Collections.addAll(nextMatch, coregex.match(tail, ctx));
         }
         match = nextMatch;
       }
@@ -255,7 +255,7 @@ public abstract class Coregex implements Serializable {
     public List<Coregex> concat() {
       List<Coregex> concat = new ArrayList<>(rest.length + 1);
       concat.add(first);
-      concat.addAll(Arrays.asList(rest));
+      Collections.addAll(concat, rest);
       return concat;
     }
 
@@ -678,14 +678,14 @@ public abstract class Coregex implements Serializable {
       for (; quantifier < min && !match.isEmpty(); quantifier++) {
         java.util.Set<String> nextMatch = new HashSet<>(match.size());
         for (String tail : match) {
-          nextMatch.addAll(Arrays.asList(quantified.match(tail, ctx)));
+          Collections.addAll(nextMatch, quantified.match(tail, ctx));
         }
         match = nextMatch;
       }
       for (; (-1 == max || quantifier < max) && !match.isEmpty(); quantifier++) {
         java.util.Set<String> nextMatch = new HashSet<>(match.size());
         for (String tail : match) {
-          nextMatch.addAll(Arrays.asList(quantified.match(tail, ctx)));
+          Collections.addAll(nextMatch, quantified.match(tail, ctx));
         }
         if (!match.addAll(nextMatch)) {
           break;
@@ -897,9 +897,9 @@ public abstract class Coregex implements Serializable {
     @Override
     String[] match(String input, Context ctx) {
       Collection<String> match = new HashSet<>(rest.length + 1);
-      match.addAll(Arrays.asList(first.match(input, ctx)));
+      Collections.addAll(match, first.match(input, ctx));
       for (Coregex coregex : rest) {
-        match.addAll(Arrays.asList(coregex.match(input, ctx)));
+        Collections.addAll(match, coregex.match(input, ctx));
       }
       return match.toArray(new String[0]);
     }
@@ -939,7 +939,7 @@ public abstract class Coregex implements Serializable {
     public List<Coregex> union() {
       List<Coregex> union = new ArrayList<>(rest.length + 1);
       union.add(first);
-      union.addAll(Arrays.asList(rest));
+      Collections.addAll(union, rest);
       return union;
     }
 
