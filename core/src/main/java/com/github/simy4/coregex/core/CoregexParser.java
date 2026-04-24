@@ -266,12 +266,15 @@ public final class CoregexParser {
     ctx.match('Q');
     ctx.flags |= Pattern.LITERAL;
     StringBuilder literal = new StringBuilder();
-    do {
+    literal.append(ctx.span(ch -> '\\' != ch));
+    ctx.match('\\');
+    while ('E' != ctx.peek()) {
+      literal.append('\\');
       literal.append(ctx.span(ch -> '\\' != ch));
       ctx.match('\\');
-    } while ('E' != ctx.peek() && (literal.append('\\') != null));
-    ctx.flags &= ~Pattern.LITERAL;
+    }
     ctx.match('E');
+    ctx.flags &= ~Pattern.LITERAL;
     return literal.toString();
   }
 
