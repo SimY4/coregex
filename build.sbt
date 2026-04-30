@@ -33,8 +33,8 @@ lazy val scala3                 = "3.3.7"
 lazy val supportedScalaVersions = List(scala212, scala213, scala3)
 
 def javaLibSettings(release: Int) = Seq(
-  crossPaths       := false,
-  autoScalaLibrary := false,
+  crossPaths                                        := false,
+  autoScalaLibrary                                  := false,
   ThisBuild / javafmtFormatterCompatibleJavaVersion := 17,
   Compile / compile / javacOptions ++= Seq("-Xlint:all,-options", "-Werror", "--release", release.toString),
   Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing", "--release", release.toString, "-html5")

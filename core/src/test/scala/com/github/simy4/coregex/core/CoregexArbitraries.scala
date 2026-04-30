@@ -23,26 +23,15 @@ import java.util.regex.Pattern
 trait CoregexArbitraries {
   import scala.jdk.CollectionConverters._
 
+  private val flags =
+    Pattern.CANON_EQ | Pattern.CASE_INSENSITIVE | Pattern.COMMENTS | Pattern.DOTALL | Pattern.LITERAL | Pattern.MULTILINE | Pattern.UNICODE_CASE | Pattern.UNICODE_CHARACTER_CLASS | Pattern.UNIX_LINES
+
   type Flags <: Int
   implicit val arbitraryFlags: Arbitrary[Flags] = Arbitrary(genFlags)
   def genFlags: Gen[Flags]                      =
     for {
-      n     <- Gen.choose(0, 9)
-      flags <- Gen.listOfN(
-        n,
-        Gen.oneOf(
-          Pattern.CANON_EQ,
-          Pattern.CASE_INSENSITIVE,
-          Pattern.COMMENTS,
-          Pattern.DOTALL,
-          Pattern.LITERAL,
-          Pattern.MULTILINE,
-          Pattern.UNICODE_CASE,
-          Pattern.UNICODE_CHARACTER_CLASS,
-          Pattern.UNIX_LINES
-        )
-      )
-    } yield flags.foldLeft(0)(_ | _).asInstanceOf[Flags]
+      mask <- Gen.choose(0, flags)
+    } yield (0 to 31).foldLeft(0)((acc, i) => acc | (((mask >> i) & 1) << i)).asInstanceOf[Flags]
 
   implicit def arbitraryCoregex(implicit range: Arbitrary[QuantifyRange]): Arbitrary[Coregex] = Arbitrary(
     genCoregex(range.arbitrary)
