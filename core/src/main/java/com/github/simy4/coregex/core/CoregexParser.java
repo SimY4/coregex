@@ -236,7 +236,7 @@ public final class CoregexParser {
           case 'k':
             ctx.match('k');
             ctx.match('<');
-            String name = ctx.span(c -> '>' != c);
+            String name = ctx.span('>');
             ctx.match('>');
             elementaryRE = new Coregex.Ref(name);
             break;
@@ -266,11 +266,11 @@ public final class CoregexParser {
     ctx.match('Q');
     ctx.flags |= Pattern.LITERAL;
     StringBuilder literal = new StringBuilder();
-    literal.append(ctx.span(ch -> '\\' != ch));
+    literal.append(ctx.span('\\'));
     ctx.match('\\');
     while ('E' != ctx.peek()) {
       literal.append('\\');
-      literal.append(ctx.span(ch -> '\\' != ch));
+      literal.append(ctx.span('\\'));
       ctx.match('\\');
     }
     ctx.match('E');
@@ -406,7 +406,7 @@ public final class CoregexParser {
               group = new Coregex.Group(Coregex.Group.Type.NEGATIVE_LOOKBEHIND, RE(ctx));
               break;
             default:
-              String name = ctx.span(ch -> '>' != ch);
+              String name = ctx.span('>');
               ctx.match('>');
               group = new Coregex.Group(ctx.index(), name, RE(ctx));
               break;
@@ -529,7 +529,7 @@ public final class CoregexParser {
       case 'p':
         ctx.match('p');
         ctx.match('{');
-        String posix = ctx.span(pos -> '}' != pos);
+        String posix = ctx.span('}');
         switch (posix) {
           case "Lower":
           case "javaLowerCase":
@@ -667,14 +667,14 @@ public final class CoregexParser {
       tokens[tokens.length - 1] = SKIP;
     }
 
-    String span(IntPredicate charPredicate) {
+    String span(char until) {
       char ch;
-      if (EOF != (ch = peek()) && charPredicate.test(ch)) {
+      if (EOF != (ch = peek()) && until != ch) {
         StringBuilder span = new StringBuilder();
         do {
           match(ch);
           span.append(ch);
-        } while (EOF != (ch = peek()) && charPredicate.test(ch));
+        } while (EOF != (ch = peek()) && until != ch);
         return span.toString();
       } else {
         return "";
