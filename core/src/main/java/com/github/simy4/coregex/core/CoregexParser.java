@@ -679,17 +679,16 @@ public final class CoregexParser {
     }
 
     String span(char until) {
-      int start = cursor - tokensCursor, end = cursor - tokensCursor;
+      int start = cursor - tokensCursor;
       char ch = peek();
       while (until != ch) {
         if (EOF == ch) {
           throw error(String.valueOf(until));
         }
         match(ch);
-        end = cursor - tokensCursor;
         ch = peek();
       }
-      return regex.substring(start, end);
+      return regex.substring(start, cursor - tokensCursor);
     }
 
     private char token() {
