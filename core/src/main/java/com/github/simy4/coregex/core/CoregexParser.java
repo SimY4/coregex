@@ -235,7 +235,7 @@ public final class CoregexParser {
                     new Coregex.Union(Coregex.empty(), Set.single('\n')));
             break;
           case 'G':
-            throw ctx.unsupported("metacharacter \\G is not supported");
+            throw ctx.unsupported("metacharacter \\G");
           case 'k':
             ctx.match('\\');
             ctx.match('k');
@@ -348,9 +348,9 @@ public final class CoregexParser {
         break;
       case '\\':
         if ('Q' == ctx.peek(2)) {
-            for (char quoted : quoted(ctx).toCharArray()) {
-              set.single(quoted);
-            }
+          for (char quoted : quoted(ctx).toCharArray()) {
+            set.single(quoted);
+          }
         } else {
           set.union(metachar(ctx));
         }
