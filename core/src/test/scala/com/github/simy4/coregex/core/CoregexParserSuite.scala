@@ -123,6 +123,16 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
     }
   }
 
+  test("should produce a well-formatted error message for unsupported constructs") {
+    val err = intercept[UnsupportedOperationException](Coregex.from(Pattern.compile("abc \\G foo")))
+    assert(
+      clue(err.getMessage) ==
+        s"""Unable to parse regex:
+           |abc \\G foo
+           |     ╰─▪ metacharacter \\G is not supported""".stripMargin
+    )
+  }
+
   property("should fail to generate strings") {
     forAll(
       Gen.oneOf(

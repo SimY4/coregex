@@ -20,7 +20,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -58,7 +57,7 @@ public final class CoregexParser {
     Context ctx = new Context(regex, flags);
     Coregex coregex = RE(ctx);
     if (ctx.hasMoreElements()) {
-      throw ctx.error("<EOL>");
+      throw ctx.error("<EOF>");
     }
     return coregex;
   }
@@ -777,31 +776,23 @@ public final class CoregexParser {
     }
 
     IllegalArgumentException error(String expected) {
-      char[] cursor = new char[this.cursor];
-      Arrays.fill(cursor, ' ');
-      cursor[cursor.length - 1] = '^';
-      String actual = hasMoreElements() ? String.valueOf(regex.charAt(this.cursor)) : "<EOL>";
-      String message =
-          String.join(
-              System.lineSeparator(),
-              "Unable to parse regex:",
-              regex,
-              new String(cursor),
-              "Expected: " + expected + " Actual: " + actual);
+      StringBuilder reason = new StringBuilder(128);
+      for (int i = 1; i < this.cursor; i++) {
+        reason.append(' ');
+      }
+      String actual = hasMoreElements() ? String.valueOf(regex.charAt(this.cursor)) : "<EOF>";
+      reason.append("╰─▪ Expected: ").append(expected).append(". Actual: ").append(actual);
+      String message = String.join(System.lineSeparator(), "Unable to parse regex:", regex, reason);
       throw new IllegalArgumentException(message);
     }
 
     UnsupportedOperationException unsupported(String what) {
-      char[] cursor = new char[this.cursor];
-      Arrays.fill(cursor, ' ');
-      cursor[cursor.length - 1] = '^';
-      String message =
-          String.join(
-              System.lineSeparator(),
-              "Unable to parse regex:",
-              regex,
-              new String(cursor),
-              "Reason: " + what + " is not supported");
+      StringBuilder reason = new StringBuilder(128);
+      for (int i = 1; i < this.cursor; i++) {
+        reason.append(' ');
+      }
+      reason.append("╰─▪ ").append(what).append(" is not supported");
+      String message = String.join(System.lineSeparator(), "Unable to parse regex:", regex, reason);
       throw new UnsupportedOperationException(message);
     }
   }
