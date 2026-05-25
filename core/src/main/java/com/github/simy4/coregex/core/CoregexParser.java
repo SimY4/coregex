@@ -670,11 +670,11 @@ public final class CoregexParser {
       if (ch != peek()) {
         throw error(String.valueOf(ch));
       }
-      tokensCursor--;
-      for (int i = 0; i < tokens.length - 1; i++) {
+      for (int i = 0; i < tokensCursor; i++) {
         tokens[i] = tokens[i + 1];
       }
-      tokens[tokens.length - 1] = SKIP;
+      tokens[tokensCursor] = SKIP;
+      tokensCursor--;
     }
 
     String span(char until) {
