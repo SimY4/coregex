@@ -107,9 +107,9 @@ lazy val hedgehog = (project in file("hedgehog"))
     moduleName  := "coregex-hedgehog",
     description := "hedgehog bindings for coregex library.",
     libraryDependencies ++= Seq(
-      "qa.hedgehog" %% "hedgehog-core"   % "0.13.0" % Provided,
-      "qa.hedgehog" %% "hedgehog-runner" % "0.13.0" % Test,
-      "qa.hedgehog" %% "hedgehog-sbt"    % "0.13.0" % Test
+      "qa.hedgehog" %% "hedgehog-core"   % "0.13.1" % Provided,
+      "qa.hedgehog" %% "hedgehog-runner" % "0.13.1" % Test,
+      "qa.hedgehog" %% "hedgehog-sbt"    % "0.13.1" % Test
     ) ++ CrossVersion.partialVersion(scalaBinaryVersion.value).collect { case (2, 12) =>
       "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2"
     },
