@@ -296,7 +296,8 @@ public final class Set extends Coregex implements Serializable {
      * @return this builder instance
      */
     public Builder negate() {
-      chars.flip(0, chars.size());
+      chars.and(DOTALL.get().chars);
+      chars.flip(Character.MIN_VALUE, Character.MIN_SURROGATE);
       description.insert(0, '^');
       return this;
     }
