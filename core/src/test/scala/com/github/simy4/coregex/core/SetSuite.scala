@@ -134,7 +134,7 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
         .sample(seed)
         .orElse(-1)
 
-      (result ?= '\r') || (result ?= '\n')
+      (result ?= '\r') || (result ?= '\n') || (result ?= '\u0085') || (result ?= '\u2028') || (result ?= '\u2029');
     }
   }
 

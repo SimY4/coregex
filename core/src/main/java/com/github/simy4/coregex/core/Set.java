@@ -43,6 +43,9 @@ public final class Set extends Coregex implements Serializable {
             chars.set(Character.MIN_VALUE, Character.MIN_SURROGATE);
             chars.clear('\r');
             chars.clear('\n');
+            chars.clear('\u0085');
+            chars.clear('\u2028');
+            chars.clear('\u2029');
             return new Set(chars, ".");
           });
   static final Lazy<Set> UNIX_LINES =
