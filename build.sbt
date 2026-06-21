@@ -179,17 +179,17 @@ lazy val kotest = (project in file("kotest"))
     moduleName  := "coregex-kotest",
     description := "Kotest bindings for coregex library.",
     libraryDependencies ++= Seq(
-      "io.kotest"            % "kotest-property-jvm"  % "6.1.11"                         % Provided,
-      "io.kotest"            % "kotest-runner-junit6" % "6.1.11"                         % Test,
+      "io.kotest"            % "kotest-property-jvm"  % "6.2.1"                          % Provided,
+      "io.kotest"            % "kotest-runner-junit6" % "6.2.1"                          % Test,
       "com.github.sbt.junit" % "jupiter-interface"    % JupiterKeys.jupiterVersion.value % Test
     ),
     crossPaths       := false,
     autoScalaLibrary := false,
-    kotlinVersion    := "2.2.21",
+    kotlinVersion    := "2.3.10",
     kotlincOptions ++= Seq(
       "-progressive",
-      "-language-version=2.2",
-      "-api-version=2.2",
+      "-language-version=2.3",
+      "-api-version=2.3",
       "-Xexplicit-api=strict",
       "-Werror"
     ),
