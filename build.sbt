@@ -185,11 +185,11 @@ lazy val kotest = (project in file("kotest"))
     ),
     crossPaths       := false,
     autoScalaLibrary := false,
-    kotlinVersion    := "2.2.21",
+    kotlinVersion    := "2.3.10",
     kotlincOptions ++= Seq(
       "-progressive",
-      "-language-version=2.2",
-      "-api-version=2.2",
+      "-language-version=2.3",
+      "-api-version=2.3",
       "-Xexplicit-api=strict",
       "-Werror"
     ),
