@@ -247,9 +247,33 @@ lazy val zioTest = (project in file("zio-test"))
       "dev.zio" %% "zio-test"     % "2.1.26" % Provided,
       "dev.zio" %% "zio-test-sbt" % "2.1.26" % Test
     ),
-    crossScalaVersions := supportedScalaVersions
   )
   .settings(jacocoSettings)
+  .dependsOn(core)
+
+lazy val scalaprops = (project in file("scalaprops"))
+  .settings(
+    name               := "scalaprops",
+    moduleName         := "coregex-scalaprops",
+    description        := "scalaprops bindings for coregex library.",
+    libraryDependencies ++= Seq("com.github.scalaprops" %% "scalaprops" % scalapropsVersion.value % Provided) ++ CrossVersion
+      .partialVersion(scalaVersion.value)
+      .collect { case (2, 12) =>
+        "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2"
+      },
+    crossScalaVersions := supportedScalaVersions,
+    Compile / unmanagedSourceDirectories ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 13) | (3, _)) => Seq("scala-2.13+")
+      case Some((2, 12))          => Seq("scala-2.12")
+    }).map(baseDirectory.value / "src" / "main" / _),
+    Test / unmanagedSourceDirectories ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 13) | (3, _)) => Seq("scala-2.13+")
+      case Some((2, 12))          => Seq("scala-2.12")
+    }).map(baseDirectory.value / "src" / "test" / _),
+  )
+  .settings(jacocoSettings)
+  .settings(scalapropsSettings)
+  .settings(scalapropsVersion := "0.11.0")
   .dependsOn(core)
 
 addCommandAlias("build", ";javafmtCheckAll;scalafmtCheckAll;headerCheckAll;jacoco")

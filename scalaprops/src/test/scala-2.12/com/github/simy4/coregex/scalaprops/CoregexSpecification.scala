@@ -14,36 +14,33 @@
  * limitations under the License.
  */
 
-package com.github.simy4.coregex.scalacheck
+package com.github.simy4.coregex.scalaprops
 
-import org.scalacheck.{ Gen, Properties }
-import org.scalacheck.Prop._
+import scalaprops.{ Gen, Property, Scalaprops }
+import scalaprops.Property.forAllG
 
 import java.net.InetAddress
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 import java.util.regex.Pattern
 
-object CoregexSpecification extends Properties("Coregex") {
-  property("should generate matching UUID string") = forAll(
+object CoregexSpecification extends Scalaprops {
+  val `should generate matching UUID string`: Property = forAllG(
     CoregexGen.fromPattern(Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}"))
-  ) { uuid =>
-    uuid =? UUID.fromString(uuid).toString
+  ) { (uuid: String) =>
+    uuid == UUID.fromString(uuid).toString
   }
 
-  property("should generate matching IPv4 string") = forAll(
+  val `should generate matching IPv4 string`: Property = forAllG(
     CoregexGen.fromPattern(Pattern.compile("((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])"))
   ) { ipv4 =>
-    all(
-      ipv4
-        .split('.')
-        .zip(InetAddress.getByName(ipv4).getHostAddress.split('.'))
-        .map { case (expected, actual) => expected.toInt =? actual.toInt }
-        .toIndexedSeq: _*
-    )
+    ipv4
+      .split('.')
+      .zip(InetAddress.getByName(ipv4).getHostAddress.split('.'))
+      .forall { case (expected, actual) => expected.toInt == actual.toInt }
   }
 
-  property("should generate matching ISO-8601 date string") = forAll(
+  val `should generate matching ISO-8601 date string`: Property = forAllG(
     CoregexGen.fromPattern(
       Pattern.compile(
         "[12]\\d{3}-(?:0[1-9]|1[012])-(?:0[1-9]|1\\d|2[0-8])T(?:1\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d{2}[1-9])?Z"
@@ -51,13 +48,13 @@ object CoregexSpecification extends Properties("Coregex") {
     )
   ) { iso8601Date =>
     val formatter = DateTimeFormatter.ISO_INSTANT
-    iso8601Date =? formatter.format(formatter.parse(iso8601Date))
+    iso8601Date == formatter.format(formatter.parse(iso8601Date))
   }
 
-  property("should generate unique strings") =
-    forAll(Gen.listOf(CoregexGen.fromPattern(Pattern.compile("[a-zA-Z0-9]{32,}")))) { strings =>
+  val `should generate unique strings`: Property =
+    forAllG(Gen.listOf(CoregexGen.fromPattern(Pattern.compile("[a-zA-Z0-9]{32,}")))) { strings =>
       strings.forall { s =>
         s.length >= 32 && s.forall(_.isLetterOrDigit)
-      } && (strings.size =? strings.toSet.size)
+      } && (strings.size == strings.toSet.size)
     }
 }
