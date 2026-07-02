@@ -1,31 +1,27 @@
-import org.jetbrains.sbt.kotlin.Keys._
+import org.jetbrains.sbt.kotlin.Keys.*
 
-inThisBuild(
-  Seq(
-    organization     := "com.github.simy4.coregex",
-    organizationName := "Alex Simkin",
-    homepage         := Some(url("https://github.com/SimY4/coregex")),
-    licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.txt")),
-    scmInfo := Some(
-      ScmInfo(
-        url("https://github.com/SimY4/coregex"),
-        "scm:git@github.com:SimY4/coregex.git"
-      )
-    ),
-    developers := List(
-      Developer(
-        id = "SimY4",
-        name = "Alex Simkin",
-        email = null,
-        url = url("https://github.com/SimY4")
-      )
-    ),
-    releaseNotesURL := Some(url("https://github.com/SimY4/coregex/releases")),
-    versionScheme   := Some("early-semver"),
-    startYear       := Some(2021),
-    headerEndYear   := Some(2026)
+organization     := "com.github.simy4.coregex"
+organizationName := "Alex Simkin"
+homepage         := Some(url("https://github.com/SimY4/coregex"))
+licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.txt"))
+scmInfo := Some(
+  ScmInfo(
+    url("https://github.com/SimY4/coregex"),
+    "scm:git@github.com:SimY4/coregex.git"
   )
 )
+developers := List(
+  Developer(
+    id = "SimY4",
+    name = "Alex Simkin",
+    email = null,
+    url = url("https://github.com/SimY4")
+  )
+)
+releaseNotesURL := Some(url("https://github.com/SimY4/coregex/releases"))
+versionScheme   := Some("early-semver")
+startYear       := Some(2021)
+headerEndYear   := Some(2026)
 
 lazy val scala212               = "2.12.21"
 lazy val scala213               = "2.13.18"
@@ -33,9 +29,9 @@ lazy val scala3                 = "3.3.8"
 lazy val supportedScalaVersions = List(scala212, scala213, scala3)
 
 def javaLibSettings(release: Int) = Seq(
-  crossPaths                                        := false,
-  autoScalaLibrary                                  := false,
-  ThisBuild / javafmtFormatterCompatibleJavaVersion := 17,
+  crossPaths                            := false,
+  autoScalaLibrary                      := false,
+  javafmtFormatterCompatibleJavaVersion := 17,
   Compile / compile / javacOptions ++= Seq("-Xlint:all,-options", "-Werror", "--release", release.toString),
   Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing", "--release", release.toString, "-html5")
 )
@@ -49,11 +45,11 @@ lazy val jacocoSettings = Test / jacocoReportSettings := JacocoReportSettings(
   "utf-8"
 )
 
-ThisBuild / scalaVersion := scala213
+scalaVersion := scala213
 
-releaseTagComment        := s"[sbt release] - releasing ${(ThisBuild / version).value}"
-releaseCommitMessage     := s"[sbt release] - setting version to ${(ThisBuild / version).value}"
-releaseNextCommitMessage := s"[skip ci][sbt release] - new version commit: ${(ThisBuild / version).value}"
+releaseTagComment        := s"[sbt release] - releasing ${version.value}"
+releaseCommitMessage     := s"[sbt release] - setting version to ${version.value}"
+releaseNextCommitMessage := s"[skip ci][sbt release] - new version commit: ${version.value}"
 
 lazy val root = (project in file("."))
   .settings(
@@ -92,8 +88,8 @@ lazy val functionaljavaQuickcheck = (project in file("functionaljava-quickcheck"
     moduleName  := "coregex-functionaljava-quickcheck",
     description := "Functionaljava quickcheck bindings for coregex library.",
     libraryDependencies ++= Seq(
-      "org.functionaljava" % "functionaljava-quickcheck" % "5.0"    % Provided exclude ("junit", "junit"),
-      "com.github.sbt"     % "junit-interface"           % "0.13.3" % Test
+      ("org.functionaljava" % "functionaljava-quickcheck" % "5.0"    % Provided).exclude("junit", "junit"),
+      "com.github.sbt"      % "junit-interface"           % "0.13.3" % Test
     ),
     testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v")
   )
@@ -113,7 +109,7 @@ lazy val hedgehog = (project in file("hedgehog"))
     ) ++ CrossVersion.partialVersion(scalaBinaryVersion.value).collect { case (2, 12) =>
       "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2"
     },
-    Compile / unmanagedSourceDirectories ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+    Compile / unmanagedSourceDirectories ++= ((CrossVersion.partialVersion(scalaVersion.value): @unchecked) match {
       case Some((2, 13) | (3, _)) => Seq("scala-2.13+")
       case Some((2, 12))          => Seq("scala-2.12")
     }).map(baseDirectory.value / "src" / "main" / _),
@@ -161,7 +157,7 @@ lazy val junitQuickcheck = (project in file("junit-quickcheck"))
     moduleName  := "coregex-junit-quickcheck",
     description := "JUnit Quickcheck bindings for coregex library.",
     libraryDependencies ++= Seq(
-      "com.pholser"    % "junit-quickcheck-core"       % "1.0"    % Provided exclude ("junit", "junit"),
+      ("com.pholser"   % "junit-quickcheck-core"       % "1.0"    % Provided).exclude("junit", "junit"),
       "com.pholser"    % "junit-quickcheck-generators" % "1.0"    % Test,
       "org.slf4j"      % "slf4j-simple"                % "1.7.25" % Test,
       "com.github.sbt" % "junit-interface"             % "0.13.3" % Test
@@ -210,11 +206,11 @@ lazy val scalacheck = (project in file("scalacheck"))
         "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2"
       },
     crossScalaVersions := supportedScalaVersions,
-    Compile / unmanagedSourceDirectories ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+    Compile / unmanagedSourceDirectories ++= ((CrossVersion.partialVersion(scalaVersion.value): @unchecked) match {
       case Some((2, 13) | (3, _)) => Seq("scala-2.13+")
       case Some((2, 12))          => Seq("scala-2.12")
     }).map(baseDirectory.value / "src" / "main" / _),
-    Test / unmanagedSourceDirectories ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+    Test / unmanagedSourceDirectories ++= ((CrossVersion.partialVersion(scalaVersion.value): @unchecked) match {
       case Some((2, 13) | (3, _)) => Seq("scala-2.13+")
       case Some((2, 12))          => Seq("scala-2.12")
     }).map(baseDirectory.value / "src" / "test" / _),
@@ -246,30 +242,32 @@ lazy val zioTest = (project in file("zio-test"))
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio-test"     % "2.1.26" % Provided,
       "dev.zio" %% "zio-test-sbt" % "2.1.26" % Test
-    ),
+    )
   )
   .settings(jacocoSettings)
   .dependsOn(core)
 
 lazy val scalaprops = (project in file("scalaprops"))
   .settings(
-    name               := "scalaprops",
-    moduleName         := "coregex-scalaprops",
-    description        := "scalaprops bindings for coregex library.",
-    libraryDependencies ++= Seq("com.github.scalaprops" %% "scalaprops" % scalapropsVersion.value % Provided) ++ CrossVersion
+    name        := "scalaprops",
+    moduleName  := "coregex-scalaprops",
+    description := "scalaprops bindings for coregex library.",
+    libraryDependencies ++= Seq(
+      "com.github.scalaprops" %% "scalaprops" % scalapropsVersion.value % Provided
+    ) ++ CrossVersion
       .partialVersion(scalaVersion.value)
       .collect { case (2, 12) =>
         "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2"
       },
     crossScalaVersions := supportedScalaVersions,
-    Compile / unmanagedSourceDirectories ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+    Compile / unmanagedSourceDirectories ++= ((CrossVersion.partialVersion(scalaVersion.value): @unchecked) match {
       case Some((2, 13) | (3, _)) => Seq("scala-2.13+")
       case Some((2, 12))          => Seq("scala-2.12")
     }).map(baseDirectory.value / "src" / "main" / _),
-    Test / unmanagedSourceDirectories ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+    Test / unmanagedSourceDirectories ++= ((CrossVersion.partialVersion(scalaVersion.value): @unchecked) match {
       case Some((2, 13) | (3, _)) => Seq("scala-2.13+")
       case Some((2, 12))          => Seq("scala-2.12")
-    }).map(baseDirectory.value / "src" / "test" / _),
+    }).map(baseDirectory.value / "src" / "test" / _)
   )
   .settings(jacocoSettings)
   .settings(scalapropsSettings)
