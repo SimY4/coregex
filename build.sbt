@@ -128,7 +128,7 @@ lazy val jetCheck = (project in file("jetCheck"))
     moduleName  := "coregex-jetCheck",
     description := "jetCheck bindings for coregex library.",
     libraryDependencies ++= Seq(
-      "org.jetbrains"        % "jetCheck"          % "0.2.3"                          % Provided,
+      "org.jetbrains"        % "jetCheck"          % "0.3.0"                          % Provided,
       "com.github.sbt.junit" % "jupiter-interface" % JupiterKeys.jupiterVersion.value % Test
     ),
     testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v")
@@ -246,17 +246,19 @@ lazy val zioTest = (project in file("zio-test"))
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio-test"     % "2.1.26" % Provided,
       "dev.zio" %% "zio-test-sbt" % "2.1.26" % Test
-    ),
+    )
   )
   .settings(jacocoSettings)
   .dependsOn(core)
 
 lazy val scalaprops = (project in file("scalaprops"))
   .settings(
-    name               := "scalaprops",
-    moduleName         := "coregex-scalaprops",
-    description        := "scalaprops bindings for coregex library.",
-    libraryDependencies ++= Seq("com.github.scalaprops" %% "scalaprops" % scalapropsVersion.value % Provided) ++ CrossVersion
+    name        := "scalaprops",
+    moduleName  := "coregex-scalaprops",
+    description := "scalaprops bindings for coregex library.",
+    libraryDependencies ++= Seq(
+      "com.github.scalaprops" %% "scalaprops" % scalapropsVersion.value % Provided
+    ) ++ CrossVersion
       .partialVersion(scalaVersion.value)
       .collect { case (2, 12) =>
         "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2"
@@ -269,7 +271,7 @@ lazy val scalaprops = (project in file("scalaprops"))
     Test / unmanagedSourceDirectories ++= (CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, 13) | (3, _)) => Seq("scala-2.13+")
       case Some((2, 12))          => Seq("scala-2.12")
-    }).map(baseDirectory.value / "src" / "test" / _),
+    }).map(baseDirectory.value / "src" / "test" / _)
   )
   .settings(jacocoSettings)
   .settings(scalapropsSettings)
