@@ -39,6 +39,11 @@ def javaLibSettings(release: Int) = Seq(
   Compile / compile / javacOptions ++= Seq("-Xlint:all,-options", "-Werror", "--release", release.toString),
   Compile / doc / javacOptions ++= Seq("-Xdoclint:all,-missing", "--release", release.toString, "-html5")
 )
+def crossScalaSources(scalaVersion: String, baseDirectory: File, conf: String) =
+  ((CrossVersion.partialVersion(scalaVersion): @unchecked) match {
+    case Some((2, 13) | (3, _)) => Seq("scala-2.13+")
+    case Some((2, 12))          => Seq("scala-2.12")
+  }).map(baseDirectory / "src" / conf / _)
 lazy val jacocoSettings = Test / jacocoReportSettings := JacocoReportSettings(
   "Jacoco Coverage Report",
   None,
@@ -81,10 +86,10 @@ lazy val core = (project in file("core"))
     libraryDependencies ++= Seq(
       "org.scalameta" %% "munit"            % "1.3.4" % Test,
       "org.scalameta" %% "munit-scalacheck" % "1.3.0" % Test
-    )
+    ),
+    javaLibSettings(8),
+    jacocoSettings
   )
-  .settings(javaLibSettings(8))
-  .settings(jacocoSettings)
 
 lazy val functionaljavaQuickcheck = (project in file("functionaljava-quickcheck"))
   .settings(
@@ -95,10 +100,10 @@ lazy val functionaljavaQuickcheck = (project in file("functionaljava-quickcheck"
       "org.functionaljava" % "functionaljava-quickcheck" % "5.0"    % Provided exclude ("junit", "junit"),
       "com.github.sbt"     % "junit-interface"           % "0.13.3" % Test
     ),
-    testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v")
+    testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
+    javaLibSettings(8),
+    jacocoSettings
   )
-  .settings(javaLibSettings(8))
-  .settings(jacocoSettings)
   .dependsOn(core)
 
 lazy val hedgehog = (project in file("hedgehog"))
@@ -113,13 +118,10 @@ lazy val hedgehog = (project in file("hedgehog"))
     ) ++ CrossVersion.partialVersion(scalaBinaryVersion.value).collect { case (2, 12) =>
       "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2"
     },
-    Compile / unmanagedSourceDirectories ++= (CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, 13) | (3, _)) => Seq("scala-2.13+")
-      case Some((2, 12))          => Seq("scala-2.12")
-    }).map(baseDirectory.value / "src" / "main" / _),
-    crossScalaVersions := supportedScalaVersions
+    Compile / unmanagedSourceDirectories ++= crossScalaSources(scalaVersion.value, baseDirectory.value, "main"),
+    crossScalaVersions := supportedScalaVersions,
+    jacocoSettings
   )
-  .settings(jacocoSettings)
   .dependsOn(core)
 
 lazy val jetCheck = (project in file("jetCheck"))
@@ -131,10 +133,10 @@ lazy val jetCheck = (project in file("jetCheck"))
       "org.jetbrains"        % "jetCheck"          % "0.3.0"                          % Provided,
       "com.github.sbt.junit" % "jupiter-interface" % JupiterKeys.jupiterVersion.value % Test
     ),
-    testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v")
+    testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v"),
+    javaLibSettings(8),
+    jacocoSettings
   )
-  .settings(javaLibSettings(8))
-  .settings(jacocoSettings)
   .dependsOn(core)
 
 lazy val jqwik = (project in file("jqwik"))
@@ -149,10 +151,10 @@ lazy val jqwik = (project in file("jqwik"))
       "com.github.sbt.junit" % "jupiter-interface" % JupiterKeys.jupiterVersion.value % Test
     ),
     Test / parallelExecution := false,
-    testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v")
+    testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v"),
+    javaLibSettings(8),
+    jacocoSettings
   )
-  .settings(javaLibSettings(8))
-  .settings(jacocoSettings)
   .dependsOn(core)
 
 lazy val junitQuickcheck = (project in file("junit-quickcheck"))
@@ -166,10 +168,10 @@ lazy val junitQuickcheck = (project in file("junit-quickcheck"))
       "org.slf4j"      % "slf4j-simple"                % "1.7.25" % Test,
       "com.github.sbt" % "junit-interface"             % "0.13.3" % Test
     ),
-    testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v")
+    testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
+    javaLibSettings(8),
+    jacocoSettings
   )
-  .settings(javaLibSettings(8))
-  .settings(jacocoSettings)
   .dependsOn(core)
 
 lazy val kotest = (project in file("kotest"))
@@ -194,9 +196,9 @@ lazy val kotest = (project in file("kotest"))
       "-Werror"
     ),
     kotlincJvmTarget := "11",
-    testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v")
+    testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v"),
+    jacocoSettings
   )
-  .settings(jacocoSettings)
   .dependsOn(core)
 
 lazy val scalacheck = (project in file("scalacheck"))
@@ -210,17 +212,11 @@ lazy val scalacheck = (project in file("scalacheck"))
         "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2"
       },
     crossScalaVersions := supportedScalaVersions,
-    Compile / unmanagedSourceDirectories ++= (CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, 13) | (3, _)) => Seq("scala-2.13+")
-      case Some((2, 12))          => Seq("scala-2.12")
-    }).map(baseDirectory.value / "src" / "main" / _),
-    Test / unmanagedSourceDirectories ++= (CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, 13) | (3, _)) => Seq("scala-2.13+")
-      case Some((2, 12))          => Seq("scala-2.12")
-    }).map(baseDirectory.value / "src" / "test" / _),
-    Test / tpolecatExcludeOptions += org.typelevel.scalacoptions.ScalacOptions.warnNonUnitStatement
+    Compile / unmanagedSourceDirectories ++= crossScalaSources(scalaVersion.value, baseDirectory.value, "main"),
+    Test / unmanagedSourceDirectories ++= crossScalaSources(scalaVersion.value, baseDirectory.value, "test"),
+    Test / tpolecatExcludeOptions += org.typelevel.scalacoptions.ScalacOptions.warnNonUnitStatement,
+    jacocoSettings
   )
-  .settings(jacocoSettings)
   .dependsOn(core)
 
 lazy val vavrTest = (project in file("vavr-test"))
@@ -232,10 +228,10 @@ lazy val vavrTest = (project in file("vavr-test"))
       "io.vavr"              % "vavr-test"         % "0.10.7"                         % Provided,
       "com.github.sbt.junit" % "jupiter-interface" % JupiterKeys.jupiterVersion.value % Test
     ),
-    testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v")
+    testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v"),
+    javaLibSettings(8),
+    jacocoSettings
   )
-  .settings(javaLibSettings(8))
-  .settings(jacocoSettings)
   .dependsOn(core)
 
 lazy val zioTest = (project in file("zio-test"))
@@ -246,9 +242,9 @@ lazy val zioTest = (project in file("zio-test"))
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio-test"     % "2.1.26" % Provided,
       "dev.zio" %% "zio-test-sbt" % "2.1.26" % Test
-    )
+    ),
+    jacocoSettings
   )
-  .settings(jacocoSettings)
   .dependsOn(core)
 
 lazy val scalaprops = (project in file("scalaprops"))
@@ -264,18 +260,12 @@ lazy val scalaprops = (project in file("scalaprops"))
         "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2"
       },
     crossScalaVersions := supportedScalaVersions,
-    Compile / unmanagedSourceDirectories ++= (CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, 13) | (3, _)) => Seq("scala-2.13+")
-      case Some((2, 12))          => Seq("scala-2.12")
-    }).map(baseDirectory.value / "src" / "main" / _),
-    Test / unmanagedSourceDirectories ++= (CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, 13) | (3, _)) => Seq("scala-2.13+")
-      case Some((2, 12))          => Seq("scala-2.12")
-    }).map(baseDirectory.value / "src" / "test" / _)
+    Compile / unmanagedSourceDirectories ++= crossScalaSources(scalaVersion.value, baseDirectory.value, "main"),
+    Test / unmanagedSourceDirectories ++= crossScalaSources(scalaVersion.value, baseDirectory.value, "test"),
+    jacocoSettings,
+    scalapropsSettings,
+    scalapropsVersion := "0.11.0"
   )
-  .settings(jacocoSettings)
-  .settings(scalapropsSettings)
-  .settings(scalapropsVersion := "0.11.0")
   .dependsOn(core)
 
 addCommandAlias("build", ";javafmtCheckAll;scalafmtCheckAll;headerCheckAll;jacoco")
