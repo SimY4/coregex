@@ -20,7 +20,7 @@ jobs:
           java-version: 17
           cache: sbt
       - name: Install sbt
-        uses: sbt/setup-sbt@v1
+        uses: sbt/setup-sbt@v1.5.5
       - name: 🚀 Run CI release
         run: sbt ci-release
         env:
