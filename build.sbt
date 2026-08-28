@@ -206,7 +206,7 @@ lazy val scalacheck = (project in file("scalacheck"))
     name        := "scalacheck",
     moduleName  := "coregex-scalacheck",
     description := "ScalaCheck bindings for coregex library.",
-    libraryDependencies ++= Seq("org.scalacheck" %% "scalacheck" % "1.19.0" % Provided) ++ CrossVersion
+    libraryDependencies ++= Seq("org.scalacheck" %% "scalacheck" % "1.20.0" % Provided) ++ CrossVersion
       .partialVersion(scalaVersion.value)
       .collect { case (2, 12) =>
         "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2"
