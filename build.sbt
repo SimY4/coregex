@@ -85,7 +85,7 @@ lazy val core = (project in file("core"))
     description := "A handy utility for generating strings that match given regular expression criteria.",
     libraryDependencies ++= Seq(
       "org.scalameta" %% "munit"            % "1.3.6" % Test,
-      "org.scalameta" %% "munit-scalacheck" % "1.3.0" % Test
+      "org.scalameta" %% "munit-scalacheck" % "1.3.1" % Test
     ),
     javaLibSettings(8),
     jacocoSettings
