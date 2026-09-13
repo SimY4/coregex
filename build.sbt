@@ -225,7 +225,7 @@ lazy val vavrTest = (project in file("vavr-test"))
     moduleName  := "coregex-vavr-test",
     description := "VAVR Test bindings for coregex library.",
     libraryDependencies ++= Seq(
-      "io.vavr"              % "vavr-test"         % "0.10.7"                         % Provided,
+      "io.vavr"              % "vavr-test"         % "1.0.0"                          % Provided,
       "com.github.sbt.junit" % "jupiter-interface" % JupiterKeys.jupiterVersion.value % Test
     ),
     testOptions += Tests.Argument(jupiterTestFramework, "-q", "-v"),
