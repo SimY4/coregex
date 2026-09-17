@@ -25,7 +25,7 @@ headerEndYear   := Some(2026)
 
 lazy val scala212               = "2.12.21"
 lazy val scala213               = "2.13.18"
-lazy val scala3                 = "3.3.8"
+lazy val scala3                 = "3.9.0"
 lazy val supportedScalaVersions = List(scala212, scala213, scala3)
 
 scalaVersion := scala213
@@ -198,6 +198,11 @@ lazy val scalacheck = (project in file("scalacheck"))
         "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2"
       },
     crossScalaVersions := supportedScalaVersions,
+    scalacOptions ++=
+      (CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((3, _)) => Seq("-source:3.0-migration")
+        case _            => Seq("-Xsource:3")
+      }),
     Compile / unmanagedSourceDirectories ++= crossScalaSources(scalaVersion.value, baseDirectory.value, "main"),
     Test / unmanagedSourceDirectories ++= crossScalaSources(scalaVersion.value, baseDirectory.value, "test"),
     Test / tpolecatExcludeOptions += org.typelevel.scalacoptions.ScalacOptions.warnNonUnitStatement,
