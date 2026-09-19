@@ -250,7 +250,7 @@ lazy val scalaprops = (project in file("scalaprops"))
     Test / unmanagedSourceDirectories ++= crossScalaSources(scalaVersion.value, baseDirectory.value, "test"),
     jacocoSettings,
     scalapropsSettings,
-    scalapropsVersion := "0.11.0"
+    scalapropsVersion := "0.11.1"
   )
   .dependsOn(core)
 
