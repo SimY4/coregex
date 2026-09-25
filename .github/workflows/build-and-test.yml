@@ -32,7 +32,7 @@ jobs:
           distribution: temurin
           cache: sbt
       - name: Install sbt
-        uses: sbt/setup-sbt@v1.5.9
+        uses: sbt/setup-sbt@v1.5.10
       - name: ⚙️ Run build
         run: sbt "++${{ matrix.scala }}; build"
       - name: Publish Test Report
