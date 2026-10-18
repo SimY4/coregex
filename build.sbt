@@ -24,7 +24,7 @@ startYear       := Some(2021)
 headerEndYear   := Some(2026)
 
 lazy val scala212               = "2.12.21"
-lazy val scala213               = "2.13.18"
+lazy val scala213               = "3.10.0"
 lazy val scala3                 = "3.3.8"
 lazy val supportedScalaVersions = List(scala212, scala213, scala3)
 
