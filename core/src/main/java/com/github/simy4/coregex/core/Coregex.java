@@ -82,13 +82,7 @@ public abstract class Coregex implements Serializable {
    * @see #any()
    */
   public static Coregex any(int flags) {
-    if (0 != (flags & Pattern.DOTALL)) {
-      return Set.DOTALL.get();
-    } else if (0 != (flags & Pattern.UNIX_LINES)) {
-      return Set.UNIX_LINES.get();
-    } else {
-      return Set.ALL.get();
-    }
+    return Set.any(flags);
   }
 
   /**

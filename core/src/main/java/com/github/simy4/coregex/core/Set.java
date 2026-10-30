@@ -64,6 +64,16 @@ public final class Set extends Coregex implements Serializable {
             return new Set(chars, ".");
           });
 
+  public static Set any(int flags) {
+    if (0 != (flags & Pattern.DOTALL)) {
+      return DOTALL.get();
+    } else if (0 != (flags & Pattern.UNIX_LINES)) {
+      return UNIX_LINES.get();
+    } else {
+      return ALL.get();
+    }
+  }
+
   /**
    * Creates an instance of {@link Set} builder.
    *
@@ -299,8 +309,8 @@ public final class Set extends Coregex implements Serializable {
      * @return this builder instance
      */
     public Builder negate() {
-      chars.and(DOTALL.get().chars);
       chars.flip(Character.MIN_VALUE, Character.MIN_SURROGATE);
+      chars.and(any(flags).chars);
       description.insert(0, '^');
       return this;
     }

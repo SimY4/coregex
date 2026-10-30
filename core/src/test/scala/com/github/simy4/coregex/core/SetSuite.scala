@@ -93,7 +93,7 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
         .shrink()
         .iterator()
         .asScala
-        .map(shrink => Set.builder().union(set).union(shrink).build().equals(set) :| s"shrunk $shrink in $set")
+        .map(shrink => (Set.builder().union(set).union(shrink).build() ?= set) :| s"shrunk $shrink in $set")
         .foldLeft(passed)(_ && _)
     }
   }
@@ -127,7 +127,7 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
   property("all generates all except line breaks") {
     forAll { (seed: Long) =>
       val result = Set
-        .builder()
+        .builder(Pattern.DOTALL)
         .union(Set.ALL.get())
         .negate()
         .build()
@@ -141,7 +141,7 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
   property("unix lines generates all except CR line break") {
     forAll { (seed: Long) =>
       val result = Set
-        .builder()
+        .builder(Pattern.DOTALL)
         .union(Set.UNIX_LINES.get())
         .negate()
         .build()
