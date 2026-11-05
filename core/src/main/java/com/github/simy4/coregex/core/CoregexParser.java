@@ -542,11 +542,15 @@ public final class CoregexParser {
         ctx.match('S');
         metachar.set('\r', '\n', '\t', '\f', ' ').negate();
         break;
+      // handling predefined predicates from java.util.regex.CharPredicates
       case 'p':
         ctx.match('p');
         ctx.match('{');
         String posix = ctx.span('}');
         switch (posix) {
+          case "all":
+            metachar.range(Character.MIN_VALUE, Character.MIN_SURROGATE);
+            break;
           case "Lower":
           case "javaLowerCase":
             metachar.range('a', 'z');
