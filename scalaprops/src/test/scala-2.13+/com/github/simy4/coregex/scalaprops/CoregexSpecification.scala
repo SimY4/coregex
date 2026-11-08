@@ -16,22 +16,22 @@
 
 package com.github.simy4.coregex.scalaprops
 
-import scalaprops.{ Property, Scalaprops }
-import scalaprops.Property.{ prop, property }
+import scalaprops.Property.{ prop, property => forAll }
+import scalaprops.Scalaprops
 
 import java.net.InetAddress
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 object CoregexSpecification extends Scalaprops with CoregexInstances {
-  val `should generate matching UUID string`: Property =
-    property[StringMatching["[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}"]] {
+  property("should generate matching UUID string") =
+    forAll[StringMatching["[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}"]] {
       (uuid: String) =>
         prop(uuid == UUID.fromString(uuid).toString)
     }
 
-  val `should generate matching IPv4 string`: Property =
-    property[StringMatching["((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])"]] { ipv4 =>
+  property("should generate matching IPv4 string") =
+    forAll[StringMatching["((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])"]] { ipv4 =>
       ipv4
         .split('.')
         .zip(InetAddress.getByName(ipv4).getHostAddress.split('.'))
@@ -39,14 +39,14 @@ object CoregexSpecification extends Scalaprops with CoregexInstances {
         .foldLeft(prop(true))(_.and(_))
     }
 
-  val `should generate matching ISO-8601 date string`: Property = property[StringMatching[
+  property("should generate matching ISO-8601 date string") = forAll[StringMatching[
     "[12]\\d{3}-(?:0[1-9]|1[012])-(?:0[1-9]|1\\d|2[0-8])T(?:1\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d{2}[1-9])?Z"
   ]] { iso8601Date =>
     val formatter = DateTimeFormatter.ISO_INSTANT
     prop(iso8601Date == formatter.format(formatter.parse(iso8601Date)))
   }
 
-  val `should generate unique strings`: Property = property[List[StringMatching["[a-zA-Z0-9]{32,}"]]] { strings =>
+  property("should generate unique strings") = forAll[List[StringMatching["[a-zA-Z0-9]{32,}"]]] { strings =>
     prop(strings.forall { s =>
       s.length >= 32 && s.forall(_.isLetterOrDigit)
     }).and(prop(strings.size == strings.toSet.size))
