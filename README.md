@@ -17,6 +17,7 @@ A handy utility for generating strings that match given regular expression crite
 - [JUnit Quickcheck](https://pholser.github.io/junit-quickcheck)
 - [Kotest](https://kotest.io/)
 - [scalacheck](https://scalacheck.org/)
+- [scalaprops](https://github.com/scalaprops/scalaprops)
 - [vavr-test](https://github.com/vavr-io/vavr-test)
 - [zio-test](https://zio.dev/reference/test/)
 
@@ -166,6 +167,23 @@ Use the provided `CoregexInstances` trait to constrain string arbitraries:
 ```scala
 object MySpecification extends Properties("MySpecification") with CoregexInstances {
   property("my property") = forAll { (str: StringMatching["[a-zA-Z]{3}"]) =>
+    3 == str.length  
+  }
+}
+```
+
+## scalaprops
+Include the following dependency into your project:
+
+```scala
+libraryDependencies ++= Seq("com.github.simy4.coregex" %% "coregex-scalaprops" % Test)
+```
+
+Use the provided `CoregexInstances` trait to constrain string arbitraries:
+
+```scala
+object MySpecification extends Scalaprops with CoregexInstances {
+  property("my property") = forAll[StringMatching["[a-zA-Z]{3}"]] =>
     3 == str.length  
   }
 }

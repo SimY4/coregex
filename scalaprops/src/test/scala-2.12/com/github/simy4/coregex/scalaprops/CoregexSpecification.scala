@@ -16,7 +16,7 @@
 
 package com.github.simy4.coregex.scalaprops
 
-import scalaprops.{ Gen, Property, Scalaprops }
+import scalaprops.{ Gen, Scalaprops }
 import scalaprops.Property.forAllG
 
 import java.net.InetAddress
@@ -25,13 +25,13 @@ import java.util.UUID
 import java.util.regex.Pattern
 
 object CoregexSpecification extends Scalaprops {
-  val `should generate matching UUID string`: Property = forAllG(
+  property("should generate matching UUID string") = forAllG(
     CoregexGen.fromPattern(Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}"))
   ) { (uuid: String) =>
     uuid == UUID.fromString(uuid).toString
   }
 
-  val `should generate matching IPv4 string`: Property = forAllG(
+  property("should generate matching IPv4 string") = forAllG(
     CoregexGen.fromPattern(Pattern.compile("((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])"))
   ) { ipv4 =>
     ipv4
@@ -40,7 +40,7 @@ object CoregexSpecification extends Scalaprops {
       .forall { case (expected, actual) => expected.toInt == actual.toInt }
   }
 
-  val `should generate matching ISO-8601 date string`: Property = forAllG(
+  property("should generate matching ISO-8601 date string") = forAllG(
     CoregexGen.fromPattern(
       Pattern.compile(
         "[12]\\d{3}-(?:0[1-9]|1[012])-(?:0[1-9]|1\\d|2[0-8])T(?:1\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d{2}[1-9])?Z"
@@ -51,7 +51,7 @@ object CoregexSpecification extends Scalaprops {
     iso8601Date == formatter.format(formatter.parse(iso8601Date))
   }
 
-  val `should generate unique strings`: Property =
+  property("should generate unique strings") =
     forAllG(Gen.listOf(CoregexGen.fromPattern(Pattern.compile("[a-zA-Z0-9]{32,}")))) { strings =>
       strings.forall { s =>
         s.length >= 32 && s.forall(_.isLetterOrDigit)
