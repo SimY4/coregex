@@ -330,11 +330,8 @@ public final class CoregexParser {
   /*
    * <pre>{@code
    * set-item ::= set | range | quoted | metachar | single
-   * range    ::= single, '-', single
-   * single   ::= ? a character ?
    * }</pre>
    */
-  @SuppressWarnings("fallthrough")
   private void setItem(Set.Builder set, Context ctx) {
     char ch = ctx.peek();
     switch (ch) {
@@ -351,30 +348,46 @@ public final class CoregexParser {
             set.single(quoted);
           }
         } else {
-          set.union(metachar(ctx));
+          Set metachar = metachar(ctx);
+          if (metachar.single()) {
+            rangeOrSingle(set, (char) metachar.sample(0).getAsInt(), ctx);
+          } else {
+            set.union(metachar);
+          }
         }
         break;
       default:
         ctx.match(ch);
-        if ('-' == ctx.peek()) {
-          ctx.match('-');
-          char end = ctx.peek();
-          switch (end) {
-            case ']':
-              set.set(ch, '-');
-              break;
-            case '\\':
-              ctx.match('\\');
-              end = ctx.peek();
-            // fall through
-            default:
-              ctx.match(end);
-              set.range(ch, end);
-              break;
-          }
-        } else {
-          set.single(ch);
-        }
+        rangeOrSingle(set, ch, ctx);
+    }
+  }
+
+  /*
+   * <pre>{@code
+   * range  ::= single, '-', single
+   * single ::= ? a character ? | '\\', ? non-alphanumeric character ?
+   * }</pre>
+   */
+  @SuppressWarnings("fallthrough")
+  private void rangeOrSingle(Set.Builder set, char start, Context ctx) {
+    if ('-' == ctx.peek()) {
+      ctx.match('-');
+      char end = ctx.peek();
+      switch (end) {
+        case ']':
+          set.set(start, '-');
+          break;
+        case '\\':
+          ctx.match('\\');
+          end = ctx.peek();
+        // fall through
+        default:
+          ctx.match(end);
+          set.range(start, end);
+          break;
+      }
+    } else {
+      set.single(start);
     }
   }
 
@@ -504,7 +517,7 @@ public final class CoregexParser {
   private Set metachar(Context ctx) {
     ctx.match('\\');
     char ch = ctx.peek();
-    Set.Builder metachar = Set.builder();
+    Set.Builder metachar = Set.builder(ctx.flags);
     switch (ch) {
       case 't':
         ctx.match('t');

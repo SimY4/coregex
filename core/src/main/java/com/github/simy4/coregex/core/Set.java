@@ -147,6 +147,10 @@ public final class Set extends Coregex implements Serializable {
         : new String[0];
   }
 
+  boolean single() {
+    return 1 == chars.cardinality();
+  }
+
   /** {@inheritDoc} */
   @Override
   public Stream<Set> shrink() {
@@ -197,7 +201,7 @@ public final class Set extends Coregex implements Serializable {
 
   @Override
   public String toString() {
-    return 1 == chars.cardinality() ? description : "[" + description + ']';
+    return single() ? description : "[" + description + ']';
   }
 
   /**
