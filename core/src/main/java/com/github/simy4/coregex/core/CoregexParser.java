@@ -350,7 +350,7 @@ public final class CoregexParser {
         } else {
           Set metachar = metachar(ctx);
           if (metachar.single()) {
-            rangeOrSingle(set, (char) metachar.sample(0).getAsInt(), ctx);
+            rangeOrSingle(set, (char) metachar.sample(0L).orElse(0), ctx);
           } else {
             set.union(metachar);
           }
