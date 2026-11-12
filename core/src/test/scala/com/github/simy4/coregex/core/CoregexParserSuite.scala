@@ -125,6 +125,16 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
     }
   }
 
+  test("boundary matchers should be represented by their labels") {
+    val regex = "^\\Aa\\b\\B\\Z\\z$"
+    assertEquals(Coregex.from(Pattern.compile(regex)).toString, regex)
+    assertEquals(Coregex.from(Pattern.compile("^")), Coregex.lineStart())
+    assertEquals(Coregex.from(Pattern.compile("$")), Coregex.lineEnd())
+    assertEquals(Coregex.from(Pattern.compile("\\A")), Coregex.inputStart())
+    assertEquals(Coregex.from(Pattern.compile("\\z")), Coregex.inputEnd())
+    assertEquals(Coregex.from(Pattern.compile("\\Z")), Coregex.inputEndBeforeTerminator())
+  }
+
   List(
     ".",
     "(?s).",

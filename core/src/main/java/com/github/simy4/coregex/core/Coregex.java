@@ -44,6 +44,7 @@ import java.util.stream.Stream;
  *
  * @see Coregex.Concat
  * @see Coregex.Group
+ * @see Coregex.Labeled
  * @see Coregex.Quantified
  * @see Coregex.Ref
  * @see Set
@@ -110,17 +111,60 @@ public abstract class Coregex implements Serializable {
     return new Concat(first, rest);
   }
 
+  /**
+   * @return predefined constructor for {@code ^} boundary matcher.
+   */
+  public static Labeled lineStart() {
+    return Labeled.LINE_START;
+  }
+
+  /**
+   * @return predefined constructor for {@code $} boundary matcher.
+   */
+  public static Labeled lineEnd() {
+    return Labeled.LINE_END;
+  }
+
+  /**
+   * @return predefined constructor for {@code \A} boundary matcher.
+   */
+  public static Labeled inputStart() {
+    return Labeled.INPUT_START;
+  }
+
+  /**
+   * @return predefined constructor for {@code \z} boundary matcher.
+   */
+  public static Labeled inputEnd() {
+    return Labeled.INPUT_END;
+  }
+
+  /**
+   * @return predefined constructor for {@code \Z} boundary matcher.
+   * @since 1.5.0
+   */
+  public static Labeled inputEndBeforeTerminator() {
+    return Labeled.INPUT_END_BEFORE_TERMINATOR;
+  }
+
+  /**
+   * @param flags regex flags
+   * @param positive {@code true} for {@code \b}, {@code false} for {@code \B}
+   * @return predefined constructor for word boundary matcher.
+   */
   public static Coregex wordBoundary(int flags, boolean positive) {
     Set word =
         Set.builder(flags).range('a', 'z').range('A', 'Z').range('0', '9').single('_').build();
     Set notWord = Set.builder(flags).union(word).negate().build();
     Group.Type lookbehind = positive ? Group.Type.LOOKBEHIND : Group.Type.NEGATIVE_LOOKBEHIND;
     Group.Type lookahead = positive ? Group.Type.LOOKAHEAD : Group.Type.NEGATIVE_LOOKAHEAD;
-    return new Union(
-        new Concat(new Group(lookbehind, empty()), new Group(lookahead, word)),
-        new Concat(new Group(lookbehind, word), new Group(lookahead, empty())),
-        new Concat(new Group(lookbehind, word), new Group(lookahead, notWord)),
-        new Concat(new Group(lookbehind, notWord), new Group(lookahead, word)));
+    return new Labeled(
+        positive ? "\\b" : "\\B",
+        new Union(
+            new Concat(new Group(lookbehind, empty()), new Group(lookahead, word)),
+            new Concat(new Group(lookbehind, word), new Group(lookahead, empty())),
+            new Concat(new Group(lookbehind, word), new Group(lookahead, notWord)),
+            new Concat(new Group(lookbehind, notWord), new Group(lookahead, word))));
   }
 
   Coregex() {}
@@ -135,6 +179,95 @@ public abstract class Coregex implements Serializable {
    * @return smaller coregexes or empty if this coregex is already the smallest possible.
    */
   public abstract Stream<? extends Coregex> shrink();
+
+  /*
+   * Thompson's construction: wires this regex between `from` and `to` such that paths from `from`
+   * to `to` spell exactly the language of this regex. Boundary anchors are stripped beforehand,
+   * see #compileAtBoundary(NFA, int, int).
+   */
+  abstract void compile(NFA nfa, int from, int to);
+
+  /*
+   * Same as #compile(NFA, int, int), for a regex spanning the whole input. Under Matcher#matches()
+   * semantics, anchors at the input boundary are no-ops (regardless of MULTILINE), so they are
+   * stripped from the very start and end of the regex, looking through alternatives and transparent
+   * groups. Anchors anywhere else are rejected by Labeled#compile.
+   *
+   * A single regex is at both boundaries at once.
+   */
+  void compileAtBoundary(NFA nfa, int from, int to) {
+    if (isNoOpAt(true) || isNoOpAt(false)) {
+      nfa.epsilon(from, to);
+    } else {
+      compile(nfa, from, to);
+    }
+  }
+
+  /*
+   * Whether this regex can be dropped at the start (or end) of the input, see
+   * #compileAtBoundary(NFA, int, int).
+   */
+  boolean isNoOpAt(boolean start) {
+    return false;
+  }
+
+  /**
+   * Tests if every string fully matched by this regex is also fully matched by the other one, i.e.
+   * if the other regex fully covers this one.
+   *
+   * <p>Unlike generation, language operations are exact. Hence, both regexes may only use regular
+   * constructs. Anchors ({@code ^}, {@code \A} and {@code $}, {@code \z}, {@code \Z}) are only
+   * supported as leading and trailing elements of the regex, of its top level alternatives or of
+   * groups that are the only remaining element, i.e. {@code ^a$|^(?:^b$)$}, where, under {@link
+   * java.util.regex.Matcher#matches()} semantics, they are no-ops regardless of {@link
+   * Pattern#MULTILINE}. Anchors nested anywhere else, i.e. {@code (^a)b}, are not supported.
+   *
+   * <p>Only characters of the Basic Multilingual Plane are considered: strings containing
+   * surrogates, i.e. supplementary code points, are out of scope. Case-insensitive matching folds
+   * case the same way {@link Pattern#CASE_INSENSITIVE} and {@link Pattern#UNICODE_CASE} do, except
+   * for the few Unicode characters with more than one case variant.
+   *
+   * @param other regex to compare with
+   * @return {@code true} if language of this regex is a subset of the other's language
+   * @throws UnsupportedOperationException if either regex uses constructs that are not regular:
+   *     back references, atomic groups, possessive quantifiers, lookarounds or word boundaries.
+   * @see #difference(Coregex)
+   * @since 1.5.0
+   */
+  public final boolean isSubsetOf(Coregex other) {
+    return !difference(other).isPresent();
+  }
+
+  /**
+   * Finds the shortest string fully matched by this regex but not by the other one. Useful as a
+   * counterexample when {@link #isSubsetOf(Coregex)} fails.
+   *
+   * <p>See {@link #isSubsetOf(Coregex)} for supported constructs.
+   *
+   * @param other regex to subtract
+   * @return the shortest string matched by this but not the other regex or nothing if there is none
+   * @throws UnsupportedOperationException if either regex uses constructs that are not regular.
+   * @see #isSubsetOf(Coregex)
+   * @since 1.5.0
+   */
+  public final Optional<String> difference(Coregex other) {
+    return NFA.of(this).difference(NFA.of(requireNonNull(other, "other")));
+  }
+
+  /**
+   * Finds the shortest string fully matched by both this and the other regex.
+   *
+   * <p>See {@link #isSubsetOf(Coregex)} for supported constructs.
+   *
+   * @param other regex to intersect with
+   * @return the shortest string matched by both regexes or nothing if they are disjoint
+   * @throws UnsupportedOperationException if either regex uses constructs that are not regular.
+   * @see #isSubsetOf(Coregex)
+   * @since 1.5.0
+   */
+  public final Optional<String> intersection(Coregex other) {
+    return NFA.of(this).intersection(NFA.of(requireNonNull(other, "other")));
+  }
 
   /**
    * Samples one random string that matches this regex.
@@ -239,6 +372,29 @@ public abstract class Coregex implements Serializable {
                                 rest[i] = chunk;
                                 return new Concat(first, rest);
                               })));
+    }
+
+    @Override
+    void compile(NFA nfa, int from, int to) {
+      nfa.chain(concat(), from, to);
+    }
+
+    @Override
+    void compileAtBoundary(NFA nfa, int from, int to) {
+      List<Coregex> concat = concat();
+      int first = 0;
+      int last = concat.size();
+      while (first < last && concat.get(first).isNoOpAt(true)) {
+        first++;
+      }
+      while (first < last && concat.get(last - 1).isNoOpAt(false)) {
+        last--;
+      }
+      if (1 == last - first) {
+        concat.get(first).compileAtBoundary(nfa, from, to);
+      } else {
+        nfa.chain(concat.subList(first, last), from, to);
+      }
     }
 
     /**
@@ -503,6 +659,32 @@ public abstract class Coregex implements Serializable {
       }
     }
 
+    @Override
+    void compile(NFA nfa, int from, int to) {
+      switch (type) {
+        case CAPTURING:
+        case NAMED:
+        case NON_CAPTURING:
+          group.compile(nfa, from, to);
+          break;
+        default:
+          throw new UnsupportedOperationException("group is not supported: " + this);
+      }
+    }
+
+    @Override
+    void compileAtBoundary(NFA nfa, int from, int to) {
+      switch (type) {
+        case CAPTURING:
+        case NAMED:
+        case NON_CAPTURING:
+          group.compileAtBoundary(nfa, from, to);
+          break;
+        default:
+          compile(nfa, from, to);
+      }
+    }
+
     /**
      * @return group type
      */
@@ -591,6 +773,111 @@ public abstract class Coregex implements Serializable {
       LOOKBEHIND,
       NEGATIVE_LOOKAHEAD,
       NEGATIVE_LOOKBEHIND
+    }
+  }
+
+  /**
+   * Regex with a label, i.e. a boundary matcher such as {@code ^} or {@code $}. Behaves exactly as
+   * the labeled regex, but is represented by its label.
+   *
+   * @since 1.5.0
+   */
+  public static final class Labeled extends Coregex {
+    private static final long serialVersionUID = 1L;
+
+    static final Labeled LINE_START = new Labeled("^", new Group(Group.Type.LOOKBEHIND, empty()));
+    static final Labeled LINE_END = new Labeled("$", new Group(Group.Type.LOOKAHEAD, empty()));
+    static final Labeled INPUT_START =
+        new Labeled("\\A", new Group(Group.Type.LOOKBEHIND, empty()));
+    static final Labeled INPUT_END = new Labeled("\\z", new Group(Group.Type.LOOKAHEAD, empty()));
+    static final Labeled INPUT_END_BEFORE_TERMINATOR =
+        new Labeled("\\Z", new Group(Group.Type.LOOKAHEAD, new Union(empty(), Set.single('\n'))));
+
+    private final String label;
+    private final Coregex labeled;
+
+    Labeled(String label, Coregex labeled) {
+      this.label = requireNonNull(label, "label");
+      this.labeled = requireNonNull(labeled, "labeled");
+    }
+
+    @Override
+    void generate(Context ctx) throws RewindException {
+      labeled.generate(ctx);
+    }
+
+    @Override
+    String[] match(String input, Context ctx) {
+      return labeled.match(input, ctx);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Stream<Labeled> shrink() {
+      return Stream.empty();
+    }
+
+    @Override
+    void compile(NFA nfa, int from, int to) {
+      // all labeled regexes are boundary matchers, which are lookarounds: boundary anchors are
+      // stripped by #compileAtBoundary(NFA, int, int), anything else is not regular
+      throw new UnsupportedOperationException(label + " is not supported");
+    }
+
+    /*
+     * Boundary anchors: `^` or `\A` at the start, `$`, `\z` or `\Z` at the end. Under
+     * Matcher#matches() semantics, `\Z` at the very end is a no-op as nothing may follow it.
+     */
+    @Override
+    boolean isNoOpAt(boolean start) {
+      // labels are canonical: Labeled can only be created by the parser and predefined constructors
+      switch (label) {
+        case "^":
+        case "\\A":
+          return start;
+        case "$":
+        case "\\z":
+        case "\\Z":
+          return !start;
+        default:
+          return false;
+      }
+    }
+
+    /**
+     * @return label
+     */
+    public String label() {
+      return label;
+    }
+
+    /**
+     * @return labeled regex
+     */
+    public Coregex labeled() {
+      return labeled;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      Labeled that = (Labeled) o;
+      return label.equals(that.label) && labeled.equals(that.labeled);
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * label.hashCode() + labeled.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      return label;
     }
   }
 
@@ -698,6 +985,42 @@ public abstract class Coregex implements Serializable {
               .filter(i -> -1 == max || min + i < max)
               .mapToObj(i -> new Quantified(quantified, min, min + i, type)),
           quantified.shrink().map(quantified -> new Quantified(quantified, min, max, type)));
+    }
+
+    @Override
+    void compile(NFA nfa, int from, int to) {
+      if (Type.POSSESSIVE == type) {
+        throw new UnsupportedOperationException("possessive quantifier is not supported: " + this);
+      }
+      int current = from;
+      for (int i = 0; i < min; i++) {
+        int next = nfa.state();
+        quantified.compile(nfa, current, next);
+        current = next;
+      }
+      if (-1 == max) {
+        // fresh loop state, as `from` may be shared and must not get incoming transitions
+        int loop = nfa.state();
+        nfa.epsilon(current, loop);
+        quantified.compile(nfa, loop, loop);
+        nfa.epsilon(loop, to);
+      } else {
+        for (int i = min; i < max; i++) {
+          int next = nfa.state();
+          nfa.epsilon(current, to);
+          quantified.compile(nfa, current, next);
+          current = next;
+        }
+        nfa.epsilon(current, to);
+      }
+    }
+
+    /*
+     * Empty regex, i.e. inline flags like `(?m)` that may precede anchors.
+     */
+    @Override
+    boolean isNoOpAt(boolean start) {
+      return EMPTY.equals(this);
     }
 
     /**
@@ -838,6 +1161,11 @@ public abstract class Coregex implements Serializable {
       return Stream.empty();
     }
 
+    @Override
+    void compile(NFA nfa, int from, int to) {
+      throw new UnsupportedOperationException("back reference is not supported: " + this);
+    }
+
     public Serializable ref() {
       return ref;
     }
@@ -925,6 +1253,22 @@ public abstract class Coregex implements Serializable {
                                     rest[i] = chunk;
                                     return new Union(first, rest);
                                   }))));
+    }
+
+    @Override
+    void compile(NFA nfa, int from, int to) {
+      first.compile(nfa, from, to);
+      for (Coregex coregex : rest) {
+        coregex.compile(nfa, from, to);
+      }
+    }
+
+    @Override
+    void compileAtBoundary(NFA nfa, int from, int to) {
+      first.compileAtBoundary(nfa, from, to);
+      for (Coregex coregex : rest) {
+        coregex.compileAtBoundary(nfa, from, to);
+      }
     }
 
     /**
