@@ -31,7 +31,9 @@ object QuantifyRange {
         Gen.const(-1),
         Gen.choose(min, min + add)
       )
-      tpe <- Gen.oneOf(Coregex.Quantified.Type.values.toIndexedSeq)
+      // possessive generates the same as greedy, but is not regular, so generated strings could not be
+      // verified with NFA
+      tpe <- Gen.oneOf(Coregex.Quantified.Type.GREEDY, Coregex.Quantified.Type.RELUCTANT)
     } yield QuantifyRange(min, max, tpe)
   }
 

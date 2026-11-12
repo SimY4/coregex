@@ -36,7 +36,7 @@ public final class Set extends Coregex implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
-  static final Set EMPTY = new Set(new BitSet(0), "");
+  static final Set EMPTY = new Set(new BitSet(0), "", false);
 
   /*
    * All chars except surrogates, which only exist in pairs: supplementary code points are out of
@@ -50,16 +50,16 @@ public final class Set extends Coregex implements Serializable {
     BitSet dotAll = new BitSet(Character.MAX_VALUE + 1);
     dotAll.set(Character.MIN_VALUE, Character.MAX_VALUE + 1);
     dotAll.clear(Character.MIN_SURROGATE, Character.MAX_SURROGATE + 1);
-    DOTALL = new Set(dotAll, ".");
+    DOTALL = new Set(dotAll, ".", false);
     BitSet unixLines = (BitSet) dotAll.clone();
     unixLines.clear('\n');
-    UNIX_LINES = new Set(unixLines, ".");
+    UNIX_LINES = new Set(unixLines, ".", false);
     BitSet all = (BitSet) unixLines.clone();
     all.clear('\r');
     all.clear('\u0085');
     all.clear('\u2028');
     all.clear('\u2029');
-    ALL = new Set(all, ".");
+    ALL = new Set(all, ".", false);
   }
 
   public static Set any(int flags) {
@@ -125,9 +125,17 @@ public final class Set extends Coregex implements Serializable {
   private final BitSet chars;
   private final String description;
 
-  private Set(BitSet chars, String description) {
+  /*
+   * Whether chars are only an approximation of the actual char class, i.e. ASCII-only \w for
+   * UNICODE_CHARACTER_CLASS. Good enough for generation, as all generated chars still match, but not
+   * for exact language operations.
+   */
+  private final boolean approximated;
+
+  private Set(BitSet chars, String description, boolean approximated) {
     this.chars = chars;
     this.description = description;
+    this.approximated = approximated;
   }
 
   @Override
@@ -136,13 +144,6 @@ public final class Set extends Coregex implements Serializable {
     if (0 <= sample) {
       ctx.append((char) sample);
     }
-  }
-
-  @Override
-  String[] match(String input, Context ctx) {
-    return !input.isEmpty() && chars.get(input.charAt(0))
-        ? new String[] {input.substring(1)}
-        : new String[0];
   }
 
   boolean single() {
@@ -168,7 +169,18 @@ public final class Set extends Coregex implements Serializable {
     return builder.build();
   }
 
-  /**
+  @Override
+  void compile(NFA nfa, int from, int to) {
+    if (approximated) {
+      throw new UnsupportedOperationException(
+          "char class with UNICODE_CHARACTER_CLASS is not supported: " + this);
+    }
+    if (!chars.isEmpty()) {
+      nfa.edge(from, chars, to);
+    }
+  }
+
+  /*
    * @return sampled char or -1 if this set is empty.
    */
   int sample(long seed) {
@@ -217,6 +229,7 @@ public final class Set extends Coregex implements Serializable {
     private final int flags;
     private final BitSet chars;
     private final StringBuilder description = new StringBuilder();
+    private boolean approximated;
 
     private Builder(int flags, int size) {
       this.flags = flags;
@@ -267,6 +280,7 @@ public final class Set extends Coregex implements Serializable {
      */
     public Builder union(Set set) {
       chars.or(requireNonNull(set, "set").chars);
+      approximated |= set.approximated;
       description.append(set);
       return this;
     }
@@ -279,6 +293,7 @@ public final class Set extends Coregex implements Serializable {
      */
     public Builder intersect(Set set) {
       chars.and(requireNonNull(set, "set").chars);
+      approximated |= set.approximated;
       description.append("&&").append(set);
       return this;
     }
@@ -293,6 +308,14 @@ public final class Set extends Coregex implements Serializable {
       chars.set(ch);
       foldCase(ch);
       description.append(ch);
+      return this;
+    }
+
+    /*
+     * Marks this set as only an approximation of the actual char class, see Set#approximated.
+     */
+    Builder approximated() {
+      approximated = true;
       return this;
     }
 
@@ -341,7 +364,7 @@ public final class Set extends Coregex implements Serializable {
      * @return compiled set
      */
     public Set build() {
-      return new Set(chars, description.toString());
+      return new Set(chars, description.toString(), approximated);
     }
   }
 }

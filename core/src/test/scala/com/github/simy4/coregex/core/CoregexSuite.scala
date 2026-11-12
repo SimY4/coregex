@@ -44,7 +44,7 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
   }
 
   test("empty should match empty") {
-    assert(Coregex.empty().matches("", null))
+    assert(NFA.of(Coregex.empty()).matches(""))
   }
 
   property("literal don't shrink") {
@@ -55,7 +55,7 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
 
   property("literal should match self") {
     forAll { (literal: String, flags: Int) =>
-      Coregex.literal(literal, flags).matches(literal, null) :| s"$literal match self"
+      NFA.of(Coregex.literal(literal, flags)).matches(literal) :| s"$literal match self"
     }
   }
 
@@ -89,7 +89,7 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
     forAll { (head: Simple, tail: Seq[Simple], seed: Long) =>
       val concat    = new Concat(head.value, tail.map(_.value): _*)
       val generated = concat.generate(seed)
-      concat.matches(generated, null) :| s"$generated in $concat"
+      NFA.of(concat).matches(generated) :| s"$generated in $concat"
     }
   }
   // endregion
@@ -134,7 +134,7 @@ class CoregexSuite extends ScalaCheckSuite with CoregexArbitraries {
     forAll { (head: Simple, tail: Seq[Simple], seed: Long) =>
       val union     = new Union(head.value, tail.map(_.value): _*)
       val generated = union.generate(seed)
-      union.matches(generated, null) :| s"$generated in ($union)"
+      NFA.of(union).matches(generated) :| s"$generated in ($union)"
     }
   }
 

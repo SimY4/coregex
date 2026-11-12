@@ -184,11 +184,11 @@ public final class CoregexParser {
         break;
       case '^':
         ctx.match('^');
-        elementaryRE = new Coregex.Group(Coregex.Group.Type.LOOKBEHIND, Coregex.empty());
+        elementaryRE = Coregex.lineStart();
         break;
       case '$':
         ctx.match('$');
-        elementaryRE = new Coregex.Group(Coregex.Group.Type.LOOKAHEAD, Coregex.empty());
+        elementaryRE = Coregex.lineEnd();
         break;
       case '\\':
         switch (ctx.peek(2)) {
@@ -198,7 +198,7 @@ public final class CoregexParser {
           case 'A':
             ctx.match('\\');
             ctx.match('A');
-            elementaryRE = new Coregex.Group(Coregex.Group.Type.LOOKBEHIND, Coregex.empty());
+            elementaryRE = Coregex.inputStart();
             break;
           case 'b':
             ctx.match('\\');
@@ -223,15 +223,12 @@ public final class CoregexParser {
           case 'z':
             ctx.match('\\');
             ctx.match('z');
-            elementaryRE = new Coregex.Group(Coregex.Group.Type.LOOKAHEAD, Coregex.empty());
+            elementaryRE = Coregex.inputEnd();
             break;
           case 'Z':
             ctx.match('\\');
             ctx.match('Z');
-            elementaryRE =
-                new Coregex.Group(
-                    Coregex.Group.Type.LOOKAHEAD,
-                    new Coregex.Union(Coregex.empty(), Set.single('\n')));
+            elementaryRE = Coregex.inputEndBeforeTerminator();
             break;
           case 'G':
             throw ctx.unsupported("metacharacter \\G");
@@ -519,6 +516,8 @@ public final class CoregexParser {
     ctx.match('\\');
     char ch = ctx.peek();
     Set.Builder metachar = Set.builder(ctx.flags);
+    // char classes that are ASCII-only here, but Unicode with UNICODE_CHARACTER_CLASS
+    boolean asciiOnly = 0 <= "dDwWsS".indexOf(ch);
     switch (ch) {
       case 't':
         ctx.match('t');
@@ -600,6 +599,7 @@ public final class CoregexParser {
         ctx.match('p');
         ctx.match('{');
         String posix = ctx.span('}');
+        asciiOnly = !"all".equals(posix) && !"ASCII".equals(posix) && !posix.startsWith("java");
         switch (posix) {
           case "all":
             metachar.matching(any -> true, "\\p{all}");
@@ -664,6 +664,9 @@ public final class CoregexParser {
         ctx.match(ch);
         metachar.single(ch);
         break;
+    }
+    if (asciiOnly && 0 != (ctx.flags & Pattern.UNICODE_CHARACTER_CLASS)) {
+      metachar.approximated();
     }
     return metachar.build();
   }
