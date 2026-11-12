@@ -31,17 +31,27 @@ var pattern = Pattern.compile("[a-zA-Z]{3}");
 var coregex = Coregex.from(pattern);
 ```
 
-Having an instance of coregex, you can ask it to generate a string matching original regular expression. At any given time
-this should be true:
+Having an instance of coregex, you can ask it to generate a string matching original regular expression:
 
 ```java
 var seed = ThreadLocalRandom.current().nextLong();
 
-assert pattern.matcher(coregex.generate(seed)).matches();
+assert pattern.matcher(coregex.generate(seed)).matches(); // at any time this should be true
 ```
 
 Given the library is primarily intended to be used in property based testing, it comes with a set of integrations for popular
 property based testing frameworks.
+
+**New in 1.5**: Coregex can answer whether one regex fully covers another. Three new methods compare the sets of strings that two regexes fully match:
+
+```java
+var sub = Coregex.from(Pattern.compile("#[0-9a-f]{6}"));
+var sup = Coregex.from(Pattern.compile("#[0-9a-fA-F]{3,6}"));
+
+sub.isSubsetOf(sup);    // true: every string matched by sub is matched by sup
+sup.difference(sub);    // Optional[#000]: the shortest string matched by sup but not sub
+sub.intersection(sup);  // Optional[#000000]: the shortest string matched by both
+```
 
 ## Functionaljava Quickcheck
 Include the following dependency into your project:
