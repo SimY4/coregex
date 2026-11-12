@@ -73,6 +73,7 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
       Pattern.compile("^(a+)+$"),
       Pattern.compile("^([a-zA-Z]+)*$"),
       Pattern.compile("[\\.-z] [\\w-] [\\w.-]"),
+      Pattern.compile("(?U)\\w+ [\\d\\s]+ \\p{Alpha}"),
       Pattern.compile("^(a|aa)+$"),
       Pattern.compile("^(a|a?)+$"),
       Pattern.compile("^(?:||)$"),
@@ -121,6 +122,60 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
         clue(expected).matcher(clue(generated)).matches(),
         s"${expected.pattern()} should match generated: $generated"
       )
+    }
+  }
+
+  List(
+    ".",
+    "(?s).",
+    "(?d).",
+    "[^a]",
+    "[^\\n]",
+    "\\d",
+    "\\D",
+    "\\w",
+    "\\W",
+    "\\s",
+    "\\S",
+    "\\h",
+    "\\H",
+    "\\v",
+    "\\V",
+    "\\t",
+    "\\f",
+    "\\a",
+    "\\e",
+    "\\cA",
+    "\\p{all}",
+    "\\p{Lower}",
+    "\\p{Upper}",
+    "\\p{ASCII}",
+    "\\p{Digit}",
+    "\\p{XDigit}",
+    "\\p{Alnum}",
+    "\\p{Alpha}",
+    "\\p{Punct}",
+    "\\p{Graph}",
+    "\\p{Print}",
+    "\\p{Blank}",
+    "\\p{Space}",
+    "\\p{javaWhitespace}",
+    "\\p{javaLowerCase}",
+    "\\p{javaUpperCase}",
+    "(?i)[a-z]",
+    "(?i)\u00E9",
+    "(?iu)\u00E9",
+    "(?iU)\u00E9",
+    "[\\w&&[^\\d]]"
+  ).foreach { regex =>
+    test(s"$regex should match the same chars as java.util.regex") {
+      val pattern = Pattern.compile(regex)
+      val coregex = Coregex.from(pattern)
+      val wrong   = (Character.MIN_VALUE to Character.MAX_VALUE)
+        .filterNot(Character.isSurrogate)
+        .map(_.toString)
+        .filter(ch => coregex.matches(ch, null) != pattern.matcher(ch).matches())
+      assert(wrong.isEmpty, s"${wrong.take(5).map(ch => f"\\u${ch.charAt(0).toInt}%04X").mkString(", ")} ...")
     }
   }
 

@@ -20,7 +20,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.io.Serializable;
 import java.util.BitSet;
-import java.util.OptionalInt;
+import java.util.function.IntPredicate;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -36,41 +36,39 @@ public final class Set extends Coregex implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
-  static final Lazy<Set> ALL =
-      new Lazy<>(
-          () -> {
-            BitSet chars = new BitSet(Character.MIN_SURROGATE);
-            chars.set(Character.MIN_VALUE, Character.MIN_SURROGATE);
-            chars.clear('\r');
-            chars.clear('\n');
-            chars.clear('\u0085');
-            chars.clear('\u2028');
-            chars.clear('\u2029');
-            return new Set(chars, ".");
-          });
-  static final Lazy<Set> UNIX_LINES =
-      new Lazy<>(
-          () -> {
-            BitSet chars = new BitSet(Character.MIN_SURROGATE);
-            chars.set(Character.MIN_VALUE, Character.MIN_SURROGATE);
-            chars.clear('\n');
-            return new Set(chars, ".");
-          });
-  static final Lazy<Set> DOTALL =
-      new Lazy<>(
-          () -> {
-            BitSet chars = new BitSet(Character.MIN_SURROGATE);
-            chars.set(Character.MIN_VALUE, Character.MIN_SURROGATE);
-            return new Set(chars, ".");
-          });
+  static final Set EMPTY = new Set(new BitSet(0), "");
+
+  /*
+   * All chars except surrogates, which only exist in pairs: supplementary code points are out of
+   * scope. Every set, including negated ones, is a subset of this one.
+   */
+  static final Set DOTALL;
+  static final Set UNIX_LINES;
+  static final Set ALL;
+
+  static {
+    BitSet dotAll = new BitSet(Character.MAX_VALUE + 1);
+    dotAll.set(Character.MIN_VALUE, Character.MAX_VALUE + 1);
+    dotAll.clear(Character.MIN_SURROGATE, Character.MAX_SURROGATE + 1);
+    DOTALL = new Set(dotAll, ".");
+    BitSet unixLines = (BitSet) dotAll.clone();
+    unixLines.clear('\n');
+    UNIX_LINES = new Set(unixLines, ".");
+    BitSet all = (BitSet) unixLines.clone();
+    all.clear('\r');
+    all.clear('\u0085');
+    all.clear('\u2028');
+    all.clear('\u2029');
+    ALL = new Set(all, ".");
+  }
 
   public static Set any(int flags) {
     if (0 != (flags & Pattern.DOTALL)) {
-      return DOTALL.get();
+      return DOTALL;
     } else if (0 != (flags & Pattern.UNIX_LINES)) {
-      return UNIX_LINES.get();
+      return UNIX_LINES;
     } else {
-      return ALL.get();
+      return ALL;
     }
   }
 
@@ -134,9 +132,9 @@ public final class Set extends Coregex implements Serializable {
 
   @Override
   void generate(Context ctx) {
-    OptionalInt sample = sample(ctx.rng.nextLong());
-    if (sample.isPresent()) {
-      ctx.append((char) sample.getAsInt());
+    int sample = sample(ctx.rng.nextLong());
+    if (0 <= sample) {
+      ctx.append((char) sample);
     }
   }
 
@@ -170,16 +168,19 @@ public final class Set extends Coregex implements Serializable {
     return builder.build();
   }
 
-  OptionalInt sample(long seed) {
+  /**
+   * @return sampled char or -1 if this set is empty.
+   */
+  int sample(long seed) {
     if (chars.isEmpty()) {
-      return OptionalInt.empty();
+      return -1;
     }
     long skip = Math.abs(seed % chars.cardinality());
     int sample = chars.nextSetBit(0);
     while (skip-- > 0) {
       sample = chars.nextSetBit(sample + 1);
     }
-    return OptionalInt.of(sample);
+    return sample;
   }
 
   @Override
@@ -235,13 +236,8 @@ public final class Set extends Coregex implements Serializable {
       }
       chars.set(start, end + 1);
       if (0 != (flags & Pattern.CASE_INSENSITIVE)) {
-        for (char ch = start; ch <= end; ch++) {
-          if (Character.isLowerCase(ch)) {
-            chars.set(Character.toUpperCase(ch));
-          }
-          if (Character.isUpperCase(ch)) {
-            chars.set(Character.toLowerCase(ch));
-          }
+        for (int ch = start; ch <= end; ch++) {
+          foldCase((char) ch);
         }
       }
       description.append(start).append('-').append(end);
@@ -295,16 +291,37 @@ public final class Set extends Coregex implements Serializable {
      */
     public Builder single(char ch) {
       chars.set(ch);
-      if (0 != (flags & Pattern.CASE_INSENSITIVE)) {
-        if (Character.isLowerCase(ch)) {
-          chars.set(Character.toUpperCase(ch));
-        }
-        if (Character.isUpperCase(ch)) {
-          chars.set(Character.toLowerCase(ch));
-        }
-      }
+      foldCase(ch);
       description.append(ch);
       return this;
+    }
+
+    /*
+     * Adds all chars matching given predicate, i.e. Character::isLowerCase.
+     */
+    Builder matching(IntPredicate predicate, String description) {
+      for (int ch = DOTALL.chars.nextSetBit(0); ch >= 0; ch = DOTALL.chars.nextSetBit(ch + 1)) {
+        if (predicate.test(ch)) {
+          chars.set(ch);
+          foldCase((char) ch);
+        }
+      }
+      this.description.append(description);
+      return this;
+    }
+
+    /*
+     * Same as Pattern: CASE_INSENSITIVE alone only folds US-ASCII, UNICODE_CASE (implied by
+     * UNICODE_CHARACTER_CLASS) folds the rest.
+     */
+    private void foldCase(char ch) {
+      if (0 == (flags & Pattern.CASE_INSENSITIVE)
+          || (ch > 0x7F
+              && 0 == (flags & (Pattern.UNICODE_CASE | Pattern.UNICODE_CHARACTER_CLASS)))) {
+        return;
+      }
+      chars.set(Character.toUpperCase(ch));
+      chars.set(Character.toLowerCase(ch));
     }
 
     /**
@@ -313,8 +330,9 @@ public final class Set extends Coregex implements Serializable {
      * @return this builder instance
      */
     public Builder negate() {
-      chars.flip(Character.MIN_VALUE, Character.MIN_SURROGATE);
-      chars.and(any(flags).chars);
+      // negation is not affected by DOTALL or UNIX_LINES: [^a] matches line terminators
+      chars.flip(Character.MIN_VALUE, Character.MAX_VALUE + 1);
+      chars.and(DOTALL.chars);
       description.insert(0, '^');
       return this;
     }

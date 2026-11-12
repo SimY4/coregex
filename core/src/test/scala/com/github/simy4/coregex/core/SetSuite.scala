@@ -53,7 +53,7 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
         if (start == end) (end + 1).asInstanceOf[Char] else end
       }
       val range     = Set.builder().range(start, end).build()
-      val generated = range.sample(seed).orElse(-1)
+      val generated = range.sample(seed)
       (start.toInt <= generated && generated <= end.toInt) :| s"$start <= $generated <= $end"
     }
   }
@@ -61,7 +61,7 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
   property("sampled should be in set") {
     forAll { (first: Char, rest: String, seed: Long) =>
       val set       = Set.builder().set(first, rest.toCharArray: _*).build()
-      val generated = set.sample(seed).orElse(-1)
+      val generated = set.sample(seed)
       rest.map(_.toInt =? generated).foldLeft(first.toInt =? generated)(_ || _) :| s"$generated in $set"
     }
   }
@@ -76,10 +76,16 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
 
   property("sampled should not be in intersection") {
     forAll { (left: Set, right: Set, seed1: Long, seed2: Long) =>
-      val leftWithCommon = Set.builder().union(left).single(right.sample(seed1).orElse(-1).toChar).build()
+      val leftWithCommon = Set.builder().union(left).single(right.sample(seed1).toChar).build()
       val intersection   = Set.builder().union(leftWithCommon).intersect(right).build()
       val generated      = intersection.generate(seed2)
       (leftWithCommon.matches(generated, null) && right.matches(generated, null)) :| s"$generated in $intersection"
+    }
+  }
+
+  property("empty set should generate empty") {
+    forAll { (seed: Long) =>
+      (Set.builder().build().sample(seed) ?= -1) && (Set.builder().build().generate(seed) ?= "")
     }
   }
 
@@ -128,11 +134,10 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
     forAll { (seed: Long) =>
       val result = Set
         .builder(Pattern.DOTALL)
-        .union(Set.ALL.get())
+        .union(Set.ALL)
         .negate()
         .build()
         .sample(seed)
-        .orElse(-1)
 
       (result ?= '\r') || (result ?= '\n') || (result ?= '\u0085') || (result ?= '\u2028') || (result ?= '\u2029');
     }
@@ -142,11 +147,10 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
     forAll { (seed: Long) =>
       val result = Set
         .builder(Pattern.DOTALL)
-        .union(Set.UNIX_LINES.get())
+        .union(Set.UNIX_LINES)
         .negate()
         .build()
         .sample(seed)
-        .orElse(-1)
 
       result ?= '\n'
     }
