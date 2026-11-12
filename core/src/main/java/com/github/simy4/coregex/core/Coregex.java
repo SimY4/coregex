@@ -21,10 +21,8 @@ import static java.util.Objects.requireNonNull;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -155,23 +153,20 @@ public abstract class Coregex implements Serializable {
   public static Coregex wordBoundary(int flags, boolean positive) {
     Set word =
         Set.builder(flags).range('a', 'z').range('A', 'Z').range('0', '9').single('_').build();
-    Set notWord = Set.builder(flags).union(word).negate().build();
-    Group.Type lookbehind = positive ? Group.Type.LOOKBEHIND : Group.Type.NEGATIVE_LOOKBEHIND;
-    Group.Type lookahead = positive ? Group.Type.LOOKAHEAD : Group.Type.NEGATIVE_LOOKAHEAD;
+    // \b: (?<=\w)(?!\w)|(?<!\w)(?=\w), \B: (?<=\w)(?=\w)|(?<!\w)(?!\w)
+    Group.Type afterWord = positive ? Group.Type.NEGATIVE_LOOKAHEAD : Group.Type.LOOKAHEAD;
+    Group.Type afterNotWord = positive ? Group.Type.LOOKAHEAD : Group.Type.NEGATIVE_LOOKAHEAD;
     return new Labeled(
         positive ? "\\b" : "\\B",
         new Union(
-            new Concat(new Group(lookbehind, empty()), new Group(lookahead, word)),
-            new Concat(new Group(lookbehind, word), new Group(lookahead, empty())),
-            new Concat(new Group(lookbehind, word), new Group(lookahead, notWord)),
-            new Concat(new Group(lookbehind, notWord), new Group(lookahead, word))));
+            new Concat(new Group(Group.Type.LOOKBEHIND, word), new Group(afterWord, word)),
+            new Concat(
+                new Group(Group.Type.NEGATIVE_LOOKBEHIND, word), new Group(afterNotWord, word))));
   }
 
   Coregex() {}
 
   abstract void generate(Context ctx) throws RewindException;
-
-  abstract String[] match(String input, Context ctx);
 
   /**
    * Converts this coregex into ones that produce "smaller" values.
@@ -289,16 +284,6 @@ public abstract class Coregex implements Serializable {
         "Cannot generate string for " + this + " after " + Context.maxAttempts + " attempts");
   }
 
-  final boolean matches(String input, Context ctx) {
-    String[] matches = match(input, ctx);
-    for (String match : matches) {
-      if (match.isEmpty()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   /**
    * Quantify this regex.
    *
@@ -338,20 +323,6 @@ public abstract class Coregex implements Serializable {
       for (Coregex coregex : rest) {
         coregex.generate(ctx);
       }
-    }
-
-    @Override
-    String[] match(String input, Context ctx) {
-      Collection<String> match = Arrays.asList(first.match(input, ctx));
-      for (int i = 0; i < rest.length && !match.isEmpty(); i++) {
-        Collection<String> nextMatch = new HashSet<>(match.size());
-        Coregex coregex = rest[i];
-        for (String tail : match) {
-          Collections.addAll(nextMatch, coregex.match(tail, ctx));
-        }
-        match = nextMatch;
-      }
-      return match.toArray(new String[0]);
     }
 
     /** {@inheritDoc} */
@@ -539,6 +510,7 @@ public abstract class Coregex implements Serializable {
     private final int index;
     private final String name;
     private final Coregex group;
+    private transient volatile NFA lookaround;
 
     /**
      * Unnamed capturing group.
@@ -603,7 +575,7 @@ public abstract class Coregex implements Serializable {
           positive = false;
         // fall through
         case LOOKBEHIND:
-          if (positive == group.matches(ctx.toString(true), ctx)) {
+          if (positive == lookaround().matches(ctx.toString(true))) {
             break;
           }
           throw new RewindException();
@@ -612,35 +584,14 @@ public abstract class Coregex implements Serializable {
         // fall through
         case LOOKAHEAD:
           int length = ctx.length(true);
-          Coregex fullLookbehind =
-              0 == length
-                  ? group
-                  : new Concat(any().quantify(length, length, Quantified.Type.GREEDY), group);
-          final boolean pos = positive;
+          NFA lookahead = lookaround();
+          boolean pos = positive;
           ctx.finalizeWithLookbehind(
-              root -> pos == fullLookbehind.matches(root.toString(true), root));
+              root -> pos == lookahead.matches(root.toString(true).substring(length)));
           break;
         default:
           try (Context childCtx = new Context(ctx, index, name)) {
             group.generate(childCtx);
-          }
-      }
-    }
-
-    @Override
-    String[] match(String input, Context ctx) {
-      switch (type) {
-        case NON_CAPTURING:
-        case ATOMIC:
-          return group.match(input, ctx);
-        case LOOKAHEAD:
-        case LOOKBEHIND:
-        case NEGATIVE_LOOKAHEAD:
-        case NEGATIVE_LOOKBEHIND:
-          return new String[] {input};
-        default:
-          try (Context childCtx = new Context(ctx, index, name)) {
-            return group.match(input, childCtx);
           }
       }
     }
@@ -657,6 +608,24 @@ public abstract class Coregex implements Serializable {
         default:
           return group.shrink().map(group -> new Group(type, index, name, group));
       }
+    }
+
+    /*
+     * Lookbehind body has to match a suffix of the input generated so far, lookahead body a prefix
+     * of the input generated after: `[\s\S]*body` and `body[\s\S]*` respectively. Compiled as is,
+     * since the body is not at the input boundary and anchors in it are not no-ops.
+     */
+    private NFA lookaround() {
+      NFA nfa = lookaround;
+      if (null == nfa) {
+        boolean behind = Type.LOOKBEHIND == type || Type.NEGATIVE_LOOKBEHIND == type;
+        Coregex anything = Set.DOTALL.quantify(0, -1, Quantified.Type.GREEDY);
+        nfa = new NFA();
+        (behind ? new Concat(anything, group) : new Concat(group, anything))
+            .compile(nfa, NFA.START, NFA.ACCEPT);
+        lookaround = nfa;
+      }
+      return nfa;
     }
 
     @Override
@@ -785,13 +754,23 @@ public abstract class Coregex implements Serializable {
   public static final class Labeled extends Coregex {
     private static final long serialVersionUID = 1L;
 
-    static final Labeled LINE_START = new Labeled("^", new Group(Group.Type.LOOKBEHIND, empty()));
-    static final Labeled LINE_END = new Labeled("$", new Group(Group.Type.LOOKAHEAD, empty()));
-    static final Labeled INPUT_START =
-        new Labeled("\\A", new Group(Group.Type.LOOKBEHIND, empty()));
-    static final Labeled INPUT_END = new Labeled("\\z", new Group(Group.Type.LOOKAHEAD, empty()));
+    // (?<![\s\S]): nothing before
+    private static final Group NOTHING_BEFORE =
+        new Group(Group.Type.NEGATIVE_LOOKBEHIND, Set.DOTALL);
+    // (?![\s\S]): nothing after
+    private static final Group NOTHING_AFTER = new Group(Group.Type.NEGATIVE_LOOKAHEAD, Set.DOTALL);
+
+    static final Labeled LINE_START = new Labeled("^", NOTHING_BEFORE);
+    static final Labeled LINE_END = new Labeled("$", NOTHING_AFTER);
+    static final Labeled INPUT_START = new Labeled("\\A", NOTHING_BEFORE);
+    static final Labeled INPUT_END = new Labeled("\\z", NOTHING_AFTER);
+    // (?![^\n]|\n[\s\S]): nothing or a single line terminator after
     static final Labeled INPUT_END_BEFORE_TERMINATOR =
-        new Labeled("\\Z", new Group(Group.Type.LOOKAHEAD, new Union(empty(), Set.single('\n'))));
+        new Labeled(
+            "\\Z",
+            new Group(
+                Group.Type.NEGATIVE_LOOKAHEAD,
+                new Union(Set.UNIX_LINES, new Concat(Set.single('\n'), Set.DOTALL))));
 
     private final String label;
     private final Coregex labeled;
@@ -804,11 +783,6 @@ public abstract class Coregex implements Serializable {
     @Override
     void generate(Context ctx) throws RewindException {
       labeled.generate(ctx);
-    }
-
-    @Override
-    String[] match(String input, Context ctx) {
-      return labeled.match(input, ctx);
     }
 
     /** {@inheritDoc} */
@@ -950,29 +924,6 @@ public abstract class Coregex implements Serializable {
       for (; (-1 == max || quantifier < max) && 0 != ctx.rng.nextInt(4); quantifier++) {
         quantified.generate(ctx);
       }
-    }
-
-    @Override
-    String[] match(String input, Context ctx) {
-      int quantifier = 0, min = this.min, max = this.max;
-      java.util.Set<String> match = new HashSet<>(Collections.singleton(input));
-      for (; quantifier < min && !match.isEmpty(); quantifier++) {
-        java.util.Set<String> nextMatch = new HashSet<>(match.size());
-        for (String tail : match) {
-          Collections.addAll(nextMatch, quantified.match(tail, ctx));
-        }
-        match = nextMatch;
-      }
-      for (; (-1 == max || quantifier < max) && !match.isEmpty(); quantifier++) {
-        java.util.Set<String> nextMatch = new HashSet<>(match.size());
-        for (String tail : match) {
-          Collections.addAll(nextMatch, quantified.match(tail, ctx));
-        }
-        if (!match.addAll(nextMatch)) {
-          break;
-        }
-      }
-      return match.toArray(new String[0]);
     }
 
     /** {@inheritDoc} */
@@ -1149,12 +1100,6 @@ public abstract class Coregex implements Serializable {
       ctx.append(ctx.ref(ref));
     }
 
-    @Override
-    String[] match(String input, Context ctx) {
-      String ref = ctx.ref(this.ref);
-      return input.startsWith(ref) ? new String[] {input.substring(ref.length())} : new String[0];
-    }
-
     /** {@inheritDoc} */
     @Override
     public Stream<Ref> shrink() {
@@ -1214,16 +1159,6 @@ public abstract class Coregex implements Serializable {
     void generate(Context ctx) throws RewindException {
       int index = ctx.rng.nextInt(rest.length + 1);
       (index < rest.length ? rest[index] : first).generate(ctx);
-    }
-
-    @Override
-    String[] match(String input, Context ctx) {
-      Collection<String> match = new HashSet<>(rest.length + 1);
-      Collections.addAll(match, first.match(input, ctx));
-      for (Coregex coregex : rest) {
-        Collections.addAll(match, coregex.match(input, ctx));
-      }
-      return match.toArray(new String[0]);
     }
 
     /** {@inheritDoc} */

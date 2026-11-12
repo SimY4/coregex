@@ -42,8 +42,8 @@ import java.util.Optional;
  */
 final class NFA {
 
-  private static final int START = 0;
-  private static final int ACCEPT = 1;
+  static final int START = 0;
+  static final int ACCEPT = 1;
 
   static NFA of(Coregex coregex) {
     NFA nfa = new NFA();
@@ -54,7 +54,7 @@ final class NFA {
   private final List<List<Integer>> epsilons = new ArrayList<>();
   private final List<List<Edge>> edges = new ArrayList<>();
 
-  private NFA() {
+  NFA() {
     state(); // START
     state(); // ACCEPT
   }

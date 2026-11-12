@@ -79,6 +79,14 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
       Pattern.compile("^(?:||)$"),
       Pattern.compile("(\\d+) (\\w+) == (\\1) \\2 \\3"),
       Pattern.compile("(?!=.{10,}).+"),
+      Pattern.compile("(?!a)[ab]b"),
+      Pattern.compile("(?=a)[ab]b"),
+      Pattern.compile("b[ab](?<=a)"),
+      Pattern.compile("[ab]{2}(?<!a)"),
+      Pattern.compile("[ab ]{3}\\b[ab ]{3}"),
+      Pattern.compile("[ab ]{3}\\B[ab ]{3}"),
+      Pattern.compile("\\w+\\b"),
+      Pattern.compile("a\\n?\\Z"),
       Pattern.compile("")
     ) ::: (if (scala.util.Properties.isJavaAtLeast(9)) {
              List(
@@ -184,7 +192,7 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
       val wrong   = (Character.MIN_VALUE to Character.MAX_VALUE)
         .filterNot(Character.isSurrogate)
         .map(_.toString)
-        .filter(ch => coregex.matches(ch, null) != pattern.matcher(ch).matches())
+        .filter(ch => NFA.of(coregex).matches(ch) != pattern.matcher(ch).matches())
       assert(wrong.isEmpty, s"${wrong.take(5).map(ch => f"\\u${ch.charAt(0).toInt}%04X").mkString(", ")} ...")
     }
   }
@@ -199,12 +207,20 @@ class CoregexParserSuite extends ScalaCheckSuite with CoregexArbitraries {
     )
   }
 
+  test("anchors inside lookarounds are not at the input boundary") {
+    List("a(?=^)b", "a(?<=$)b", "a(?<=\\z)b", "a(?<=\\Z)b", "(?<=^)a", "a(?=$)").foreach { regex =>
+      val _ = intercept[UnsupportedOperationException](Coregex.from(Pattern.compile(regex)).generate(0L))
+    }
+  }
+
   property("should fail to generate strings") {
     forAll(
       Gen.oneOf(
         Pattern.compile("(?=(abc))"),
         Pattern.compile("\\d+(?= dollars)"),
-        Pattern.compile("(?<=[a-z0-9])(?=[A-Z])")
+        Pattern.compile("(?<=[a-z0-9])(?=[A-Z])"),
+        Pattern.compile("ba(?<!a)"),
+        Pattern.compile("a\\bb")
       ),
       Gen.long
     ) { (pattern, seed) =>

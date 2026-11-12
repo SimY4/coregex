@@ -103,7 +103,7 @@ class NFASuite extends ScalaCheckSuite with CoregexArbitraries {
         |2 --[b]--> 2 --ε--> 1
         |""".stripMargin
     )
-    assertEquals(nfa(".[^ab]").toString.linesIterator.next(), "0 (start) --[^\\n\\r\\u0085\\u2028\\u2029]--> 2")
+    assert(nfa(".[^ab]").toString.startsWith("0 (start) --[^\n\r\u0085\u2028\u2029]--> 2\n"))
   }
 
   test("witnesses use the simplest chars, same as shrinking") {
@@ -288,32 +288,10 @@ class NFASuite extends ScalaCheckSuite with CoregexArbitraries {
     } yield QuantifyRange(min, max, Coregex.Quantified.Type.GREEDY)
   private val genSupported: Gen[Coregex] = Gen.resize(20, genCoregex(supportedRange))
 
-  private def mutate(s: String): Gen[String] =
-    if (s.isEmpty) Gen.alphaNumChar.map(_.toString)
-    else
-      for {
-        i       <- Gen.choose(0, s.length - 1)
-        ch      <- Gen.alphaNumChar
-        mutated <- Gen.oneOf(
-          s.patch(i, Nil, 1),
-          s.patch(i, ch.toString, 0),
-          s.patch(i, ch.toString, 1),
-          s + s.charAt(i)
-        )
-      } yield mutated
-
   property("nfa should accept generated strings") {
     forAll(genSupported, Arbitrary.arbitrary[Long]) { (coregex, seed) =>
       val generated = coregex.generate(seed)
       NFA.of(coregex).matches(generated) :| s"$generated in $coregex"
-    }
-  }
-
-  property("nfa should agree with coregex matcher") {
-    forAll(genSupported, Arbitrary.arbitrary[Long]) { (coregex, seed) =>
-      forAll(mutate(coregex.generate(seed))) { input =>
-        (NFA.of(coregex).matches(input) ?= coregex.matches(input, null)) :| s"$input in $coregex"
-      }
     }
   }
 
@@ -328,8 +306,8 @@ class NFASuite extends ScalaCheckSuite with CoregexArbitraries {
     forAll(genSupported, genSupported) { (left, right) =>
       val witness = left.difference(right)
       witness.isPresent ==> {
-        (left.matches(witness.get, null) :| s"${witness.get} in $left") &&
-        (!right.matches(witness.get, null) :| s"${witness.get} not in $right")
+        (NFA.of(left).matches(witness.get) :| s"${witness.get} in $left") &&
+        (!NFA.of(right).matches(witness.get) :| s"${witness.get} not in $right")
       }
     }
   }
@@ -337,7 +315,7 @@ class NFASuite extends ScalaCheckSuite with CoregexArbitraries {
   property("difference should find the shortest witness if any exists") {
     forAll(genSupported, genSupported, Arbitrary.arbitrary[Long]) { (left, right, seed) =>
       val generated = left.generate(seed)
-      !right.matches(generated, null) ==> {
+      !NFA.of(right).matches(generated) ==> {
         val witness = left.difference(right)
         (witness.isPresent :| s"$generated in $left but not in $right") &&
         (witness.get.length <= generated.length) :| s"${witness.get} is no longer than $generated"
@@ -352,7 +330,7 @@ class NFASuite extends ScalaCheckSuite with CoregexArbitraries {
       val witness   = left.intersection(right)
       (witness.isPresent :| s"$generated in both $left and $right") && {
         (witness.get.length <= generated.length) :| s"${witness.get} is no longer than $generated" &&
-        (left.matches(witness.get, null) && right.matches(witness.get, null)) :| s"${witness.get} in both"
+        (NFA.of(left).matches(witness.get) && NFA.of(right).matches(witness.get)) :| s"${witness.get} in both"
       }
     }
   }

@@ -29,7 +29,7 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
     forAll { (set: Set, seed: Long) =>
       val generated = set.generate(seed)
 
-      val inSetCheck  = set.matches(generated, null) :| s"$generated in $set"
+      val inSetCheck  = NFA.of(set).matches(generated) :| s"$generated in $set"
       val lengthCheck = (generated.length ?= 1) :| s"$generated.length == 1"
 
       inSetCheck && lengthCheck
@@ -37,11 +37,11 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
   }
 
   property("quantified generated should be in set") {
-    forAll { (set: Set, range: QuantifyRange, `type`: Coregex.Quantified.Type, seed: Long) =>
-      val quantified = set.quantify(range.min, range.max, `type`)
+    forAll { (set: Set, range: QuantifyRange, seed: Long) =>
+      val quantified = set.quantify(range.min, range.max, range.`type`)
       val generated  = quantified.generate(seed)
 
-      quantified.matches(generated, null) :| s"$generated in $set"
+      NFA.of(quantified).matches(generated) :| s"$generated in $set"
     }
   }
 
@@ -70,7 +70,7 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
     forAll { (left: Set, right: Set, seed: Long) =>
       val union     = Set.builder().union(left).union(right).build()
       val generated = union.generate(seed)
-      (left.matches(generated, null) || right.matches(generated, null)) :| s"$generated in $union"
+      (NFA.of(left).matches(generated) || NFA.of(right).matches(generated)) :| s"$generated in $union"
     }
   }
 
@@ -79,7 +79,7 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
       val leftWithCommon = Set.builder().union(left).single(right.sample(seed1).toChar).build()
       val intersection   = Set.builder().union(leftWithCommon).intersect(right).build()
       val generated      = intersection.generate(seed2)
-      (leftWithCommon.matches(generated, null) && right.matches(generated, null)) :| s"$generated in $intersection"
+      (NFA.of(leftWithCommon).matches(generated) && NFA.of(right).matches(generated)) :| s"$generated in $intersection"
     }
   }
 
@@ -126,7 +126,7 @@ class SetSuite extends ScalaCheckSuite with CoregexArbitraries {
         .build()
         .generate(seed)
 
-      set.matches(result.toLowerCase(Locale.ENGLISH), null) || set.matches(result.toUpperCase(Locale.ENGLISH), null)
+      NFA.of(set).matches(result.toLowerCase(Locale.ENGLISH)) || NFA.of(set).matches(result.toUpperCase(Locale.ENGLISH))
     }
   }
 

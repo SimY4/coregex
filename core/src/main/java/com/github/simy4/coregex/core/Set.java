@@ -146,13 +146,6 @@ public final class Set extends Coregex implements Serializable {
     }
   }
 
-  @Override
-  String[] match(String input, Context ctx) {
-    return !input.isEmpty() && chars.get(input.charAt(0))
-        ? new String[] {input.substring(1)}
-        : new String[0];
-  }
-
   boolean single() {
     return 1 == chars.cardinality();
   }
