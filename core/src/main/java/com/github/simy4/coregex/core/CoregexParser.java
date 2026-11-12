@@ -350,7 +350,7 @@ public final class CoregexParser {
         } else {
           Set metachar = metachar(ctx);
           if (metachar.single()) {
-            rangeOrSingle(set, (char) metachar.sample(0L).orElse(0), ctx);
+            rangeOrSingle(set, (char) metachar.sample(0L), ctx);
           } else {
             set.union(metachar);
           }
@@ -510,7 +510,8 @@ public final class CoregexParser {
 
   /*
    * <pre>{@code
-   * metachar ::= '\', 't' | 'r' | 'n' | 'd' | 'D' | 'w' | 'W' | 's' | 'p', '{', ? posix ?, '}' | 'S' | single
+   * metachar ::= '\', 't' | 'r' | 'n' | 'f' | 'a' | 'e' | 'c', ? char ? | 'd' | 'D' | 'w' | 'W'
+   *              | 's' | 'S' | 'h' | 'H' | 'v' | 'V' | 'p', '{', ? posix ?, '}' | single
    * }</pre>
    */
   @SuppressWarnings("fallthrough")
@@ -549,11 +550,50 @@ public final class CoregexParser {
         break;
       case 's':
         ctx.match('s');
-        metachar.set('\r', '\n', '\t', '\f', ' ');
+        metachar.set(' ', '\t', '\n', '\u000B', '\f', '\r');
         break;
       case 'S':
         ctx.match('S');
-        metachar.set('\r', '\n', '\t', '\f', ' ').negate();
+        metachar.set(' ', '\t', '\n', '\u000B', '\f', '\r').negate();
+        break;
+      case 'h':
+        ctx.match('h');
+        metachar
+            .set(' ', '\t', '\u00A0', '\u1680', '\u180E', '\u202F', '\u205F', '\u3000')
+            .range('\u2000', '\u200A');
+        break;
+      case 'H':
+        ctx.match('H');
+        metachar
+            .set(' ', '\t', '\u00A0', '\u1680', '\u180E', '\u202F', '\u205F', '\u3000')
+            .range('\u2000', '\u200A')
+            .negate();
+        break;
+      case 'v':
+        ctx.match('v');
+        metachar.set('\n', '\u000B', '\f', '\r', '\u0085', '\u2028', '\u2029');
+        break;
+      case 'V':
+        ctx.match('V');
+        metachar.set('\n', '\u000B', '\f', '\r', '\u0085', '\u2028', '\u2029').negate();
+        break;
+      case 'f':
+        ctx.match('f');
+        metachar.single('\f');
+        break;
+      case 'a':
+        ctx.match('a');
+        metachar.single('\u0007');
+        break;
+      case 'e':
+        ctx.match('e');
+        metachar.single('\u001B');
+        break;
+      case 'c':
+        ctx.match('c');
+        char control = ctx.peek();
+        ctx.match(control);
+        metachar.single((char) (control ^ 0x40));
         break;
       // handling predefined predicates from java.util.regex.CharPredicates
       case 'p':
@@ -562,15 +602,19 @@ public final class CoregexParser {
         String posix = ctx.span('}');
         switch (posix) {
           case "all":
-            metachar.range(Character.MIN_VALUE, Character.MIN_SURROGATE);
+            metachar.matching(any -> true, "\\p{all}");
             break;
           case "Lower":
-          case "javaLowerCase":
             metachar.range('a', 'z');
             break;
+          case "javaLowerCase":
+            metachar.matching(Character::isLowerCase, "\\p{javaLowerCase}");
+            break;
           case "Upper":
-          case "javaUpperCase":
             metachar.range('A', 'Z');
+            break;
+          case "javaUpperCase":
+            metachar.matching(Character::isUpperCase, "\\p{javaUpperCase}");
             break;
           case "ASCII":
             metachar.range(Character.MIN_VALUE, (char) 0x7F);
@@ -602,9 +646,13 @@ public final class CoregexParser {
             break;
 
           case "Blank":
-          case "Space":
-          case "javaWhitespace":
             metachar.set(' ', '\t');
+            break;
+          case "Space":
+            metachar.set(' ', '\t', '\n', '\u000B', '\f', '\r');
+            break;
+          case "javaWhitespace":
+            metachar.matching(Character::isWhitespace, "\\p{javaWhitespace}");
             break;
           default:
             throw ctx.unsupported("posix char class \\" + posix);

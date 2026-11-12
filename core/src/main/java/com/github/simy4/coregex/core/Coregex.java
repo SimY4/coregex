@@ -54,8 +54,6 @@ import java.util.stream.Stream;
 public abstract class Coregex implements Serializable {
 
   private static final long serialVersionUID = 1L;
-  private static final Lazy<Coregex> EMPTY =
-      new Lazy<>(() -> Set.builder().build().quantify(0, 0, Quantified.Type.GREEDY));
 
   /**
    * Constructs {@link Coregex} from provided {@link Pattern} instance.
@@ -89,7 +87,7 @@ public abstract class Coregex implements Serializable {
    * @return predefined constructor for empty regex.
    */
   public static Coregex empty() {
-    return EMPTY.get();
+    return Quantified.EMPTY;
   }
 
   /**
@@ -600,6 +598,8 @@ public abstract class Coregex implements Serializable {
   public static final class Quantified extends Coregex {
 
     private static final long serialVersionUID = 1L;
+
+    static final Quantified EMPTY = new Quantified(Set.EMPTY, 0, 0, Type.GREEDY);
 
     private final Coregex quantified;
     private final int min;
