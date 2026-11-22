@@ -1,5 +1,5 @@
 addSbtPlugin("com.github.sbt"        % "sbt-ci-release"        % "1.12.1")
-addSbtPlugin("com.github.sbt"        % "sbt-release"           % "1.5.0")
+addSbtPlugin("com.github.sbt"        % "sbt-release"           % "1.6.0")
 addSbtPlugin("com.github.sbt"        % "sbt-java-formatter"    % "0.14.0")
 addSbtPlugin("com.github.sbt"        % "sbt-header"            % "5.11.0")
 addSbtPlugin("com.github.sbt.junit"  % "sbt-jupiter-interface" % "0.19.0")
